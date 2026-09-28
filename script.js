@@ -751,10 +751,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function toggleLetter() {
       if (!envelope) return;
       envelope.classList.toggle('open');
-      const isOpen = envelope.classList.contains('open');
+      envelope.classList.toggle('is-open');
+      const isOpen = envelope.classList.contains('open') || envelope.classList.contains('is-open');
 
       if (toggleLetterBtn) {
-        toggleLetterBtn.querySelector('span').textContent = isOpen ? 'Khép Lại Bức Thư' : 'Chạm Để Đọc Thư';
+        const btnSpan = toggleLetterBtn.querySelector('span');
+        if (btnSpan) {
+          btnSpan.textContent = isOpen ? 'Khép Lại Bức Thư 💌' : 'Chạm Vào Phong Thư Để Đọc 💌';
+        }
       }
 
       if (isOpen && typeof confetti === 'function') {
@@ -767,12 +771,31 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    if (sealBtn) sealBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      toggleLetter();
-    });
-    if (envelopeClosedDecor) envelopeClosedDecor.addEventListener('click', toggleLetter);
-    if (toggleLetterBtn) toggleLetterBtn.addEventListener('click', toggleLetter);
+    if (sealBtn) {
+      sealBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleLetter();
+      });
+    }
+    if (envelopeClosedDecor) {
+      envelopeClosedDecor.addEventListener('click', (e) => {
+        toggleLetter();
+      });
+    }
+    if (toggleLetterBtn) {
+      toggleLetterBtn.addEventListener('click', (e) => {
+        toggleLetter();
+      });
+    }
+
+    const navCtaBtn = document.querySelector('.nav-cta-btn');
+    if (navCtaBtn) {
+      navCtaBtn.addEventListener('click', () => {
+        if (envelope && !envelope.classList.contains('open') && !envelope.classList.contains('is-open')) {
+          setTimeout(toggleLetter, 400);
+        }
+      });
+    }
 
     // --- E. MEMORIES CRUD WITH SUPABASE ---
     const FALLBACK_MEMORIES = [
