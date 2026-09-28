@@ -8,7 +8,7 @@
  * - Deferred Supabase network queries & Realtime channels.
  */
 
-document.addEventListener('DOMContentLoaded', () => {
+function initLoveStoryApp() {
 
   // Prevent mobile auto-scrolling to middle on reload: disable scroll restoration and clear URL hash
   try {
@@ -26,6 +26,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
   } catch (e) {}
+
+  // Safely resolve Supabase client (from window.supabaseClient or null if offline/blocked)
+  const supabaseClient = (typeof window !== 'undefined' && window.supabaseClient) ? window.supabaseClient : null;
+
   // 1. STORY & COUPLE DATA
   // ==========================================
   const COUPLE_DATA = {
@@ -207,10 +211,6 @@ document.addEventListener('DOMContentLoaded', () => {
     window.removeEventListener('keydown', onKeyDownGuard);
   }
 
-  // Forward declarations for functions needed across scopes
-  let startMusic = () => {};
-  let handleYTStateChange = () => {};
-  let handleYTError = () => {};
 
   // ==========================================
   // YOUTUBE AUDIO PLAYER BRIDGE & DYNAMIC CONFIG
@@ -681,17 +681,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // 1. Immediately toggle UI elements so user sees feedback without any blocking
-    if (enterBtn) enterBtn.style.display = 'none';
-    if (introPasswordSection) {
-      introPasswordSection.style.display = 'block';
+    const b = document.getElementById('enterBtn');
+    const s = document.getElementById('introPasswordSection');
+    const inp = document.getElementById('introPasswordInput');
+
+    if (b) b.style.display = 'none';
+    if (s) {
+      s.style.display = 'block';
     }
 
-    if (introPasswordInput) {
+    if (inp) {
+      try {
+        inp.focus();
+      } catch (err) {}
       setTimeout(() => {
         try {
-          introPasswordInput.focus();
+          inp.focus();
         } catch (err) {}
-      }, 100);
+      }, 80);
     }
 
     // 2. Safely attempt to start music
@@ -703,6 +710,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   window.showPasswordStepGlobal = showPasswordStep;
+  window.startMusic = startMusic;
 
   async function handlePasswordCheck() {
     if (!introPasswordInput) return;
@@ -711,12 +719,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let isMatch = false;
     try {
-      const hash = await computeSHA256(cleanDigits);
-      if (hash === HASH_3108) {
-        isMatch = true;
+      if (window.crypto && window.crypto.subtle) {
+        const hash = await computeSHA256(cleanDigits);
+        if (hash === HASH_3108 || cleanDigits === '3108') {
+          isMatch = true;
+        }
+      } else {
+        if (cleanDigits === '3108') {
+          isMatch = true;
+        }
       }
     } catch (err) {
-      console.error('Password hash computation error:', err);
+      console.warn('Password hash computation error, using fallback:', err);
+      if (cleanDigits === '3108') {
+        isMatch = true;
+      }
     }
 
     if (isMatch) {
@@ -768,16 +785,26 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.scrollTop = 0;
 
       // 2. Decrypt love letter via AES-GCM
+      const FALLBACK_LETTER = `Người ta thường bảo duyên số là do trời định, nhưng anh nghĩ vũ trụ đã ưu ái anh quá nhiều vào buổi chiều ngày 17/07 hôm ấy trên sân pickleball. Trong đám đông, anh lập tức bị thu hút bởi một cô bé vừa xinh xắn, dễ thương lại sở hữu đôi chân dài miên man. Buổi đầu tiên ấy, vì ngại ngùng nên anh còn chẳng dám lại gần xin cách liên lạc, cứ ngỡ mình đã bỏ lỡ một điều tuyệt vời...
+
+Thế nhưng định mệnh thật khéo sắp đặt! Bằng một cơ duyên tình cờ, anh gặp lại bạn của em trên sân pick, và thế là bằng mọi cách anh đã có được info của em. Để rồi ngày 12/08 định mệnh, buổi hẹn chơi pickleball riêng đầu tiên của hai đứa đã diễn ra. Nhớ hôm đó, đánh bóng thì ít mà hai đứa đi nói chuyện tới tận 12h đêm thì nhiều! Chưa bao giờ anh thấy mình nói chuyện với ai mà lại hợp cạ, cười nhiều và tự nhiên đến thế.
+
+Từ hôm ấy là chuỗi ngày những buổi hẹn hò không dứt, những đêm thức khuya deeptalk từ chuyện trên trời dưới biển đến chuyện tương lai mà không biết chán. Dù em hơn anh 2 tuổi (1999 & 2001), nhưng ở bên em, anh vừa thấy được sự ngọt ngào, tinh tế, vừa thấy một cô người yêu bé bỏng mà anh muốn che chở cả đời. Chuyến đi du lịch biển cuối tháng 8 và khoảnh khắc tỏ tình ngày 31/08/2026 là ngày hạnh phúc nhất cuộc đời anh. Cảm ơn em vì đã đến bên anh, làm đồng đội trên sân pickleball và làm người bạn đời tuyệt vời nhất của anh!`;
+
       let plainLetter = '';
       try {
-        plainLetter = await decryptText(
-          COUPLE_DATA.letterBodyCipher.data,
-          COUPLE_DATA.letterBodyCipher.iv,
-          cleanDigits
-        );
+        if (window.crypto && window.crypto.subtle) {
+          plainLetter = await decryptText(
+            COUPLE_DATA.letterBodyCipher.data,
+            COUPLE_DATA.letterBodyCipher.iv,
+            cleanDigits
+          );
+        } else {
+          plainLetter = FALLBACK_LETTER;
+        }
       } catch (err) {
-        console.error('Không thể giải mã thư tình:', err);
-        plainLetter = 'Thư tình đang tạm thời không thể giải mã.';
+        console.warn('Không thể giải mã thư tình qua WebCrypto, dùng bản sao lưu:', err);
+        plainLetter = FALLBACK_LETTER;
       }
 
       // 3. Initialize all interactive features and load Supabase data
@@ -810,11 +837,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (enterBtn) {
     enterBtn.addEventListener('click', showPasswordStep);
-    enterBtn.addEventListener('touchend', showPasswordStep);
   }
   if (introSeal) {
     introSeal.addEventListener('click', showPasswordStep);
-    introSeal.addEventListener('touchend', showPasswordStep);
   }
 
   if (introPasswordForm) {
@@ -2358,4 +2383,12 @@ document.addEventListener('DOMContentLoaded', () => {
     loadMusicFromDatabase();
   }
 
-});
+}
+
+// Resilient auto-launch: execute immediately if DOM is already ready, or wait for DOMContentLoaded
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initLoveStoryApp);
+} else {
+  initLoveStoryApp();
+}
+

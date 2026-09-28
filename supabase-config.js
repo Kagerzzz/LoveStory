@@ -12,6 +12,7 @@ let supabaseClient = null;
 if (typeof supabase !== 'undefined' && SUPABASE_URL && SUPABASE_ANON_KEY) {
   try {
     supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    window.supabaseClient = supabaseClient;
     console.log('✨ [Supabase] Kết nối database thành công!');
   } catch (err) {
     console.error('⚠️ [Supabase] Lỗi khởi tạo Supabase client:', err);
@@ -19,3 +20,5 @@ if (typeof supabase !== 'undefined' && SUPABASE_URL && SUPABASE_ANON_KEY) {
 } else {
   console.warn('⚠️ [Supabase] Thư viện @supabase/supabase-js chưa sẵn sàng hoặc thiếu key.');
 }
+window.supabaseClient = supabaseClient;
+

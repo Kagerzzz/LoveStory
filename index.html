@@ -26,6 +26,27 @@
   <!-- Ambient Golden Fireflies & Star Canvas -->
   <canvas id="ambientCanvas"></canvas>
 
+  <!-- Immediate early fallback so button is 100% interactive instantly -->
+  <script>
+    window.showPasswordStepGlobal = function(e) {
+      if (e && typeof e.preventDefault === 'function' && e.cancelable) e.preventDefault();
+      var b = document.getElementById('enterBtn');
+      var s = document.getElementById('introPasswordSection');
+      var inp = document.getElementById('introPasswordInput');
+      if (b) b.style.display = 'none';
+      if (s) s.style.display = 'block';
+      if (inp) {
+        try { inp.focus(); } catch (err) {}
+        setTimeout(function() {
+          try { inp.focus(); } catch (err) {}
+        }, 60);
+      }
+      if (typeof window.startMusic === 'function') {
+        try { window.startMusic(); } catch (err) {}
+      }
+    };
+  </script>
+
   <!-- INTRO OVERLAY / CURTAIN SCREEN -->
   <div id="introScreen" class="intro-screen">
     <div class="intro-card">
@@ -35,7 +56,7 @@
       </div>
       <p class="intro-quote">"Em nói yêu màu xanh của bầu trời.<br>Anh cũng vậy, cũng muốn giăng buồm ra khơi ..."</p>
       <h2 class="intro-names" id="introNamesDisplay">✦ Our Love Story ✦</h2>
-      <button class="intro-btn" id="enterBtn" onclick="window.showPasswordStepGlobal && window.showPasswordStepGlobal(event)">
+      <button class="intro-btn" id="enterBtn" type="button" onclick="window.showPasswordStepGlobal && window.showPasswordStepGlobal(event)">
         <span>Tap to open love's door</span>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M5 12h14M12 5l7 7-7 7"/>
