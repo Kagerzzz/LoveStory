@@ -58,8 +58,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const DEFAULT_CONFIG = {
     hisName: 'Thân Hiếu',
     herName: 'Khánh Linh',
-    startDate: '2026-08-25T00:00:00',
-    letterDate: '24 Tháng 09, 2026',
+    startDate: '2026-08-31T00:00:00',
+    letterDate: '30 Tháng 09, 2026',
     letterSalutation: 'Gửi Em, Cô Gái Bé Nhỏ Của Anh,',
     letterBody: `Hôm nay là tròn 30 ngày kể từ khoảnh khắc anh lấy hết dũng khí để nắm lấy tay em và nói ra những điều ấp ủ bấy lâu. Một tháng — đối với thế giới có thể chỉ là một cái chớp mắt, nhưng với anh, đó là 30 ngày tràn ngập những nụ cười, những rung động ngọt ngào và những bình yên mà anh chưa từng có trước đây.\n\nAnh nhớ từng buổi tối hai đứa ngồi bên cốc cafe ấm, ánh đèn vàng hắt nhẹ lên khuôn mặt em; nhớ từng cuộc gọi nửa đêm kể đủ thứ chuyện không đầu không cuối; và nhớ nhất là nụ cười rạng rỡ của em mỗi khi nhìn thấy anh.\n\nCảm ơn em vì đã đồng ý bước vào thế giới của anh, bao dung những vụng về của anh và cho anh cơ hội được yêu thương em. 1 tháng mới chỉ là chương mở đầu cho một cuốn sách dài vô tận của chúng ta. Anh muốn cùng em đi qua tháng thứ hai, năm đầu tiên, và thật nhiều năm tháng rực rỡ phía trước nữa.`,
     letterSignature: 'Thân Hiếu',
@@ -67,17 +67,17 @@ document.addEventListener('DOMContentLoaded', () => {
       {
         author: 'Khánh Linh',
         text: 'Cảm ơn anh vì 1 tháng qua đã luôn cưng chiều và nhường nhịn em. Yêu anh rất nhiều! ♥',
-        date: '24.09.2026 09:30'
+        date: '30.09.2026 09:30'
       },
       {
         author: 'Thân Hiếu',
         text: 'Nắm tay anh thật chặt nhé, dù có bão giông thì phía sau lưng em luôn có anh.',
-        date: '24.09.2026 10:15'
+        date: '30.09.2026 10:15'
       },
       {
         author: 'Hai Đứa Mình',
         text: 'Kỷ niệm 1 tháng ngọt ngào! Mục tiêu tiếp theo: 100 ngày, 1 năm, và mãi mãi!',
-        date: '24.09.2026 11:00'
+        date: '30.09.2026 11:00'
       }
     ]
   };
@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function loadConfig() {
     try {
-      const saved = localStorage.getItem('anniversary_config_v2');
+      const saved = localStorage.getItem('anniversary_config_v3');
       if (saved) {
         return { ...DEFAULT_CONFIG, ...JSON.parse(saved) };
       }
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function saveConfig() {
     try {
-      localStorage.setItem('anniversary_config_v2', JSON.stringify(appConfig));
+      localStorage.setItem('anniversary_config_v3', JSON.stringify(appConfig));
     } catch (e) {
       console.warn('Error saving to localStorage:', e);
     }
