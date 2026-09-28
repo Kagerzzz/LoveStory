@@ -14,45 +14,6 @@
 document.addEventListener('DOMContentLoaded', () => {
 
   // ==========================================
-  // 0. LIGHT / DARK THEME MANAGER (Default: Light Mode)
-  // ==========================================
-  const themeToggleBtn = document.getElementById('themeToggleBtn');
-  let currentTheme = localStorage.getItem('anniversary_theme_mode') || 'light';
-
-  function applyTheme(theme) {
-    currentTheme = theme;
-    document.documentElement.setAttribute('data-theme', theme);
-    localStorage.setItem('anniversary_theme_mode', theme);
-
-    if (themeToggleBtn) {
-      themeToggleBtn.setAttribute(
-        'title',
-        theme === 'dark' ? 'Chuyển sang chế độ Sáng (Light Mode)' : 'Chuyển sang chế độ Tối (Dark Mode)'
-      );
-    }
-  }
-
-  // Initialize theme
-  applyTheme(currentTheme);
-
-  if (themeToggleBtn) {
-    themeToggleBtn.addEventListener('click', () => {
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      applyTheme(newTheme);
-
-      // Cute micro sparkle when switching theme
-      if (typeof confetti === 'function') {
-        confetti({
-          particleCount: 20,
-          spread: 40,
-          origin: { y: 0.1, x: 0.9 },
-          colors: newTheme === 'light' ? ['#d64d72', '#b8823b', '#fff'] : ['#e8c89a', '#e5989b', '#7a1f36']
-        });
-      }
-    });
-  }
-
-  // ==========================================
   // 1. STATE & LOCAL STORAGE INITIALIZATION
   // ==========================================
   const DEFAULT_CONFIG = {
@@ -228,7 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
         particleCount: 50,
         spread: 60,
         origin: { y: 0.6 },
-        colors: ['#e8c89a', '#e5989b', '#f7dfbe']
+        colors: ['#ff70a6', '#ffd166', '#70e4d0', '#c77dff', '#ffffff']
       });
     }
 
@@ -366,7 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
         particleCount: 50,
         spread: 70,
         origin: { y: 0.65 },
-        colors: ['#df7b93', '#f7a8ba', '#cfa170', '#ffffff']
+        colors: ['#ff70a6', '#ffd166', '#70e4d0', '#c77dff', '#ff8fab', '#18181b']
       });
     }
   }
@@ -562,11 +523,11 @@ document.addEventListener('DOMContentLoaded', () => {
       fire(0.25, {
         spread: 26,
         startVelocity: 55,
-        colors: ['#e8c89a', '#d4af37']
+        colors: ['#ff70a6', '#ffd166']
       });
       fire(0.2, {
         spread: 60,
-        colors: ['#e5989b', '#ba2847']
+        colors: ['#70e4d0', '#ff8fab']
       });
       fire(0.35, {
         spread: 100,
@@ -577,11 +538,12 @@ document.addEventListener('DOMContentLoaded', () => {
         spread: 120,
         startVelocity: 25,
         decay: 0.92,
-        colors: ['#ffffff', '#f5dfbe']
+        colors: ['#ffffff', '#c77dff', '#18181b']
       });
       fire(0.1, {
         spread: 120,
         startVelocity: 45,
+        colors: ['#ffea79', '#b5e48c']
       });
     }
 
@@ -648,7 +610,7 @@ document.addEventListener('DOMContentLoaded', () => {
           particleCount: 30,
           spread: 50,
           origin: { y: 0.8 },
-          colors: ['#e5989b', '#e8c89a']
+          colors: ['#ff70a6', '#ffd166', '#70e4d0', '#ff8fab']
         });
       }
     });
@@ -794,12 +756,14 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       getColor() {
-        const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-        if (isLight) {
-          return Math.random() > 0.4 ? '223, 123, 147' : '207, 161, 112';
-        } else {
-          return Math.random() > 0.4 ? '242, 155, 176' : '223, 184, 142';
-        }
+        const colors = [
+          '255, 112, 166', // Bubblegum Pink
+          '255, 209, 102', // Buttercup Yellow
+          '112, 228, 208', // Mint Green
+          '199, 125, 255', // Sweet Lavender
+          '160, 196, 255'  // Pastel Sky Blue
+        ];
+        return colors[Math.floor(Math.random() * colors.length)];
       }
 
       update() {
