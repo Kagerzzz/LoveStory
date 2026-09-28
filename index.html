@@ -17,7 +17,7 @@
   <!-- Stylesheet -->
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="lock-scroll">
 
   <!-- Custom Cursor Glow -->
   <div class="cursor-glow" id="cursorGlow"></div>
@@ -635,30 +635,10 @@
 
     </div>
   </aside>
-
-  <!-- MOBILE FLOATING GLASS BOTTOM NAVIGATION BAR -->
-  <nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="Điều hướng nhanh trên điện thoại">
-    <a href="#hero" class="mobile-nav-item active">
-      <span class="mobile-nav-icon">⏱️</span>
-      <span class="mobile-nav-label">Đếm ngày</span>
-    </a>
-    <a href="#letter" class="mobile-nav-item">
-      <span class="mobile-nav-icon">💌</span>
-      <span class="mobile-nav-label">Thư tình</span>
-    </a>
-    <a href="#gallery" class="mobile-nav-item">
-      <span class="mobile-nav-icon">📸</span>
-      <span class="mobile-nav-label">Kỷ niệm</span>
-    </a>
-    <a href="#notes" class="mobile-nav-item">
-      <span class="mobile-nav-icon">💬</span>
-      <span class="mobile-nav-label">Lời nhắn</span>
-    </a>
-  </nav>
   </template>
 
   <!-- HIDDEN YOUTUBE AUDIO CONTAINER (Head In The Clouds - Hayd) -->
-  <div id="ytAudioContainer" style="position:fixed;top:-9999px;left:-9999px;width:200px;height:200px;opacity:0.001;pointer-events:none;z-index:-9999;overflow:hidden;" aria-hidden="true">
+  <div id="ytAudioContainer" style="position:fixed;bottom:0;right:0;width:1px;height:1px;opacity:0.001;pointer-events:none;z-index:-1;overflow:hidden;" aria-hidden="true">
     <div id="ytAudioPlayer"></div>
   </div>
 

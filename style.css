@@ -106,6 +106,12 @@ body {
   min-height: 100vh;
 }
 
+body.lock-scroll {
+  overflow: hidden !important;
+  height: 100vh !important;
+  touch-action: none;
+}
+
 ::selection {
   background: var(--pink);
   color: #ffffff;
@@ -3301,15 +3307,15 @@ img {
    -------------------------------------------------------------------------- */
 @media (max-width: 860px) {
   body {
-    padding-bottom: 140px; /* Ample safe space for bottom nav & floating audio bar */
+    padding-bottom: 85px; /* Clean spacing for floating audio bar */
   }
 
   .nav-menu {
-    display: none; /* Mobile uses floating bottom nav */
+    display: none;
   }
 
   .mobile-bottom-nav {
-    display: flex;
+    display: none !important;
   }
 
   /* Compact Navbar for mobile */
@@ -3338,9 +3344,9 @@ img {
     font-size: 0.78rem;
   }
 
-  /* Floating audio player: sleek, low-profile, perfectly docked above bottom nav */
+  /* Floating audio player: sleek, low-profile docked at bottom of mobile screen */
   .floating-audio-bar {
-    bottom: 72px;
+    bottom: 16px;
     left: 50%;
     right: auto;
     transform: translateX(-50%);
@@ -3854,7 +3860,7 @@ img {
   .floating-audio-bar {
     width: calc(100vw - 16px);
     padding: 5px 8px;
-    bottom: 68px;
+    bottom: 14px;
   }
 
   .floating-audio-bar .audio-meta {
@@ -3867,21 +3873,6 @@ img {
 
   .floating-audio-bar .audio-progress-container {
     min-width: 35px;
-  }
-
-  .mobile-bottom-nav {
-    bottom: 10px;
-    padding: 4px 6px;
-    gap: 6px;
-  }
-
-  .mobile-nav-item {
-    width: 40px;
-    height: 40px;
-  }
-
-  .mobile-nav-icon {
-    font-size: 1.2rem;
   }
 }
 
@@ -3897,19 +3888,5 @@ img {
   .hero-photo-badge {
     font-size: 0.72rem;
     padding: 3px 8px;
-  }
-
-  .mobile-bottom-nav {
-    gap: 4px;
-    padding: 3px 4px;
-  }
-
-  .mobile-nav-item {
-    width: 38px;
-    height: 38px;
-  }
-
-  .mobile-nav-icon {
-    font-size: 1.12rem;
   }
 }

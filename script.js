@@ -10,7 +10,16 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  // ==========================================
+  // Prevent mobile auto-scrolling to middle on reload: disable scroll restoration and clear URL hash
+  if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+  }
+  if (window.location.hash) {
+    history.replaceState(null, document.title, window.location.pathname + window.location.search);
+  }
+  window.scrollTo(0, 0);
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
   // 1. STORY & COUPLE DATA
   // ==========================================
   const COUPLE_DATA = {
@@ -253,6 +262,247 @@ document.addEventListener('DOMContentLoaded', () => {
   let ytPlayerReady = false;
   let pendingPlay = false;
 
+  // Floating audio player DOM references (hydrated upon mounting appRoot)
+  let floatingAudioBar = null;
+  let audioPlayBtn = null;
+  let audioPlayIcon = null;
+  let audioPauseIcon = null;
+  let audioCurrentTime = null;
+  let audioDuration = null;
+  let audioProgressContainer = null;
+  let audioProgressFill = null;
+  let audioMuteBtn = null;
+  let audioVolIcon = null;
+  let audioVolumeSlider = null;
+  let audioSettingsBtn = null;
+  let audioCollapseBtn = null;
+  let collapseIcon = null;
+
+  let audioCtx = null;
+  let masterGainNode = null;
+  let isPlayingMusic = false;
+  let synthInterval = null;
+  let progressInterval = null;
+
+  const FALLBACK_DURATION = 165; // Hayd - Head In The Clouds (~2:45)
+  let currentElapsed = 0;
+  let currentVolume = 0.75;
+  let isMuted = false;
+  let lastVolume = 75;
+
+  // Web Audio synthesizer (romantic arpeggiated piano fallback)
+  const chords = [
+    [174.61, 220.00, 261.63, 329.63], // Fmaj7
+    [196.00, 246.94, 293.66, 329.63], // G6
+    [164.81, 196.00, 246.94, 293.66], // Em7
+    [220.00, 261.63, 329.63, 392.00]  // Am7
+  ];
+  let chordIndex = 0;
+
+  function initAudio() {
+    if (!audioCtx) {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      audioCtx = new AudioContext();
+      masterGainNode = audioCtx.createGain();
+      masterGainNode.gain.setValueAtTime(currentVolume, audioCtx.currentTime);
+      masterGainNode.connect(audioCtx.destination);
+    }
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  }
+
+  function playTone(freq, time, duration = 3.5, volume = 0.05) {
+    if (!audioCtx || !masterGainNode) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    const filter = audioCtx.createBiquadFilter();
+
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(freq, time);
+
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(900, time);
+
+    gain.gain.setValueAtTime(0.0001, time);
+    gain.gain.linearRampToValueAtTime(volume, time + 0.15);
+    gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(masterGainNode);
+
+    osc.start(time);
+    osc.stop(time + duration + 0.1);
+  }
+
+  function playArpeggiatedChord() {
+    if (!isPlayingMusic || !audioCtx) return;
+    const currentChord = chords[chordIndex % chords.length];
+    const now = audioCtx.currentTime;
+
+    currentChord.forEach((note, i) => {
+      playTone(note, now + i * 0.18, 4.0, 0.045);
+    });
+
+    if (Math.random() > 0.4) {
+      const highNote = currentChord[Math.floor(Math.random() * currentChord.length)] * 2;
+      playTone(highNote, now + 1.2, 3.0, 0.025);
+    }
+
+    chordIndex++;
+  }
+
+  function startSynthFallback() {
+    if (synthInterval) return;
+    initAudio();
+    playArpeggiatedChord();
+    synthInterval = setInterval(playArpeggiatedChord, 3800);
+  }
+
+  function stopSynthFallback() {
+    if (synthInterval) {
+      clearInterval(synthInterval);
+      synthInterval = null;
+    }
+  }
+
+  function formatTimeTrack(seconds) {
+    if (isNaN(seconds) || seconds < 0) seconds = 0;
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
+
+  function updateTrackProgress() {
+    let dur = FALLBACK_DURATION;
+    let curr = currentElapsed;
+
+    if (ytPlayer && ytPlayerReady) {
+      try {
+        const ytDur = ytPlayer.getDuration();
+        if (ytDur && ytDur > 0) dur = ytDur;
+        const ytCurr = ytPlayer.getCurrentTime();
+        if (typeof ytCurr === 'number' && !isNaN(ytCurr)) {
+          curr = ytCurr;
+          currentElapsed = Math.floor(ytCurr);
+        }
+      } catch (e) {}
+    }
+
+    if (audioCurrentTime) audioCurrentTime.textContent = formatTimeTrack(curr);
+    if (audioDuration) audioDuration.textContent = formatTimeTrack(dur);
+    if (audioProgressFill) {
+      const pct = Math.min(100, Math.max(0, (curr / dur) * 100));
+      audioProgressFill.style.width = `${pct}%`;
+    }
+  }
+
+  function startProgressTicker() {
+    if (progressInterval) clearInterval(progressInterval);
+    updateTrackProgress();
+    progressInterval = setInterval(() => {
+      if (!isPlayingMusic) return;
+      if (!ytPlayer || !ytPlayerReady) {
+        currentElapsed++;
+        if (currentElapsed > FALLBACK_DURATION) currentElapsed = 0;
+      }
+      updateTrackProgress();
+    }, 500);
+  }
+
+  function stopProgressTicker() {
+    if (progressInterval) {
+      clearInterval(progressInterval);
+      progressInterval = null;
+    }
+  }
+
+  function updateAudioUI(playing) {
+    if (floatingAudioBar) {
+      if (playing) {
+        floatingAudioBar.classList.add('is-playing');
+      } else {
+        floatingAudioBar.classList.remove('is-playing');
+      }
+    }
+    if (audioPlayIcon && audioPauseIcon) {
+      if (playing) {
+        audioPlayIcon.style.display = 'none';
+        audioPauseIcon.style.display = 'block';
+      } else {
+        audioPlayIcon.style.display = 'block';
+        audioPauseIcon.style.display = 'none';
+      }
+    }
+  }
+
+  function startMusic() {
+    isPlayingMusic = true;
+    updateAudioUI(true);
+
+    try {
+      initAudio();
+    } catch (e) {}
+
+    if (ytPlayer && ytPlayerReady && typeof ytPlayer.playVideo === 'function') {
+      try {
+        ytPlayer.playVideo();
+        stopSynthFallback();
+      } catch (e) {
+        console.warn('ytPlayer.playVideo exception:', e);
+        startSynthFallback();
+      }
+    } else {
+      pendingPlay = true;
+      startSynthFallback();
+    }
+
+    startProgressTicker();
+  }
+
+  function stopMusic() {
+    isPlayingMusic = false;
+    pendingPlay = false;
+    updateAudioUI(false);
+
+    if (ytPlayer && ytPlayerReady && typeof ytPlayer.pauseVideo === 'function') {
+      try {
+        ytPlayer.pauseVideo();
+      } catch (e) {
+        console.warn('ytPlayer.pauseVideo exception:', e);
+      }
+    }
+    stopSynthFallback();
+    stopProgressTicker();
+  }
+
+  function handleYTStateChange(state) {
+    // 1: PLAYING, 2: PAUSED, 0: ENDED
+    if (state === 1) { // PLAYING
+      isPlayingMusic = true;
+      updateAudioUI(true);
+      stopSynthFallback();
+      startProgressTicker();
+    } else if (state === 2) { // PAUSED
+      isPlayingMusic = false;
+      updateAudioUI(false);
+      stopProgressTicker();
+    } else if (state === 0) { // ENDED (Loop track)
+      if (ytPlayer && typeof ytPlayer.seekTo === 'function') {
+        ytPlayer.seekTo(0, true);
+        ytPlayer.playVideo();
+      }
+    }
+  }
+
+  function handleYTError(err) {
+    console.warn('YouTube Player error code:', err ? err.data : 'unknown', '- switching to synth fallback');
+    if (isPlayingMusic) {
+      startSynthFallback();
+    }
+  }
+
   function initYouTubePlayer() {
     if (ytPlayer || !window.YT || !window.YT.Player) return;
     try {
@@ -262,7 +512,7 @@ document.addEventListener('DOMContentLoaded', () => {
         width: '200',
         videoId: activeVideoId,
         playerVars: {
-          autoplay: 0,
+          autoplay: 1,
           controls: 0,
           disablekb: 1,
           fs: 0,
@@ -281,23 +531,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 ytPlayer.setVolume(75);
               }
             } catch (e) {}
-            if (pendingPlay) {
-              pendingPlay = false;
-              if (typeof startMusic === 'function') {
-                startMusic();
+            if (isPlayingMusic || pendingPlay) {
+              try {
+                ytPlayer.playVideo();
+                stopSynthFallback();
+              } catch (e) {
+                console.warn('ytPlayer.playVideo exception:', e);
               }
             }
           },
           onStateChange: (event) => {
-            if (typeof handleYTStateChange === 'function') {
-              handleYTStateChange(event.data);
-            }
+            handleYTStateChange(event.data);
           },
           onError: (err) => {
-            console.warn('YouTube Player error code:', err ? err.data : 'unknown');
-            if (typeof handleYTError === 'function') {
-              handleYTError(err);
-            }
+            handleYTError(err);
           }
         }
       });
@@ -316,6 +563,24 @@ document.addEventListener('DOMContentLoaded', () => {
     initYouTubePlayer();
   }
 
+  // Attempt immediate autoplay on page load
+  try {
+    startMusic();
+  } catch (e) {}
+
+  // Autoplay on first touch/click anywhere on page (handles mobile browser policy)
+  const autoPlayOnFirstTouch = () => {
+    startMusic();
+    window.removeEventListener('pointerdown', autoPlayOnFirstTouch);
+    window.removeEventListener('touchstart', autoPlayOnFirstTouch);
+    window.removeEventListener('click', autoPlayOnFirstTouch);
+    window.removeEventListener('keydown', autoPlayOnFirstTouch);
+  };
+  window.addEventListener('pointerdown', autoPlayOnFirstTouch, { once: true, passive: true });
+  window.addEventListener('touchstart', autoPlayOnFirstTouch, { once: true, passive: true });
+  window.addEventListener('click', autoPlayOnFirstTouch, { once: true, passive: true });
+  window.addEventListener('keydown', autoPlayOnFirstTouch, { once: true, passive: true });
+
   // ==========================================
   // 4. INTRO CURTAIN & PASSWORD VERIFICATION
   // ==========================================
@@ -331,6 +596,22 @@ document.addEventListener('DOMContentLoaded', () => {
   function dismissIntro() {
     if (!introScreen) return;
     introScreen.classList.add('hide');
+    document.body.classList.remove('lock-scroll');
+
+    // Force top position on mobile immediately and after keyboard retracts
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    setTimeout(() => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }, 50);
+    setTimeout(() => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }, 300);
 
     if (typeof confetti === 'function') {
       confetti({
@@ -341,12 +622,11 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    if (typeof startMusic === 'function') {
-      startMusic();
-    }
+    startMusic();
   }
 
   function showPasswordStep() {
+    startMusic();
     if (!introPasswordSection) {
       return;
     }
@@ -380,6 +660,20 @@ document.addEventListener('DOMContentLoaded', () => {
       if (tamperObserver) tamperObserver.disconnect();
       removeLockScreenGuards();
 
+      // Immediately dismiss mobile keyboard so it doesn't shift scroll position
+      if (introPasswordInput) introPasswordInput.blur();
+
+      // Clear any URL hash so browser does not anchor-jump to middle
+      if (window.location.hash) {
+        history.replaceState(null, document.title, window.location.pathname + window.location.search);
+      }
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+
+      // Start music directly within this user gesture call stack
+      startMusic();
+
       if (passwordErrorMsg) passwordErrorMsg.style.display = 'none';
       introPasswordInput.classList.remove('pass-error');
       introPasswordInput.classList.add('pass-success');
@@ -401,6 +695,11 @@ document.addEventListener('DOMContentLoaded', () => {
         appRoot.appendChild(clone);
         template.remove();
       }
+
+      // Re-anchor to top after DOM insertion
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
 
       // 2. Decrypt love letter via AES-GCM
       let plainLetter = '';
@@ -662,20 +961,20 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(updateLoveCounter, 1000);
 
     // --- C. FLOATING AUDIO PLAYER (Hayd - Head In The Clouds) ---
-    const floatingAudioBar = document.getElementById('floatingAudioBar');
-    const audioPlayBtn = document.getElementById('audioPlayBtn');
-    const audioPlayIcon = document.getElementById('audioPlayIcon');
-    const audioPauseIcon = document.getElementById('audioPauseIcon');
-    const audioCurrentTime = document.getElementById('audioCurrentTime');
-    const audioDuration = document.getElementById('audioDuration');
-    const audioProgressContainer = document.getElementById('audioProgressContainer');
-    const audioProgressFill = document.getElementById('audioProgressFill');
-    const audioMuteBtn = document.getElementById('audioMuteBtn');
-    const audioVolIcon = document.getElementById('audioVolIcon');
-    const audioVolumeSlider = document.getElementById('audioVolumeSlider');
-    const audioSettingsBtn = document.getElementById('audioSettingsBtn');
-    const audioCollapseBtn = document.getElementById('audioCollapseBtn');
-    const collapseIcon = document.getElementById('collapseIcon');
+    floatingAudioBar = document.getElementById('floatingAudioBar');
+    audioPlayBtn = document.getElementById('audioPlayBtn');
+    audioPlayIcon = document.getElementById('audioPlayIcon');
+    audioPauseIcon = document.getElementById('audioPauseIcon');
+    audioCurrentTime = document.getElementById('audioCurrentTime');
+    audioDuration = document.getElementById('audioDuration');
+    audioProgressContainer = document.getElementById('audioProgressContainer');
+    audioProgressFill = document.getElementById('audioProgressFill');
+    audioMuteBtn = document.getElementById('audioMuteBtn');
+    audioVolIcon = document.getElementById('audioVolIcon');
+    audioVolumeSlider = document.getElementById('audioVolumeSlider');
+    audioSettingsBtn = document.getElementById('audioSettingsBtn');
+    audioCollapseBtn = document.getElementById('audioCollapseBtn');
+    collapseIcon = document.getElementById('collapseIcon');
 
     // Music Settings Modal Elements
     const musicSettingsModal = document.getElementById('musicSettingsModal');
@@ -690,230 +989,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const musicErrorTipText = document.getElementById('musicErrorTipText');
     const saveMusicBtnText = document.getElementById('saveMusicBtnText');
 
-    let audioCtx = null;
-    let masterGainNode = null;
-    let isPlayingMusic = false;
-    let synthInterval = null;
-    let progressInterval = null;
-
-    const FALLBACK_DURATION = 165; // Hayd - Head In The Clouds (~2:45)
-    let currentElapsed = 0;
-    let currentVolume = 0.75;
-    let isMuted = false;
-    let lastVolume = 75;
-
-    // Web Audio synthesizer (romantic arpeggiated piano fallback)
-    const chords = [
-      [174.61, 220.00, 261.63, 329.63], // Fmaj7
-      [196.00, 246.94, 293.66, 329.63], // G6
-      [164.81, 196.00, 246.94, 293.66], // Em7
-      [220.00, 261.63, 329.63, 392.00]  // Am7
-    ];
-    let chordIndex = 0;
-
-    function initAudio() {
-      if (!audioCtx) {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        audioCtx = new AudioContext();
-        masterGainNode = audioCtx.createGain();
-        masterGainNode.gain.setValueAtTime(currentVolume, audioCtx.currentTime);
-        masterGainNode.connect(audioCtx.destination);
-      }
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-    }
-
-    function playTone(freq, time, duration = 3.5, volume = 0.05) {
-      if (!audioCtx || !masterGainNode) return;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      const filter = audioCtx.createBiquadFilter();
-
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(freq, time);
-
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(900, time);
-
-      gain.gain.setValueAtTime(0.0001, time);
-      gain.gain.linearRampToValueAtTime(volume, time + 0.15);
-      gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
-
-      osc.connect(filter);
-      filter.connect(gain);
-      gain.connect(masterGainNode);
-
-      osc.start(time);
-      osc.stop(time + duration + 0.1);
-    }
-
-    function playArpeggiatedChord() {
-      if (!isPlayingMusic || !audioCtx) return;
-      const currentChord = chords[chordIndex % chords.length];
-      const now = audioCtx.currentTime;
-
-      currentChord.forEach((note, i) => {
-        playTone(note, now + i * 0.18, 4.0, 0.045);
-      });
-
-      if (Math.random() > 0.4) {
-        const highNote = currentChord[Math.floor(Math.random() * currentChord.length)] * 2;
-        playTone(highNote, now + 1.2, 3.0, 0.025);
-      }
-
-      chordIndex++;
-    }
-
-    function startSynthFallback() {
-      if (synthInterval) return;
-      initAudio();
-      playArpeggiatedChord();
-      synthInterval = setInterval(playArpeggiatedChord, 3800);
-    }
-
-    function stopSynthFallback() {
-      if (synthInterval) {
-        clearInterval(synthInterval);
-        synthInterval = null;
-      }
-    }
-
-    function formatTimeTrack(seconds) {
-      if (isNaN(seconds) || seconds < 0) seconds = 0;
-      const m = Math.floor(seconds / 60);
-      const s = Math.floor(seconds % 60);
-      return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    }
-
-    function updateTrackProgress() {
-      let dur = FALLBACK_DURATION;
-      let curr = currentElapsed;
-
-      if (ytPlayer && ytPlayerReady) {
-        try {
-          const ytDur = ytPlayer.getDuration();
-          if (ytDur && ytDur > 0) dur = ytDur;
-          const ytCurr = ytPlayer.getCurrentTime();
-          if (typeof ytCurr === 'number' && !isNaN(ytCurr)) {
-            curr = ytCurr;
-            currentElapsed = Math.floor(ytCurr);
-          }
-        } catch (e) {}
-      }
-
-      if (audioCurrentTime) audioCurrentTime.textContent = formatTimeTrack(curr);
-      if (audioDuration) audioDuration.textContent = formatTimeTrack(dur);
-      if (audioProgressFill) {
-        const pct = Math.min(100, Math.max(0, (curr / dur) * 100));
-        audioProgressFill.style.width = `${pct}%`;
-      }
-    }
-
-    function startProgressTicker() {
-      if (progressInterval) clearInterval(progressInterval);
-      updateTrackProgress();
-      progressInterval = setInterval(() => {
-        if (!isPlayingMusic) return;
-        if (!ytPlayer || !ytPlayerReady) {
-          currentElapsed++;
-          if (currentElapsed > FALLBACK_DURATION) currentElapsed = 0;
-        }
-        updateTrackProgress();
-      }, 500);
-    }
-
-    function stopProgressTicker() {
-      if (progressInterval) {
-        clearInterval(progressInterval);
-        progressInterval = null;
-      }
-    }
-
-    function updateAudioUI(playing) {
-      if (floatingAudioBar) {
-        if (playing) {
-          floatingAudioBar.classList.add('is-playing');
-        } else {
-          floatingAudioBar.classList.remove('is-playing');
-        }
-      }
-      if (audioPlayIcon && audioPauseIcon) {
-        if (playing) {
-          audioPlayIcon.style.display = 'none';
-          audioPauseIcon.style.display = 'block';
-        } else {
-          audioPlayIcon.style.display = 'block';
-          audioPauseIcon.style.display = 'none';
-        }
-      }
-    }
-
-    startMusic = function() {
-      isPlayingMusic = true;
-      updateAudioUI(true);
-
-      if (ytPlayer && ytPlayerReady && typeof ytPlayer.playVideo === 'function') {
-        try {
-          ytPlayer.playVideo();
-        } catch (e) {
-          console.warn('ytPlayer.playVideo exception:', e);
-          startSynthFallback();
-        }
-      } else {
-        pendingPlay = true;
-        // Fallback after 4s if YouTube player doesn't become available
-        setTimeout(() => {
-          if (pendingPlay && (!ytPlayer || !ytPlayerReady)) {
-            startSynthFallback();
-          }
-        }, 4000);
-      }
-
+    // Sync audio UI with running audio controller
+    updateAudioUI(isPlayingMusic);
+    if (isPlayingMusic) {
       startProgressTicker();
-    };
-
-    function stopMusic() {
-      isPlayingMusic = false;
-      pendingPlay = false;
-      updateAudioUI(false);
-
-      if (ytPlayer && ytPlayerReady && typeof ytPlayer.pauseVideo === 'function') {
-        try {
-          ytPlayer.pauseVideo();
-        } catch (e) {
-          console.warn('ytPlayer.pauseVideo exception:', e);
-        }
-      }
-      stopSynthFallback();
-      stopProgressTicker();
     }
-
-    handleYTStateChange = function(state) {
-      // 1: PLAYING, 2: PAUSED, 0: ENDED
-      if (state === 1) { // PLAYING
-        isPlayingMusic = true;
-        updateAudioUI(true);
-        stopSynthFallback();
-        startProgressTicker();
-      } else if (state === 2) { // PAUSED
-        isPlayingMusic = false;
-        updateAudioUI(false);
-        stopProgressTicker();
-      } else if (state === 0) { // ENDED (Loop track)
-        if (ytPlayer && typeof ytPlayer.seekTo === 'function') {
-          ytPlayer.seekTo(0, true);
-          ytPlayer.playVideo();
-        }
-      }
-    };
-
-    handleYTError = function(err) {
-      console.warn('YouTube Player error code:', err ? err.data : 'unknown', '- switching to synth fallback');
-      if (isPlayingMusic) {
-        startSynthFallback();
-      }
-    };
 
     if (audioPlayBtn) {
       audioPlayBtn.addEventListener('click', () => {
@@ -2185,31 +2265,20 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // --- I. MOBILE BOTTOM NAV OBSERVER ---
-    const mobileNavItems = document.querySelectorAll('.mobile-nav-item');
-    const trackedSections = document.querySelectorAll('section[id]');
-
-    if (mobileNavItems.length && 'IntersectionObserver' in window) {
-      const navObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            const id = entry.target.getAttribute('id');
-            mobileNavItems.forEach(item => {
-              const href = item.getAttribute('href');
-              if (href === `#${id}`) {
-                item.classList.add('active');
-              } else {
-                item.classList.remove('active');
-              }
-            });
+    // --- I. SMOOTH SCROLLING FOR IN-PAGE ANCHORS ---
+    // Prevents browser from appending hash (#letter, etc.) to URL, avoiding jump to middle on reload
+    document.querySelectorAll('a[href^="#"]').forEach(link => {
+      link.addEventListener('click', (e) => {
+        const href = link.getAttribute('href');
+        if (href && href.length > 1 && href.startsWith('#')) {
+          const target = document.querySelector(href);
+          if (target) {
+            e.preventDefault();
+            target.scrollIntoView({ behavior: 'smooth' });
           }
-        });
-      }, {
-        rootMargin: '-20% 0px -40% 0px'
+        }
       });
-
-      trackedSections.forEach(section => navObserver.observe(section));
-    }
+    });
 
     // Trigger initial data load from Supabase
     fetchMemories();
