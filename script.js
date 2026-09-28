@@ -1295,6 +1295,26 @@ document.addEventListener('DOMContentLoaded', () => {
       renderNotes();
     }
 
+    async function deleteNote(id) {
+      if (!confirm('Bạn có chắc muốn xóa lời nhắn này không?')) return;
+      try {
+        if (supabaseClient && !String(id).startsWith('local-')) {
+          const { error } = await supabaseClient
+            .from('love_notes')
+            .delete()
+            .eq('id', id);
+          if (error) throw error;
+        } else {
+          appNotes = appNotes.filter(n => n.id !== id);
+          saveLocalNotes();
+        }
+        await fetchLoveNotes();
+      } catch (err) {
+        console.error('Lỗi khi xóa lời nhắn:', err);
+        alert('Không thể xóa: ' + (err.message || err));
+      }
+    }
+
     function renderNotes() {
       if (!notesWall) return;
       notesWall.innerHTML = '';
@@ -1308,25 +1328,35 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const rotations = [-1.5, 1.2, -2, 1.8, -1, 2.2];
+      const rotations = [-2, 1.8, -1.5, 2.2, -1.8, 1.5];
       const tapeColors = ['#ffd166', '#ff70a6', '#70e4d0', '#c77dff', '#ff8fab'];
 
       appNotes.forEach((note, index) => {
         const card = document.createElement('div');
-        card.className = 'note-card';
+        card.className = 'sticky-note note-card';
 
         const rot = rotations[index % rotations.length];
         const tapeColor = tapeColors[index % tapeColors.length];
-        card.style.setProperty('--note-rot', `${rot}deg`);
+        card.style.transform = `rotate(${rot}deg)`;
 
         card.innerHTML = `
           <div class="note-tape" style="background:${tapeColor};"></div>
-          <p class="note-text font-mali">"${escapeHTML(note.text)}"</p>
-          <div class="note-footer">
-            <span class="note-author font-title">✦ ${escapeHTML(note.author)}</span>
-            <span class="note-date">${escapeHTML(note.date || '')}</span>
+          <button class="btn-delete-note" title="Xóa lời nhắn này" data-id="${escapeHTML(note.id || '')}">✕</button>
+          <p class="sticky-text note-text font-mali">"${escapeHTML(note.text)}"</p>
+          <div class="sticky-footer note-footer">
+            <span class="sticky-author note-author font-title">✦ ${escapeHTML(note.author)}</span>
+            <span class="sticky-date note-date">${escapeHTML(note.date || '')}</span>
           </div>
         `;
+
+        const delBtn = card.querySelector('.btn-delete-note');
+        if (delBtn) {
+          delBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            deleteNote(note.id);
+          });
+        }
+
         notesWall.appendChild(card);
       });
     }

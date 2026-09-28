@@ -2498,112 +2498,152 @@ img {
 .sticky-notes-wall {
   display: flex;
   flex-wrap: wrap;
-  gap: 24px;
+  gap: 28px;
   justify-content: center;
   width: 100%;
+  margin-top: 10px;
 }
 
-.sticky-note {
-  width: 250px;
-  min-height: 180px;
-  padding: 26px 18px 16px;
-  border: var(--border);
+.sticky-note,
+.note-card {
+  width: 270px;
+  min-height: 190px;
+  padding: 28px 20px 18px;
+  border: var(--border-thick);
   box-shadow: var(--shadow);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   position: relative;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   transition: var(--transition-bounce);
+  background: var(--yellow-soft);
 }
 
-/* Tape on top */
+/* Washi Tape on top */
+.note-tape {
+  position: absolute;
+  top: -11px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 78px;
+  height: 24px;
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  border-radius: 3px;
+  opacity: 0.95;
+  z-index: 3;
+}
+
 .sticky-note::before {
   content: '';
   position: absolute;
-  top: -10px;
+  top: -11px;
   left: 50%;
   transform: translateX(-50%);
-  width: 70px;
-  height: 22px;
-  background: rgba(255, 230, 109, 0.9);
-  border: 1.5px solid var(--ink);
-  box-shadow: 1px 1px 0 var(--ink);
-  border-radius: 2px;
+  width: 78px;
+  height: 24px;
+  background: rgba(255, 230, 109, 0.95);
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  border-radius: 3px;
+  z-index: 3;
 }
 
-/* Alternating candy pastel notes & tilts */
-.sticky-note:nth-child(4n+1) { background: var(--yellow-soft); transform: rotate(-2deg); }
-.sticky-note:nth-child(4n+2) { background: var(--pink-soft); transform: rotate(2deg); }
-.sticky-note:nth-child(4n+3) { background: var(--mint-soft); transform: rotate(-1.5deg); }
-.sticky-note:nth-child(4n+4) { background: var(--lavender-soft); transform: rotate(1.5deg); }
+/* If note-tape element is present inside, hide the ::before so they don't double */
+.note-card:has(.note-tape)::before,
+.sticky-note:has(.note-tape)::before {
+  display: none;
+}
 
-.sticky-note:hover {
-  transform: translateY(-6px) scale(1.04) rotate(0deg);
+/* Alternating candy pastel notes & subtle tilts */
+.sticky-note:nth-child(4n+1), .note-card:nth-child(4n+1) { background: var(--yellow-soft); }
+.sticky-note:nth-child(4n+2), .note-card:nth-child(4n+2) { background: var(--pink-soft); }
+.sticky-note:nth-child(4n+3), .note-card:nth-child(4n+3) { background: var(--mint-soft); }
+.sticky-note:nth-child(4n+4), .note-card:nth-child(4n+4) { background: var(--lavender-soft); }
+
+.sticky-note:hover,
+.note-card:hover {
+  transform: translateY(-8px) scale(1.04) rotate(0deg) !important;
   box-shadow: var(--shadow-hover);
   z-index: 10;
 }
 
-.sticky-text {
+.sticky-text,
+.note-text {
   font-family: var(--font-hand);
   font-size: 1.05rem;
   line-height: 1.6;
   color: var(--text-main);
   font-weight: 600;
+  margin: 0;
+  word-break: break-word;
+  white-space: pre-wrap;
 }
 
-.sticky-footer {
-  margin-top: 14px;
+.sticky-footer,
+.note-footer {
+  margin-top: 16px;
   padding-top: 10px;
-  border-top: 1.5px dashed rgba(24, 24, 27, 0.2);
+  border-top: 2px dashed rgba(24, 24, 27, 0.2);
   display: flex;
   justify-content: space-between;
   align-items: center;
   font-family: var(--font-title);
-  font-size: 0.78rem;
-  font-weight: 700;
+  font-size: 0.8rem;
+  font-weight: 800;
 }
 
-.sticky-author {
+.sticky-author,
+.note-author {
   color: var(--pink-deep);
+  font-weight: 800;
 }
 
-.sticky-date {
+.sticky-date,
+.note-date {
   color: var(--text-muted);
+  font-size: 0.74rem;
+  font-weight: 600;
 }
 
 .btn-delete-note {
   position: absolute;
   top: 8px;
   right: 8px;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1.5px solid var(--ink);
-  box-shadow: 1px 1px 0 var(--ink);
-  font-size: 0.72rem;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  font-size: 0.8rem;
+  font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  opacity: 0.75;
+  opacity: 0.65;
   transition: var(--transition-bounce);
   z-index: 5;
+  padding: 0;
+  line-height: 1;
 }
 
 .sticky-note:hover .btn-delete-note,
+.note-card:hover .btn-delete-note,
 .btn-delete-note:hover {
   opacity: 1;
   background: #fee2e2;
-  transform: scale(1.15);
+  color: #dc2626;
+  transform: scale(1.1);
 }
 
 .notes-empty-state {
   text-align: center;
   padding: 40px 20px;
   background: #ffffff;
-  border: var(--border);
+  border: var(--border-thick);
   box-shadow: var(--shadow);
   border-radius: var(--radius-md);
   font-family: var(--font-title);
