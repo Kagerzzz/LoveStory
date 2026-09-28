@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hiếu & Linh — Our Love Story ✦ Hành Trình Yêu & Đếm Ngày Bên Nhau</title>
+  <title>✦ Our Love Story ✦</title>
   <meta name="description" content="Nơi lưu giữ hành trình tình yêu ngọt ngào của Thân Hiếu & Khánh Linh — Từ sân pickleball định mệnh đến những năm tháng hạnh phúc trọn đời.">
   
   <!-- Favicon -->
@@ -35,7 +35,6 @@
       </div>
       <p class="intro-quote">"Từ một ánh nhìn trên sân pickleball hôm ấy,<br>cả thế giới của anh đã đổi hướng..."</p>
       <h2 class="intro-names" id="introNamesDisplay">Thân Hiếu & Khánh Linh</h2>
-      <p class="intro-sub">Chuyện Tình Yêu & Đếm Ngày Bên Nhau</p>
       <button class="intro-btn" id="enterBtn">
         <span>Chạm để mở cánh cửa tình yêu</span>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -63,15 +62,9 @@
       </nav>
 
       <div class="nav-controls">
-        <!-- Music Toggle -->
-        <button id="musicToggleBtn" class="control-btn music-btn" title="Phát / Dừng Nhạc Nền">
-          <div class="vinyl-mini" id="vinylMini">
-            <span class="vinyl-center"></span>
-          </div>
-          <div class="equalizer" id="equalizer">
-            <span></span><span></span><span></span><span></span>
-          </div>
-        </button>
+        <a href="#letter" class="nav-cta-btn" title="Đọc thư tình">
+          <span>💌 Đọc Thư</span>
+        </a>
       </div>
     </div>
   </header>
@@ -170,29 +163,100 @@
         <div class="envelope-wrapper" id="envelopeWrapper">
           <div class="envelope" id="envelope">
             
-            <!-- Closed Envelope Decor (Displayed when envelope is closed) -->
-            <div class="envelope-closed-decor" id="envelopeClosedDecor">
-              <!-- Top Flap (Triangular fold) -->
-              <div class="envelope-flap"></div>
+            <!-- Closed Envelope Decor (Retro Vintage Airmail Postal Style) -->
+            <div class="envelope-closed-decor" id="envelopeClosedDecor" title="Chạm để mở phong thư">
+              <!-- Retro Airmail Diagonal Candy Stripes Border -->
+              <div class="retro-airmail-edge"></div>
 
-              <!-- Air Mail Postage Stamp -->
-              <div class="envelope-postage-stamp">
-                <span class="stamp-icon">💌</span>
-                <span class="stamp-txt">AIR MAIL</span>
-                <span class="stamp-num">FOREVER</span>
+              <!-- Vintage Top Flap with realistic folds & stitches -->
+              <div class="envelope-flap">
+                <div class="flap-crease-left"></div>
+                <div class="flap-crease-right"></div>
+                <div class="flap-stitches"></div>
               </div>
 
-              <!-- Romantic Address Lines -->
+              <!-- Vintage Postal Marks Header -->
+              <div class="envelope-postal-header">
+                <!-- Par Avion Rubber Stamp Badge -->
+                <div class="par-avion-seal">
+                  <span class="par-avion-icon">✈</span>
+                  <div class="par-avion-labels">
+                    <span class="par-avion-main">PAR AVION</span>
+                    <span class="par-avion-sub">AIR MAIL ✦ SPECIAL DELIVERY</span>
+                  </div>
+                </div>
+
+                <!-- Vintage Perforated Postage Stamps Group -->
+                <div class="vintage-stamps-set">
+                  <!-- Stamp 1: Pickleball Love Stamp -->
+                  <div class="v-stamp v-stamp-pickleball" title="Pickleball Love Post">
+                    <div class="stamp-holes"></div>
+                    <div class="v-stamp-body">
+                      <span class="v-stamp-emoji">🎾</span>
+                      <span class="v-stamp-label">PICKLE</span>
+                      <span class="v-stamp-val">17.07</span>
+                    </div>
+                  </div>
+                  <!-- Stamp 2: Red Heart Stamp -->
+                  <div class="v-stamp v-stamp-heart" title="Forever Love">
+                    <div class="stamp-holes"></div>
+                    <div class="v-stamp-body">
+                      <span class="v-stamp-emoji">💖</span>
+                      <span class="v-stamp-label">FOREVER</span>
+                      <span class="v-stamp-val">31.08</span>
+                    </div>
+                  </div>
+                  <!-- Postmark Ink Stamp Cancellation -->
+                  <div class="postmark-ink-stamp">
+                    <div class="postmark-circle">
+                      <span class="p-city">LOVE POST</span>
+                      <span class="p-date">31.08.2026</span>
+                      <span class="p-status">CERTIFIED</span>
+                    </div>
+                    <div class="postmark-wavy-lines">
+                      <span></span><span></span><span></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Horizontal Vintage Twine Ribbon Band -->
+              <div class="envelope-twine-line"></div>
+
+              <!-- Romantic Address Block with vintage telegram guidelines -->
               <div class="envelope-to-block">
-                <p class="to-label">Gửi đến cô gái đáng yêu nhất:</p>
-                <h4 class="to-name font-script" id="envelopeToName">Khánh Linh</h4>
-                <p class="to-destination">Nơi bình yên của chàng trai 2001 ♥</p>
+                <div class="retro-address-line from-line">
+                  <span class="addr-tag">FROM:</span>
+                  <span class="addr-content">Thân Hiếu (2001) — Sân Pickleball Hẹn Hò</span>
+                </div>
+                <div class="retro-address-line to-line">
+                  <span class="addr-tag">TO:</span>
+                  <h4 class="to-name font-script" id="envelopeToName">Khánh Linh</h4>
+                  <span class="addr-sub">✦ Cô bé 1999 xinh xắn chân dài của anh</span>
+                </div>
+                <div class="retro-address-line dest-line">
+                  <span class="addr-tag">DEST:</span>
+                  <span class="addr-content">Trái tim anh & Hành trình hạnh phúc trọn đời ♥</span>
+                </div>
               </div>
 
-              <!-- Wax Seal Button -->
-              <div class="envelope-seal-btn" id="sealBtn" title="Chạm để mở phong thư">
-                <span class="seal-heart">♥</span>
-                <span class="seal-prompt">Mở thư</span>
+              <!-- 3D Wax Seal Button with Wax Drips and Heart -->
+              <div class="envelope-seal-btn" id="sealBtn" title="Chạm để mở phong thư tình yêu">
+                <div class="wax-drip wax-drip-1"></div>
+                <div class="wax-drip wax-drip-2"></div>
+                <div class="wax-seal-outer-rim">
+                  <div class="wax-seal-inner-rim">
+                    <span class="seal-heart">♥</span>
+                    <span class="seal-prompt">MỞ THƯ</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Priority Postage Label -->
+              <div class="retro-priority-sticker">
+                <span class="priority-star">★</span>
+                <span>PRIORITY LOVE ✦ CONFIDENTIAL & SWEET</span>
+                <span class="priority-star">★</span>
               </div>
             </div>
 
@@ -562,6 +626,65 @@
   <audio id="bgAudio" loop preload="none">
     <!-- Optional custom MP3 URL can be injected here -->
   </audio>
+
+  <!-- FLOATING NEUBRUTALISM AUDIO PLAYER (BOTTOM OF SCREEN) -->
+  <aside class="floating-audio-bar" id="floatingAudioBar" aria-label="Bộ phát nhạc tình yêu">
+    <div class="audio-bar-inner">
+      
+      <!-- Disc & Track Info -->
+      <div class="audio-track-info">
+        <div class="audio-disc" id="audioDisc" title="Đang phát nhạc lofi piano">
+          <div class="disc-vinyl">
+            <span class="disc-groove"></span>
+            <span class="disc-center">💖</span>
+          </div>
+        </div>
+        <div class="audio-meta">
+          <span class="audio-title">Lofi Romance</span>
+          <span class="audio-artist">Hiếu & Linh • Lofi Piano</span>
+        </div>
+      </div>
+
+      <!-- Play / Pause Button -->
+      <button class="audio-btn-play" id="audioPlayBtn" title="Phát / Tạm dừng nhạc" aria-label="Phát hoặc tạm dừng nhạc">
+        <svg class="icon-play" id="audioPlayIcon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+          <polygon points="5 3 19 12 5 21 5 3"></polygon>
+        </svg>
+        <svg class="icon-pause" id="audioPauseIcon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="display:none;">
+          <rect x="6" y="4" width="4" height="16"></rect>
+          <rect x="14" y="4" width="4" height="16"></rect>
+        </svg>
+      </button>
+
+      <!-- Timeline & Progress -->
+      <div class="audio-timeline-wrap">
+        <span class="audio-time" id="audioCurrentTime">00:00</span>
+        <div class="audio-progress-container" id="audioProgressContainer" title="Nhấp hoặc kéo để tua nhạc">
+          <div class="audio-progress-fill" id="audioProgressFill" style="width: 0%;"></div>
+        </div>
+        <span class="audio-time" id="audioDuration">03:30</span>
+      </div>
+
+      <!-- Volume Controls -->
+      <div class="audio-volume-wrap">
+        <button class="audio-vol-icon-btn" id="audioMuteBtn" title="Tắt / Bật tiếng" aria-label="Tắt hoặc bật tiếng">
+          <span id="audioVolIcon">🔊</span>
+        </button>
+        <input type="range" class="audio-volume-slider" id="audioVolumeSlider" min="0" max="100" value="75" title="Âm lượng">
+      </div>
+
+      <!-- Equalizer waves -->
+      <div class="audio-waves" id="audioWaves">
+        <span></span><span></span><span></span><span></span>
+      </div>
+
+      <!-- Toggle compact button on mobile/desktop -->
+      <button class="audio-collapse-btn" id="audioCollapseBtn" title="Thu gọn / Mở rộng" aria-label="Thu gọn">
+        <span id="collapseIcon">✕</span>
+      </button>
+
+    </div>
+  </aside>
 
   <!-- MOBILE FLOATING GLASS BOTTOM NAVIGATION BAR -->
   <nav class="mobile-bottom-nav" id="mobileBottomNav" aria-label="Điều hướng nhanh trên điện thoại">

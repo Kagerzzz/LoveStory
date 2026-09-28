@@ -950,132 +950,448 @@ img {
 }
 
 .envelope {
-  background: var(--pink-soft);
+  background: #fbf5e6; /* Vintage kraft parchment */
   border: var(--border-thick);
   box-shadow: var(--shadow-lg);
   border-radius: var(--radius-lg);
   position: relative;
-  padding: 30px;
+  padding: 24px;
   transition: var(--transition-bounce);
+  overflow: hidden;
 }
 
 .envelope-closed-decor {
-  min-height: 280px;
+  min-height: 380px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   position: relative;
   cursor: pointer;
+  padding: 10px;
 }
 
 .envelope.is-open .envelope-closed-decor {
   display: none;
 }
 
+/* 1. Retro Airmail Diagonal Candy Stripes Frame */
+.retro-airmail-edge {
+  position: absolute;
+  inset: -14px;
+  border-radius: calc(var(--radius-lg) - 4px);
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    -45deg,
+    #ff70a6 0,
+    #ff70a6 16px,
+    #fffdfa 16px,
+    #fffdfa 24px,
+    #70b8ff 24px,
+    #70b8ff 40px,
+    #fffdfa 40px,
+    #fffdfa 48px
+  );
+  padding: 10px;
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.9;
+  z-index: 1;
+}
+
+/* 2. Realistic 3D Envelope Top Flap */
 .envelope-flap {
   position: absolute;
-  top: 0;
+  top: -24px;
   left: 50%;
   transform: translateX(-50%);
   width: 0;
   height: 0;
-  border-left: 140px solid transparent;
-  border-right: 140px solid transparent;
-  border-top: 90px solid #fec5bb;
-  filter: drop-shadow(0 2px 0 var(--ink));
+  border-left: 200px solid transparent;
+  border-right: 200px solid transparent;
+  border-top: 130px solid #f6ecdc;
+  filter: drop-shadow(0 3px 0 var(--ink)) drop-shadow(0 8px 12px rgba(24,24,27,0.12));
+  pointer-events: none;
+  z-index: 2;
+}
+
+.flap-stitches {
+  position: absolute;
+  top: -128px;
+  left: -180px;
+  width: 360px;
+  height: 0;
+  border-top: 2px dashed rgba(24, 24, 27, 0.35);
   pointer-events: none;
 }
 
-.envelope-postage-stamp {
-  position: absolute;
-  top: 10px;
-  right: 14px;
-  background: var(--blue-soft);
-  border: 2px solid var(--ink);
-  box-shadow: 3px 3px 0 var(--ink);
-  border-radius: 6px;
-  padding: 8px 14px;
+/* 3. Vintage Postal Marks Header */
+.envelope-postal-header {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: relative;
+  z-index: 4;
+}
+
+/* Par Avion Rubber Badge */
+.par-avion-seal {
+  background: #e0f2fe;
+  border: 2px solid var(--ink);
+  box-shadow: 2.5px 2.5px 0 var(--ink);
+  border-radius: var(--radius-xs);
+  padding: 6px 12px;
+  display: flex;
   align-items: center;
-  transform: rotate(4deg);
+  gap: 8px;
+  transform: rotate(-3deg);
   transition: var(--transition-bounce);
 }
 
-.envelope-postage-stamp:hover {
-  transform: rotate(-3deg) scale(1.1);
+.par-avion-seal:hover {
+  transform: rotate(0deg) scale(1.05);
+  background: var(--yellow-soft);
 }
 
-.stamp-icon { font-size: 1.3rem; }
-.stamp-txt { font-family: var(--font-title); font-size: 0.68rem; font-weight: 800; }
-.stamp-num { font-family: var(--font-title); font-size: 0.72rem; font-weight: 800; color: var(--pink-deep); }
-
-.envelope-to-block {
-  margin-top: 60px;
-  margin-left: 10px;
+.par-avion-icon {
+  font-size: 1.3rem;
+  color: #0284c7;
 }
 
-.to-label {
-  font-family: var(--font-title);
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--text-muted);
+.par-avion-labels {
+  display: flex;
+  flex-direction: column;
 }
 
-.to-name {
-  font-family: var(--font-script);
-  font-size: 2.6rem;
-  font-weight: 700;
-  color: var(--pink-deep);
-  margin: 2px 0;
-}
-
-.to-destination {
+.par-avion-main {
   font-family: var(--font-title);
   font-size: 0.88rem;
-  font-weight: 600;
-  color: var(--text-muted);
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: 1px;
+  line-height: 1.1;
 }
 
-.envelope-seal-btn {
-  width: 76px;
+.par-avion-sub {
+  font-size: 0.62rem;
+  font-weight: 800;
+  color: #0369a1;
+  letter-spacing: 0.5px;
+}
+
+/* 4. Vintage Stamps Set with Perforations */
+.vintage-stamps-set {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+}
+
+.v-stamp {
+  width: 64px;
   height: 76px;
-  background: var(--pink);
-  border: var(--border);
-  box-shadow: var(--shadow);
+  border: 2px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
+  border-radius: 4px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: var(--transition-bounce);
+  cursor: pointer;
+}
+
+.v-stamp:hover {
+  transform: scale(1.12) rotate(0deg) !important;
+  z-index: 10;
+}
+
+.v-stamp-pickleball {
+  background: #fef08a; /* Retro yellow */
+  transform: rotate(4deg);
+}
+
+.v-stamp-heart {
+  background: #fecdd3; /* Retro rose */
+  transform: rotate(-3deg);
+}
+
+.v-stamp-body {
+  border: 1.5px dashed var(--ink);
+  border-radius: 2px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.v-stamp-emoji {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.v-stamp-label {
+  font-family: var(--font-title);
+  font-size: 0.58rem;
+  font-weight: 800;
+  color: var(--ink);
+  margin-top: 2px;
+}
+
+.v-stamp-val {
+  font-family: var(--font-title);
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--pink-deep);
+}
+
+/* Rubber Ink Postmark Cancellation */
+.postmark-ink-stamp {
+  position: absolute;
+  right: -10px;
+  top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transform: rotate(-10deg);
+  pointer-events: none;
+  opacity: 0.82;
+}
+
+.postmark-circle {
+  width: 54px;
+  height: 54px;
+  border: 2px solid var(--ink);
   border-radius: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin: 20px auto 10px;
-  cursor: pointer;
-  transition: var(--transition-bounce);
-  animation: sealPulse 2s ease-in-out infinite;
+  font-family: var(--font-title);
+  font-size: 0.52rem;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.1;
+  background: rgba(255, 255, 255, 0.45);
 }
 
-@keyframes sealPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.06); }
+.p-date {
+  font-weight: 800;
+  color: var(--pink-deep);
+  border-top: 1px solid var(--ink);
+  border-bottom: 1px solid var(--ink);
+  padding: 1px 3px;
+  margin: 1px 0;
+}
+
+.postmark-wavy-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.postmark-wavy-lines span {
+  width: 44px;
+  height: 2px;
+  background: var(--ink);
+  border-radius: 2px;
+}
+
+/* 5. Horizontal Vintage Twine Band */
+.envelope-twine-line {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: repeating-linear-gradient(
+    90deg,
+    #d97706 0,
+    #d97706 8px,
+    #fef3c7 8px,
+    #fef3c7 16px
+  );
+  border-top: 1.5px solid var(--ink);
+  border-bottom: 1.5px solid var(--ink);
+  opacity: 0.65;
+  z-index: 2;
+  transform: translateY(-50%);
+}
+
+/* 6. Romantic Address Block with vintage telegram guidelines */
+.envelope-to-block {
+  margin-top: 80px;
+  margin-bottom: 20px;
+  padding: 18px 24px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 2px dashed rgba(24, 24, 27, 0.35);
+  border-radius: var(--radius-sm);
+  position: relative;
+  z-index: 3;
+}
+
+.retro-address-line {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 4px 0;
+  border-bottom: 1px dotted rgba(24, 24, 27, 0.25);
+  flex-wrap: wrap;
+}
+
+.retro-address-line:last-child {
+  border-bottom: none;
+}
+
+.addr-tag {
+  font-family: var(--font-title);
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: var(--pink-deep);
+  letter-spacing: 0.5px;
+  min-width: 46px;
+}
+
+.addr-content {
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.to-line .to-name {
+  font-family: var(--font-script);
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: var(--pink-deep);
+  margin: 0;
+  line-height: 1.1;
+  text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.addr-sub {
+  font-family: var(--font-title);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+/* 7. 3D Embossed Wax Seal Button */
+.envelope-seal-btn {
+  width: 86px;
+  height: 86px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  cursor: pointer;
+  transition: var(--transition-bounce);
+  animation: sealBeat 2.2s ease-in-out infinite;
+}
+
+@keyframes sealBeat {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.08); }
 }
 
 .envelope-seal-btn:hover {
-  background: var(--yellow);
-  transform: scale(1.15) rotate(8deg);
-  box-shadow: var(--shadow-hover);
+  transform: translate(-50%, -50%) scale(1.2) rotate(6deg) !important;
+}
+
+.wax-seal-outer-rim {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #f43f5e, #be123c 65%, #881337 100%);
+  border: 3px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink), inset 0 2px 4px rgba(255, 255, 255, 0.4), inset 0 -3px 6px rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.wax-seal-inner-rim {
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  border: 2px dashed rgba(255, 255, 255, 0.45);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.wax-drip {
+  position: absolute;
+  background: #be123c;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  z-index: -1;
+}
+
+.wax-drip-1 {
+  width: 22px;
+  height: 28px;
+  bottom: -6px;
+  right: 14px;
+}
+
+.wax-drip-2 {
+  width: 18px;
+  height: 22px;
+  top: -4px;
+  left: 10px;
 }
 
 .seal-heart {
-  font-size: 1.6rem;
-  color: var(--ink);
+  font-size: 1.7rem;
+  color: #ffffff;
   line-height: 1;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
 
 .seal-prompt {
   font-family: var(--font-title);
-  font-size: 0.75rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  margin-top: 2px;
+}
+
+/* 8. Retro Delivery Priority Sticker */
+.retro-priority-sticker {
+  align-self: center;
+  background: var(--yellow);
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  border-radius: var(--radius-pill);
+  padding: 4px 16px;
+  font-family: var(--font-title);
+  font-size: 0.74rem;
   font-weight: 800;
   color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  position: relative;
+  z-index: 4;
+}
+
+.priority-star {
+  color: var(--pink-deep);
+  font-size: 0.85rem;
 }
 
 /* Letter Paper */
@@ -2314,6 +2630,298 @@ img {
 }
 
 /* --------------------------------------------------------------------------
+   FLOATING NEUBRUTALISM AUDIO PLAYER (BOTTOM OF SCREEN)
+   -------------------------------------------------------------------------- */
+.floating-audio-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 28px;
+  z-index: 9998;
+  background: #ffffff;
+  border: var(--border-thick);
+  box-shadow: 4px 4px 0 var(--ink);
+  border-radius: var(--radius-pill);
+  padding: 8px 18px;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, opacity 0.3s ease;
+  user-select: none;
+}
+
+.floating-audio-bar:hover {
+  box-shadow: 6px 6px 0 var(--ink);
+}
+
+.audio-bar-inner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+/* Vinyl Disc & Info */
+.audio-track-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.audio-disc {
+  width: 38px;
+  height: 38px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.disc-vinyl {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #27272a 40%, #18181b 100%);
+  border: 2px solid var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 1px 1px 0 var(--ink);
+  transition: transform 0.5s linear;
+}
+
+.floating-audio-bar.is-playing .disc-vinyl {
+  animation: spinVinyl 3.5s linear infinite;
+}
+
+@keyframes spinVinyl {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.disc-center {
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.audio-meta {
+  display: flex;
+  flex-direction: column;
+  white-space: nowrap;
+}
+
+.audio-title {
+  font-family: var(--font-title);
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--text-main);
+  line-height: 1.1;
+}
+
+.audio-artist {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+/* Play/Pause Button */
+.audio-btn-play {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--yellow);
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--ink);
+  transition: var(--transition-bounce);
+  flex-shrink: 0;
+}
+
+.audio-btn-play:hover {
+  background: var(--pink);
+  transform: scale(1.12);
+}
+
+.audio-btn-play:active {
+  transform: scale(0.95);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+/* Timeline & Progress Bar */
+.audio-timeline-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.audio-time {
+  font-family: var(--font-title);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  min-width: 34px;
+}
+
+.audio-progress-container {
+  width: 120px;
+  height: 10px;
+  background: #f4f4f5;
+  border: 2px solid var(--ink);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 1px 1px 0 rgba(0,0,0,0.1);
+}
+
+.audio-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--pink), var(--yellow));
+  border-radius: var(--radius-pill);
+  transition: width 0.15s ease;
+}
+
+/* Volume Control */
+.audio-volume-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.audio-vol-icon-btn {
+  background: none;
+  border: none;
+  font-size: 1.05rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+
+.audio-volume-slider {
+  width: 65px;
+  height: 6px;
+  -webkit-appearance: none;
+  appearance: none;
+  background: #e4e4e7;
+  border: 1.5px solid var(--ink);
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+}
+
+.audio-volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--pink);
+  border: 1.5px solid var(--ink);
+  box-shadow: 1px 1px 0 var(--ink);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.audio-volume-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  background: var(--yellow);
+}
+
+/* Dancing Equalizer Waves */
+.audio-waves {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 18px;
+  padding: 0 2px;
+}
+
+.audio-waves span {
+  width: 3.5px;
+  height: 4px;
+  background: var(--pink-deep);
+  border-radius: 2px;
+  transition: height 0.2s ease;
+}
+
+.floating-audio-bar.is-playing .audio-waves span:nth-child(1) {
+  animation: danceWave 0.7s ease-in-out infinite alternate;
+}
+.floating-audio-bar.is-playing .audio-waves span:nth-child(2) {
+  animation: danceWave 0.5s ease-in-out infinite alternate 0.15s;
+}
+.floating-audio-bar.is-playing .audio-waves span:nth-child(3) {
+  animation: danceWave 0.8s ease-in-out infinite alternate 0.3s;
+}
+.floating-audio-bar.is-playing .audio-waves span:nth-child(4) {
+  animation: danceWave 0.6s ease-in-out infinite alternate 0.45s;
+}
+
+@keyframes danceWave {
+  0% { height: 4px; }
+  100% { height: 18px; }
+}
+
+/* Collapse / Mini state */
+.audio-collapse-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink);
+  background: #f4f4f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+  margin-left: 2px;
+  transition: var(--transition-bounce);
+}
+
+.audio-collapse-btn:hover {
+  background: var(--pink);
+}
+
+/* Collapsed Mini Pill State */
+.floating-audio-bar.is-collapsed {
+  padding: 6px 12px;
+}
+
+.floating-audio-bar.is-collapsed .audio-meta,
+.floating-audio-bar.is-collapsed .audio-timeline-wrap,
+.floating-audio-bar.is-collapsed .audio-volume-wrap,
+.floating-audio-bar.is-collapsed .audio-waves {
+  display: none;
+}
+
+.floating-audio-bar.is-collapsed .audio-collapse-btn #collapseIcon {
+  display: inline-block;
+  transform: rotate(45deg);
+}
+
+/* Navbar CTA link */
+.nav-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--yellow);
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  border-radius: var(--radius-pill);
+  padding: 6px 14px;
+  font-family: var(--font-title);
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: var(--ink);
+  text-decoration: none;
+  transition: var(--transition-bounce);
+}
+
+.nav-cta-btn:hover {
+  background: var(--pink);
+  transform: translateY(-2px);
+}
+
+/* --------------------------------------------------------------------------
    19. MOBILE FLOATING GLASS BOTTOM NAVIGATION
    -------------------------------------------------------------------------- */
 .mobile-bottom-nav {
@@ -2367,6 +2975,24 @@ img {
 
   .mobile-bottom-nav {
     display: flex;
+  }
+
+  /* Position floating audio player nicely above mobile bottom nav */
+  .floating-audio-bar {
+    bottom: 76px;
+    left: 12px;
+    right: 12px;
+    max-width: none;
+    padding: 6px 12px;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+
+  .floating-audio-bar .audio-volume-wrap {
+    display: none; /* Hide volume slider on mobile to stay compact */
+  }
+
+  .floating-audio-bar .audio-progress-container {
+    width: 70px;
   }
 
   .hero-title {
@@ -2463,5 +3089,46 @@ img {
 
   .cert-inner {
     padding: 16px 12px;
+  }
+
+  .envelope-closed-decor {
+    min-height: 330px;
+    padding: 6px;
+  }
+
+  .envelope-flap {
+    border-left-width: 130px;
+    border-right-width: 130px;
+    border-top-width: 90px;
+  }
+
+  .envelope-to-block {
+    margin-top: 55px;
+    padding: 12px 14px;
+  }
+
+  .to-line .to-name {
+    font-size: 2.1rem;
+  }
+
+  .floating-audio-bar .audio-meta {
+    max-width: 80px;
+    overflow: hidden;
+  }
+
+  .floating-audio-bar .audio-title {
+    font-size: 0.8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .floating-audio-bar .audio-artist {
+    font-size: 0.65rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .floating-audio-bar .audio-progress-container {
+    width: 50px;
   }
 }

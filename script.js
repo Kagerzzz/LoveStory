@@ -190,15 +190,34 @@ document.addEventListener('DOMContentLoaded', () => {
   if (introSeal) introSeal.addEventListener('click', dismissIntro);
 
   // ==========================================
-  // 4. ROMANTIC AMBIENT SOUNDSCAPE (Web Audio API Synth)
+  // 4. FLOATING NEUBRUTALISM AUDIO PLAYER (BOTTOM BAR)
   // ==========================================
-  const musicToggleBtn = document.getElementById('musicToggleBtn');
-  const vinylMini = document.getElementById('vinylMini');
-  const equalizer = document.getElementById('equalizer');
+  const floatingAudioBar = document.getElementById('floatingAudioBar');
+  const audioPlayBtn = document.getElementById('audioPlayBtn');
+  const audioPlayIcon = document.getElementById('audioPlayIcon');
+  const audioPauseIcon = document.getElementById('audioPauseIcon');
+  const audioCurrentTime = document.getElementById('audioCurrentTime');
+  const audioDuration = document.getElementById('audioDuration');
+  const audioProgressContainer = document.getElementById('audioProgressContainer');
+  const audioProgressFill = document.getElementById('audioProgressFill');
+  const audioMuteBtn = document.getElementById('audioMuteBtn');
+  const audioVolIcon = document.getElementById('audioVolIcon');
+  const audioVolumeSlider = document.getElementById('audioVolumeSlider');
+  const audioCollapseBtn = document.getElementById('audioCollapseBtn');
+  const collapseIcon = document.getElementById('collapseIcon');
 
   let audioCtx = null;
+  let masterGainNode = null;
   let isPlayingMusic = false;
   let synthInterval = null;
+  let clockInterval = null;
+
+  // Track progress & duration (3 minutes 30 seconds = 210s)
+  const TOTAL_DURATION = 210;
+  let currentElapsed = 0;
+  let currentVolume = 0.75;
+  let isMuted = false;
+  let lastVolume = 0.75;
 
   // Gentle romantic chord progression: Fmaj7 -> G6 -> Em7 -> Am7
   const chords = [
@@ -213,6 +232,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!audioCtx) {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       audioCtx = new AudioContext();
+      masterGainNode = audioCtx.createGain();
+      masterGainNode.gain.setValueAtTime(currentVolume, audioCtx.currentTime);
+      masterGainNode.connect(audioCtx.destination);
     }
     if (audioCtx.state === 'suspended') {
       audioCtx.resume();
@@ -220,7 +242,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function playTone(freq, time, duration = 3.5, volume = 0.05) {
-    if (!audioCtx) return;
+    if (!audioCtx || !masterGainNode) return;
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
     const filter = audioCtx.createBiquadFilter();
@@ -238,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     osc.connect(filter);
     filter.connect(gain);
-    gain.connect(audioCtx.destination);
+    gain.connect(masterGainNode);
 
     osc.start(time);
     osc.stop(time + duration + 0.1);
@@ -262,27 +284,56 @@ document.addEventListener('DOMContentLoaded', () => {
     chordIndex++;
   }
 
+  function formatTimeTrack(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
+
+  function updateTrackProgress() {
+    if (audioCurrentTime) audioCurrentTime.textContent = formatTimeTrack(currentElapsed);
+    if (audioDuration) audioDuration.textContent = formatTimeTrack(TOTAL_DURATION);
+    if (audioProgressFill) {
+      const pct = Math.min(100, (currentElapsed / TOTAL_DURATION) * 100);
+      audioProgressFill.style.width = `${pct}%`;
+    }
+  }
+
   function startMusic() {
     initAudio();
     if (isPlayingMusic) return;
     isPlayingMusic = true;
 
-    if (vinylMini) vinylMini.classList.add('spinning');
-    if (equalizer) equalizer.classList.add('active');
+    if (floatingAudioBar) floatingAudioBar.classList.add('is-playing');
+    if (audioPlayIcon) audioPlayIcon.style.display = 'none';
+    if (audioPauseIcon) audioPauseIcon.style.display = 'block';
 
     playArpeggiatedChord();
     synthInterval = setInterval(playArpeggiatedChord, 3800);
+
+    // Track running seconds & progress
+    if (clockInterval) clearInterval(clockInterval);
+    clockInterval = setInterval(() => {
+      currentElapsed++;
+      if (currentElapsed > TOTAL_DURATION) {
+        currentElapsed = 0;
+      }
+      updateTrackProgress();
+    }, 1000);
   }
 
   function stopMusic() {
     isPlayingMusic = false;
     if (synthInterval) clearInterval(synthInterval);
-    if (vinylMini) vinylMini.classList.remove('spinning');
-    if (equalizer) equalizer.classList.remove('active');
+    if (clockInterval) clearInterval(clockInterval);
+
+    if (floatingAudioBar) floatingAudioBar.classList.remove('is-playing');
+    if (audioPlayIcon) audioPlayIcon.style.display = 'block';
+    if (audioPauseIcon) audioPauseIcon.style.display = 'none';
   }
 
-  if (musicToggleBtn) {
-    musicToggleBtn.addEventListener('click', () => {
+  if (audioPlayBtn) {
+    audioPlayBtn.addEventListener('click', () => {
       if (isPlayingMusic) {
         stopMusic();
       } else {
@@ -290,6 +341,66 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  // Seeking on progress container click
+  if (audioProgressContainer) {
+    audioProgressContainer.addEventListener('click', (e) => {
+      const rect = audioProgressContainer.getBoundingClientRect();
+      const clickRatio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      currentElapsed = Math.floor(clickRatio * TOTAL_DURATION);
+      updateTrackProgress();
+    });
+  }
+
+  // Volume Slider
+  if (audioVolumeSlider) {
+    audioVolumeSlider.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value, 10);
+      currentVolume = val / 100;
+      if (masterGainNode && audioCtx) {
+        masterGainNode.gain.setValueAtTime(currentVolume, audioCtx.currentTime);
+      }
+      if (audioVolIcon) {
+        audioVolIcon.textContent = currentVolume === 0 ? '🔇' : currentVolume < 0.5 ? '🔉' : '🔊';
+      }
+      isMuted = (currentVolume === 0);
+    });
+  }
+
+  // Mute / Unmute Button
+  if (audioMuteBtn) {
+    audioMuteBtn.addEventListener('click', () => {
+      if (!isMuted) {
+        lastVolume = currentVolume > 0 ? currentVolume : 0.75;
+        currentVolume = 0;
+        if (audioVolumeSlider) audioVolumeSlider.value = 0;
+        if (audioVolIcon) audioVolIcon.textContent = '🔇';
+        isMuted = true;
+      } else {
+        currentVolume = lastVolume;
+        if (audioVolumeSlider) audioVolumeSlider.value = Math.round(currentVolume * 100);
+        if (audioVolIcon) audioVolIcon.textContent = currentVolume < 0.5 ? '🔉' : '🔊';
+        isMuted = false;
+      }
+      if (masterGainNode && audioCtx) {
+        masterGainNode.gain.setValueAtTime(currentVolume, audioCtx.currentTime);
+      }
+    });
+  }
+
+  // Collapse / Expand toggle
+  if (audioCollapseBtn) {
+    audioCollapseBtn.addEventListener('click', () => {
+      if (!floatingAudioBar) return;
+      floatingAudioBar.classList.toggle('is-collapsed');
+      if (collapseIcon) {
+        collapseIcon.textContent = floatingAudioBar.classList.contains('is-collapsed') ? '+' : '✕';
+      }
+    });
+  }
+
+  // Initialize progress display
+  updateTrackProgress();
 
   // ==========================================
   // 5. INTERACTIVE LOVE ENVELOPE (Unfolding 3D)
