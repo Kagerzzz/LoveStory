@@ -1,0 +1,15 @@
+# Old / Unrelated files
+Portfolio/
+backup_portfolio/
+email_template.html
+assets/design-system.png
+assets/ecommerce.png
+assets/fintech.png
+assets/saas.png
+
+# OS and Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
