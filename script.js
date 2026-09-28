@@ -194,6 +194,77 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Forward declarations for functions needed across scopes
   let startMusic = () => {};
+  let handleYTStateChange = () => {};
+  let handleYTError = () => {};
+
+  // ==========================================
+  // YOUTUBE AUDIO PLAYER BRIDGE (Hayd - Head In The Clouds)
+  // ==========================================
+  let ytPlayer = null;
+  let ytPlayerReady = false;
+  let pendingPlay = false;
+
+  function initYouTubePlayer() {
+    if (ytPlayer || !window.YT || !window.YT.Player) return;
+    try {
+      ytPlayer = new YT.Player('ytAudioPlayer', {
+        height: '200',
+        width: '200',
+        videoId: '-uFQzcY7YHc',
+        playerVars: {
+          autoplay: 0,
+          controls: 0,
+          disablekb: 1,
+          fs: 0,
+          iv_load_policy: 3,
+          modestbranding: 1,
+          rel: 0,
+          playsinline: 1,
+          loop: 1,
+          playlist: '-uFQzcY7YHc'
+        },
+        events: {
+          onReady: () => {
+            ytPlayerReady = true;
+            try {
+              if (typeof ytPlayer.setVolume === 'function') {
+                ytPlayer.setVolume(75);
+              }
+            } catch (e) {}
+            if (pendingPlay) {
+              pendingPlay = false;
+              if (typeof startMusic === 'function') {
+                startMusic();
+              }
+            }
+          },
+          onStateChange: (event) => {
+            if (typeof handleYTStateChange === 'function') {
+              handleYTStateChange(event.data);
+            }
+          },
+          onError: (err) => {
+            console.warn('YouTube Player error code:', err ? err.data : 'unknown');
+            if (typeof handleYTError === 'function') {
+              handleYTError(err);
+            }
+          }
+        }
+      });
+    } catch (e) {
+      console.warn('Failed to initialize YouTube Player:', e);
+    }
+  }
+
+  // Hook global YouTube API callback
+  window.onYouTubeIframeAPIReady = function() {
+    initYouTubePlayer();
+  };
+
+  // If YouTube API script was already parsed and ready
+  if (window.YT && window.YT.Player) {
+    initYouTubePlayer();
+  }
 
   // ==========================================
   // 4. INTRO CURTAIN & PASSWORD VERIFICATION
@@ -540,7 +611,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateLoveCounter();
     setInterval(updateLoveCounter, 1000);
 
-    // --- C. FLOATING AUDIO PLAYER ---
+    // --- C. FLOATING AUDIO PLAYER (Hayd - Head In The Clouds) ---
     const floatingAudioBar = document.getElementById('floatingAudioBar');
     const audioPlayBtn = document.getElementById('audioPlayBtn');
     const audioPlayIcon = document.getElementById('audioPlayIcon');
@@ -559,14 +630,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let masterGainNode = null;
     let isPlayingMusic = false;
     let synthInterval = null;
-    let clockInterval = null;
+    let progressInterval = null;
 
-    const TOTAL_DURATION = 210;
+    const FALLBACK_DURATION = 165; // Hayd - Head In The Clouds (~2:45)
     let currentElapsed = 0;
     let currentVolume = 0.75;
     let isMuted = false;
-    let lastVolume = 0.75;
+    let lastVolume = 75;
 
+    // Web Audio synthesizer (romantic arpeggiated piano fallback)
     const chords = [
       [174.61, 220.00, 261.63, 329.63], // Fmaj7
       [196.00, 246.94, 293.66, 329.63], // G6
@@ -629,52 +701,155 @@ document.addEventListener('DOMContentLoaded', () => {
       chordIndex++;
     }
 
+    function startSynthFallback() {
+      if (synthInterval) return;
+      initAudio();
+      playArpeggiatedChord();
+      synthInterval = setInterval(playArpeggiatedChord, 3800);
+    }
+
+    function stopSynthFallback() {
+      if (synthInterval) {
+        clearInterval(synthInterval);
+        synthInterval = null;
+      }
+    }
+
     function formatTimeTrack(seconds) {
+      if (isNaN(seconds) || seconds < 0) seconds = 0;
       const m = Math.floor(seconds / 60);
       const s = Math.floor(seconds % 60);
       return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
     }
 
     function updateTrackProgress() {
-      if (audioCurrentTime) audioCurrentTime.textContent = formatTimeTrack(currentElapsed);
-      if (audioDuration) audioDuration.textContent = formatTimeTrack(TOTAL_DURATION);
+      let dur = FALLBACK_DURATION;
+      let curr = currentElapsed;
+
+      if (ytPlayer && ytPlayerReady) {
+        try {
+          const ytDur = ytPlayer.getDuration();
+          if (ytDur && ytDur > 0) dur = ytDur;
+          const ytCurr = ytPlayer.getCurrentTime();
+          if (typeof ytCurr === 'number' && !isNaN(ytCurr)) {
+            curr = ytCurr;
+            currentElapsed = Math.floor(ytCurr);
+          }
+        } catch (e) {}
+      }
+
+      if (audioCurrentTime) audioCurrentTime.textContent = formatTimeTrack(curr);
+      if (audioDuration) audioDuration.textContent = formatTimeTrack(dur);
       if (audioProgressFill) {
-        const pct = Math.min(100, (currentElapsed / TOTAL_DURATION) * 100);
+        const pct = Math.min(100, Math.max(0, (curr / dur) * 100));
         audioProgressFill.style.width = `${pct}%`;
       }
     }
 
-    startMusic = function() {
-      initAudio();
-      if (isPlayingMusic) return;
-      isPlayingMusic = true;
-
-      if (floatingAudioBar) floatingAudioBar.classList.add('is-playing');
-      if (audioPlayIcon) audioPlayIcon.style.display = 'none';
-      if (audioPauseIcon) audioPauseIcon.style.display = 'block';
-
-      playArpeggiatedChord();
-      synthInterval = setInterval(playArpeggiatedChord, 3800);
-
-      if (clockInterval) clearInterval(clockInterval);
-      clockInterval = setInterval(() => {
-        currentElapsed++;
-        if (currentElapsed > TOTAL_DURATION) {
-          currentElapsed = 0;
+    function startProgressTicker() {
+      if (progressInterval) clearInterval(progressInterval);
+      updateTrackProgress();
+      progressInterval = setInterval(() => {
+        if (!isPlayingMusic) return;
+        if (!ytPlayer || !ytPlayerReady) {
+          currentElapsed++;
+          if (currentElapsed > FALLBACK_DURATION) currentElapsed = 0;
         }
         updateTrackProgress();
-      }, 1000);
+      }, 500);
+    }
+
+    function stopProgressTicker() {
+      if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+      }
+    }
+
+    function updateAudioUI(playing) {
+      if (floatingAudioBar) {
+        if (playing) {
+          floatingAudioBar.classList.add('is-playing');
+        } else {
+          floatingAudioBar.classList.remove('is-playing');
+        }
+      }
+      if (audioPlayIcon && audioPauseIcon) {
+        if (playing) {
+          audioPlayIcon.style.display = 'none';
+          audioPauseIcon.style.display = 'block';
+        } else {
+          audioPlayIcon.style.display = 'block';
+          audioPauseIcon.style.display = 'none';
+        }
+      }
+    }
+
+    startMusic = function() {
+      isPlayingMusic = true;
+      updateAudioUI(true);
+
+      if (ytPlayer && ytPlayerReady && typeof ytPlayer.playVideo === 'function') {
+        try {
+          ytPlayer.playVideo();
+        } catch (e) {
+          console.warn('ytPlayer.playVideo exception:', e);
+          startSynthFallback();
+        }
+      } else {
+        pendingPlay = true;
+        // Fallback after 4s if YouTube player doesn't become available
+        setTimeout(() => {
+          if (pendingPlay && (!ytPlayer || !ytPlayerReady)) {
+            startSynthFallback();
+          }
+        }, 4000);
+      }
+
+      startProgressTicker();
     };
 
     function stopMusic() {
       isPlayingMusic = false;
-      if (synthInterval) clearInterval(synthInterval);
-      if (clockInterval) clearInterval(clockInterval);
+      pendingPlay = false;
+      updateAudioUI(false);
 
-      if (floatingAudioBar) floatingAudioBar.classList.remove('is-playing');
-      if (audioPlayIcon) audioPlayIcon.style.display = 'block';
-      if (audioPauseIcon) audioPauseIcon.style.display = 'none';
+      if (ytPlayer && ytPlayerReady && typeof ytPlayer.pauseVideo === 'function') {
+        try {
+          ytPlayer.pauseVideo();
+        } catch (e) {
+          console.warn('ytPlayer.pauseVideo exception:', e);
+        }
+      }
+      stopSynthFallback();
+      stopProgressTicker();
     }
+
+    handleYTStateChange = function(state) {
+      // 1: PLAYING, 2: PAUSED, 0: ENDED
+      if (state === 1) { // PLAYING
+        isPlayingMusic = true;
+        updateAudioUI(true);
+        stopSynthFallback();
+        startProgressTicker();
+      } else if (state === 2) { // PAUSED
+        isPlayingMusic = false;
+        updateAudioUI(false);
+        stopProgressTicker();
+      } else if (state === 0) { // ENDED (Loop track)
+        if (ytPlayer && typeof ytPlayer.seekTo === 'function') {
+          ytPlayer.seekTo(0, true);
+          ytPlayer.playVideo();
+        }
+      }
+    };
+
+    handleYTError = function(err) {
+      console.warn('YouTube Player error code:', err ? err.data : 'unknown', '- switching to synth fallback');
+      if (isPlayingMusic) {
+        startSynthFallback();
+      }
+    };
 
     if (audioPlayBtn) {
       audioPlayBtn.addEventListener('click', () => {
@@ -690,7 +865,17 @@ document.addEventListener('DOMContentLoaded', () => {
       audioProgressContainer.addEventListener('click', (e) => {
         const rect = audioProgressContainer.getBoundingClientRect();
         const clickRatio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-        currentElapsed = Math.floor(clickRatio * TOTAL_DURATION);
+        let dur = FALLBACK_DURATION;
+        if (ytPlayer && ytPlayerReady && typeof ytPlayer.getDuration === 'function') {
+          const ytDur = ytPlayer.getDuration();
+          if (ytDur && ytDur > 0) dur = ytDur;
+        }
+        const targetSec = clickRatio * dur;
+        currentElapsed = Math.floor(targetSec);
+
+        if (ytPlayer && ytPlayerReady && typeof ytPlayer.seekTo === 'function') {
+          ytPlayer.seekTo(targetSec, true);
+        }
         updateTrackProgress();
       });
     }
@@ -699,13 +884,19 @@ document.addEventListener('DOMContentLoaded', () => {
       audioVolumeSlider.addEventListener('input', (e) => {
         const val = parseInt(e.target.value, 10);
         currentVolume = val / 100;
+        if (ytPlayer && ytPlayerReady && typeof ytPlayer.setVolume === 'function') {
+          ytPlayer.setVolume(val);
+          if (val > 0 && typeof ytPlayer.isMuted === 'function' && ytPlayer.isMuted()) {
+            ytPlayer.unMute();
+          }
+        }
         if (masterGainNode && audioCtx) {
           masterGainNode.gain.setValueAtTime(currentVolume, audioCtx.currentTime);
         }
         if (audioVolIcon) {
-          audioVolIcon.textContent = currentVolume === 0 ? '🔇' : currentVolume < 0.5 ? '🔉' : '🔊';
+          audioVolIcon.textContent = val === 0 ? '🔇' : val < 50 ? '🔉' : '🔊';
         }
-        isMuted = (currentVolume === 0);
+        isMuted = (val === 0);
       });
     }
 
@@ -713,18 +904,29 @@ document.addEventListener('DOMContentLoaded', () => {
       audioMuteBtn.addEventListener('click', () => {
         if (isMuted) {
           isMuted = false;
-          currentVolume = lastVolume || 0.75;
-          if (audioVolumeSlider) audioVolumeSlider.value = Math.round(currentVolume * 100);
-          if (audioVolIcon) audioVolIcon.textContent = currentVolume < 0.5 ? '🔉' : '🔊';
+          const targetVol = lastVolume > 0 ? lastVolume : 75;
+          currentVolume = targetVol / 100;
+          if (audioVolumeSlider) audioVolumeSlider.value = targetVol;
+          if (audioVolIcon) audioVolIcon.textContent = targetVol < 50 ? '🔉' : '🔊';
+          if (ytPlayer && ytPlayerReady) {
+            if (typeof ytPlayer.unMute === 'function') ytPlayer.unMute();
+            if (typeof ytPlayer.setVolume === 'function') ytPlayer.setVolume(targetVol);
+          }
+          if (masterGainNode && audioCtx) {
+            masterGainNode.gain.setValueAtTime(currentVolume, audioCtx.currentTime);
+          }
         } else {
           isMuted = true;
-          lastVolume = currentVolume;
+          lastVolume = audioVolumeSlider ? parseInt(audioVolumeSlider.value, 10) : 75;
           currentVolume = 0;
           if (audioVolumeSlider) audioVolumeSlider.value = 0;
           if (audioVolIcon) audioVolIcon.textContent = '🔇';
-        }
-        if (masterGainNode && audioCtx) {
-          masterGainNode.gain.setValueAtTime(currentVolume, audioCtx.currentTime);
+          if (ytPlayer && ytPlayerReady && typeof ytPlayer.mute === 'function') {
+            ytPlayer.mute();
+          }
+          if (masterGainNode && audioCtx) {
+            masterGainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+          }
         }
       });
     }

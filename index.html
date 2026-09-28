@@ -616,15 +616,15 @@
       
       <!-- Disc & Track Info -->
       <div class="audio-track-info">
-        <div class="audio-disc" id="audioDisc" title="Đang phát nhạc lofi piano">
+        <div class="audio-disc" id="audioDisc" title="Đang phát nhạc: Head In The Clouds - Hayd">
           <div class="disc-vinyl">
             <span class="disc-groove"></span>
-            <span class="disc-center">💖</span>
+            <span class="disc-center">☁️</span>
           </div>
         </div>
         <div class="audio-meta">
-          <span class="audio-title">Lofi Romance</span>
-          <span class="audio-artist">Hiếu & Linh • Lofi Piano</span>
+          <span class="audio-title">Head In The Clouds</span>
+          <span class="audio-artist">Hayd</span>
         </div>
       </div>
 
@@ -645,7 +645,7 @@
         <div class="audio-progress-container" id="audioProgressContainer" title="Nhấp hoặc kéo để tua nhạc">
           <div class="audio-progress-fill" id="audioProgressFill" style="width: 0%;"></div>
         </div>
-        <span class="audio-time" id="audioDuration">03:30</span>
+        <span class="audio-time" id="audioDuration">02:45</span>
       </div>
 
       <!-- Volume Controls -->
@@ -693,6 +693,14 @@
     </a>
   </nav>
   </template>
+
+  <!-- HIDDEN YOUTUBE AUDIO CONTAINER (Head In The Clouds - Hayd) -->
+  <div id="ytAudioContainer" style="position:fixed;top:-9999px;left:-9999px;width:200px;height:200px;opacity:0.001;pointer-events:none;z-index:-9999;overflow:hidden;" aria-hidden="true">
+    <div id="ytAudioPlayer"></div>
+  </div>
+
+  <!-- YOUTUBE IFRAME API (Plays Hayd - Head In The Clouds) -->
+  <script src="https://www.youtube.com/iframe_api"></script>
 
   <!-- CONFETTI SCRIPT (Self-contained Canvas Confetti for magical moments) -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
