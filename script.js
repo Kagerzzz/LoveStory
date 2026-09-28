@@ -37,13 +37,13 @@ function initLoveStoryApp() {
     herName: 'Khánh Linh',
     startDate: '2026-08-31T00:00:00',
     letterDate: 'Since 31 Tháng 08, 2026',
-    letterSalutation: 'Gửi Khánh Linh — Cô gái xinh xắn chân dài của anh,',
+    letterSalutation: 'Gửi em, nàng thơ của anh',
     // AES-GCM 256-bit encrypted ciphertext of the secret love letter
     letterBodyCipher: {
-      iv: 'FpxAWO9iEJih43J9',
-      data: 'w/lhwTivsdXZI4mh61KyXC24opINo++NV4PGxssWgyiIULeAnF6YJDTYsu9AvKsDndgCq2fbfOvse1VX03CWVkPVaM4cSUpUVUmRhwC47oYIOEfpZ/TYUjfzbTnso998/uH7Y3LNrQvHpZg/rzBazsmwo74UYj5owLqHI9Jx6dfLckhe6NX+RidfSB0dCu4vhluHQBOnYQk+iYdYepooQ1hqn3r6E8mn6Kg6/9mwPDIZkY9L2Shu9VpGrKEASbIrsr3qggyx78tPKS/gEk6rvUJLNEnZqIrwesx5A8hx68pnp4hWdaUSNQc+H/i+Z4sona4nP23FZ60JnTQfnNu0dwFVhYi51Sa2cedC/BElHJWnbboM/dFSiDeWDfSXqfVupZC7kq780bZMjHLUCdc2ssSBbR509HrIpXWPWehMTvEcBJcZGVqOEYTJvp+hq2pAfmFPRiugCo12hxjwKDD5kbRoCweiCgOxWNupK5v71kWOSCVchoZsuAE7omT6Yrt8fhr9XCGRM/P9phLevFjeHrV9H5QffCDDLv7alIbNGS4/EgbZAL1tDeYArtRu4BXhknzWidhvuduQG6Vmtw04+Sgwfg5MniOPdrMZpNY2+Tbb06nfB1npkyqXD092qAdmyod1EXgVhYZEMMP+5N21zW9gnIENEwVvmuGnwjliH96bbvPo3GERvISbU5bOHlPxiTK0hTCRKeKNi+sBjGDINSUFvJXJnlWH4Tf4js8dwz4ybjmex64ywLKTfaqMiLb/6B+NFfWQIe7ZSXn87EBlxILHAwixAcPFNZ5NGP8NyC/VKpMOGzTONsTegiF/M/fMXNbEBqKI3+I/p6RVo0qc0kN7s8gTAJ57wmOGWJopIv5rMugIGqJzWYoR07P515aHrXsh+vZv6NIBGgh0aKtD6UTteFnjT8nyY/8PXhDOHztUzcKI3QAJoWtpgQgv5QpRKWz4nDYXm43ttjFjRFG0VhbDk/+R76nh2r3kGx/oJMNt/Q2bLwZ2oQnUVNKb6UfYmHzzHpBA+k1NvnkXrE05zfctN+KrJn040qC4dUs8VbumqdXYDA8oJxk5/hhG01C7qTIj2nxe9fYijTQp+yZbOQYUt2oz7nHz652t/3P0io1f8qPncbRl3N/t/W5OHmz85OhJo4EcZSUgbk34hNMNGNc3W3nKQKBCjGTKvq/MpwiJAnxjywwj/3Ioj5J4GD/VbKYuDzxjFFxL6ag4dL8jS0C0NQ99zRA/7bNWans8zYUThP8yIHnX/EvAWkvm9dqa+5J2mzNf5R3EIvzYBF7jSCxxkDQTtkzmXsRLv/BkRsopujysQf0WXqzK8qEU278/A5RTrQ+6VsoelTznxsVtcRvMGP+uIL6fQVY2QPyYDgylEY5jGQapShD7qrjqwt5nA+RWwtLbBirh9gPNQiv6Ts3nho2xi5PD9UuLhukeUVJscVcar1CwjizlJrBVWasV7Uv3M2lEYu38oj1qM3YaiIgrlpCmirDBK2zFzTtvJKPZ08NeurCqDhWHRT0rFi2DS45UNNqdvt2NSHIkP5hu8WwyELYaXbN+jgkULeqH1fRQ2IaL8hptzFEvvM2RmTfjiSKHTnTtzf6eeVtypFT21lVnG6BPeCYTR+OwQMWqNIjQILVdCCiov+Gxh+PtE77Z1i1tJ91kcujI7KsABfPuOG3lvQUHHS0G+fRo7PKGOOZL8TvqqUtg2LxpHnF9vhoh5wAPpCmQsRAgrkogiPwsl7nQmyjA4M36KedM8UupHKem9pjeJXbNm1H6xbp01GYohSZqGd+Jgxnit8sOnpk4hOgn8Ra903CPotnW4h9jYf9RFFrItfmn3IywZTpL6wY68+TW7hNsFgKgsZJ0XsdiLmLZUA1/pO3OT9KagIK8kT0bXswvDvHXhDkviem6NVDMXsS9hcrxf41wzbju6XL5EP8gjx3dSvC/yj5iIDF6vnl4ZF+9I6RZ6o2iVpvNuyy8U4GxrhN11sGIPm4yfthlxz4IBbfIE6xXpBKn0N31asBaEbNtG6yyuRiyMwjPdu7re4Vth7NnnTsYXgFza9WxCM0hECW+p9i3yrujWZlGJdWQHzkkG7f3KbquL9gSIBmX6hTLV1pcB3T02uoY7ZRIaje9puwaeFNq9WkQ2WUxmc+d8XYFqlP8QY7tQylAIl+qR5w0C1awNwYFd69qN2rQpX5ArdhDyDvOdGMBV9TJ5JHVGOjlj7NfXKmoiskW5in81gSCs0LKpJMHIjqqVQg0T+d0WQ2tH9SqO5R2JGYlnsTE9RbxNxX84GbJ3y24zrux2FQUOCPuPYpLXViPjpWWUeuyzVeS0GuySM+N1PIV1v+I1X1xfwG95aqlI82ZOA=='
+      iv: 'ORkjhpE6Ak+XVRtG',
+      data: 'rjIjaV7V2puW0Rv8qOh2VomejWYfZAn1c/sWmgilcDuydwz4qCEfqxn8gWjsXi0vvnchWf36z7xrhFVrRdsWAabxtl1HAMUd4fKu8FmzWdfd8bu6IhM/T63MipkwEm29JKDkTcMah2aaagfEtxGhyP8tQ2zBKeSmLpeeF2ndlm5+JjHRRMXElJ54VJI03JaIk//+zX98t742N/BJqQ9eC4ZGdV4Cz/su3muJibwIZivS86gRt7E+MKuf6V74gJ1kPuHUx7XmMaG3tRoe1Piv6bWdvVzfrRGg7CkC7eZfzIYv7jW0kWNx4Ptuc4Rv0H7Fxo0LGYrFXMgHEODIE//j50SSoL8p4x6prOPn5Ti+jRmYbLHmRC4YDS95sBgsUUskeZ8Fpv7EhNwY7hys70BPr5KkZUB3Pu+mhNb0COP/DWvxRs8GfzfIvg9SSgKq1UBYs5FW2geNqyNH56D/ISfOY+oXIwgG8WrK8YQkQtpEXoPp17yVm9rwxyRMwZjM+AjH0X6GDJGuN7y/XBaizfaWNucbxIJLkpjt8P5/0BnxRC+q/VECxvNlBULnq0D2pFtXsOXcE4IWMiTZsIzxURyIB4R2Jk9u9fhLk1sTIV7z4ansKLVXud0qKRXrqG+bmZjcoxDJydu00/rmDZyOiqtjoS1be3ASYwQzCtwJYJzBLWZ8I8f9uG8G+eEuYlXpAZAZuydU/dBh8JLUzn2fKowUPt91JaZugUQYCV3nwzoR/Ivh8tW8fBHaQrPSRupTuHVZx6jJF90x2By8vuz1LILIHhn/I13u8rcB/xOTv4Ss/8LoIn9bj3XmszI+a+C5nIeXC/aDxaufXyAqq4+MMUKtYYXf/ryku5DkpNwqaZy2aIxMdeTAtnc3JlJKkcEKh/CWdivx/rdA+/I184ovx10XQrzrBmtMJhYLc+V3hmcDJeONJ52KBna5hIaHZRdAIy4YdYj1ivPfjDN3wNW3a1VX0S511jZWTyZFldBd2IQxA/+pNBl+spvLq8a0A4vXPV64z+/erWSSKeJCD6jtHVWrrxj/4Stbq6l238wou2q39fjj8etMISyaqx5MjoIi1Fvcpzr0TutWzg9GakpihiPeNsmkPZHOe1UVvuWSA511GUGYTyIJ8RMbaT7iYVaDVNTXOVVt1xTra3CLmixuq1fkNNNpB182wFVc/Ji10QJTZx/wAW/30nO6pfpRWSjerRDxzQKBjMzoOjlU6tgBBqrxYNFtW/VBAwkyCp97Rzk2EUcF0GHTM4FEjIaxxY987k81tCmYXPXb4maj7vBVPHIE3yoEoUrepZ28SfC2g1ssGkS7xE07NGu5UeXJpOLYKpmCZVc4TGsVbsLVpi6iX24NkgULQhuJUn+002z4zUoQNmbV40SKX09n9qaIpdB1vRB3a2l8c8oPxJkpStANyOZfXfac0q+3uLD8Y8X8sOxE6ESdZqO9Opn5qznjAiq/gmgja27UlKape7I72xBDy5Tnl2nx57mwqBl3lXfRK4SZ4y3GHRae0rU/ed98lZlT82zTb1y5I95LCCKSOSPcajISsi+Y9Rq9il1/f/q9gaWBFOqCddu7opQtPo32/nynsg='
     },
-    letterSignature: 'Thân Hiếu (Chàng trai 2001 của em)'
+    letterSignature: 'Yêu em nhiều hơn mỗi ngày trôi qua'
   };
 
   const DEFAULT_NOTES = [
@@ -678,11 +678,15 @@ function initLoveStoryApp() {
       document.body.scrollTop = 0;
 
       // 2. Decrypt love letter via AES-GCM
-      const FALLBACK_LETTER = `Người ta thường bảo duyên số là do trời định, nhưng anh nghĩ vũ trụ đã ưu ái anh quá nhiều vào buổi chiều ngày 17/07 hôm ấy trên sân pickleball. Trong đám đông, anh lập tức bị thu hút bởi một cô bé vừa xinh xắn, dễ thương lại sở hữu đôi chân dài miên man. Buổi đầu tiên ấy, vì ngại ngùng nên anh còn chẳng dám lại gần xin cách liên lạc, cứ ngỡ mình đã bỏ lỡ một điều tuyệt vời...
+      const FALLBACK_LETTER = `Người ta thường nói, duyên số là do trời, nhưng nếu vậy thì vũ trụ đã ưu ái anh quá nhiều. Giữa thế giới hàng tỷ người, gặp nhau chỉ có thể là duyên hoặc nợ. Có duyên thì ở lại, còn nếu nợ thì anh xin được mang theo cả đời ...
 
-Thế nhưng định mệnh thật khéo sắp đặt! Bằng một cơ duyên tình cờ, anh gặp lại bạn của em trên sân pick, và thế là bằng mọi cách anh đã có được info của em. Để rồi ngày 12/08 định mệnh, buổi hẹn chơi pickleball riêng đầu tiên của hai đứa đã diễn ra. Nhớ hôm đó, đánh bóng thì ít mà hai đứa đi nói chuyện tới tận 12h đêm thì nhiều! Chưa bao giờ anh thấy mình nói chuyện với ai mà lại hợp cạ, cười nhiều và tự nhiên đến thế.
+Anh chưa bao giờ phủ nhận rằng, mình là kẻ phản diện. Anh từng vụng về với những điều đáng lẽ phải dịu dàng, từng im lặng ở những lúc cần một lời nói, và đôi khi mải mê với thế giới của mình.
 
-Từ hôm ấy là chuỗi ngày những buổi hẹn hò không dứt, những đêm thức khuya deeptalk từ chuyện trên trời dưới biển đến chuyện tương lai mà không biết chán. Dù em hơn anh 2 tuổi (1999 & 2001), nhưng ở bên em, anh vừa thấy được sự ngọt ngào, tinh tế, vừa thấy một cô người yêu bé bỏng mà anh muốn che chở cả đời. Chuyến đi du lịch biển cuối tháng 8 và khoảnh khắc tỏ tình ngày 31/08/2026 là ngày hạnh phúc nhất cuộc đời anh. Cảm ơn em vì đã đến bên anh, làm đồng đội trên sân pickleball và làm người bạn đời tuyệt vời nhất của anh!`;
+Nhưng rồi em đến. Anh không biết từ khoảnh khắc nào anh bắt đầu muốn được nghe em nói, muốn được nhìn em cười, muốn cái cảm giác bình yên khi ở cạnh em.
+
+Anh không hứa rằng những ngày phía trước sẽ luôn dễ dàng. Anh chỉ biết là cho dù nắng hay mưa, anh vẫn sẽ ở đó. Bởi sau cùng, tình yêu đẹp nhất không phải là cùng nhau đứng giữa những ngày rực rỡ, mà là khi ánh hoàng hôn tắt, ta vẫn nhận ra nhau — và vẫn muốn cùng nhau đi tiếp.
+
+Với anh, anh muốn đi tiếp cùng với em.`;
 
       let plainLetter = '';
       try {
@@ -914,7 +918,7 @@ Từ hôm ấy là chuỗi ngày những buổi hẹn hò không dứt, những 
 
     const footerNamesDisplay = document.getElementById('footerNamesDisplay');
     if (footerNamesDisplay) {
-      footerNamesDisplay.textContent = `${COUPLE_DATA.hisName} (2001) & ${COUPLE_DATA.herName} (1999) • Since 31.08.2026`;
+      footerNamesDisplay.textContent = 'Thân Hiếu & Khánh Linh';
     }
 
     const counterStartDateLabel = document.getElementById('counterStartDateLabel');
