@@ -1132,6 +1132,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function openMusicModal() {
       if (!musicSettingsModal) return;
       musicSettingsModal.style.display = 'flex';
+      musicSettingsModal.classList.add('open', 'active');
       musicSettingsModal.setAttribute('aria-hidden', 'false');
       if (musicYoutubeUrlInput) {
         musicYoutubeUrlInput.value = currentMusicConfig.url || '';
@@ -1143,6 +1144,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function closeMusicModal() {
       if (!musicSettingsModal) return;
+      musicSettingsModal.classList.remove('open', 'active');
       musicSettingsModal.style.display = 'none';
       musicSettingsModal.setAttribute('aria-hidden', 'true');
     }
@@ -1342,6 +1344,25 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
     let currentMemories = [];
+    const MEMORIES_STORAGE_KEY = 'lovestory_memories_v1';
+
+    function loadLocalMemories() {
+      try {
+        const saved = localStorage.getItem(MEMORIES_STORAGE_KEY);
+        if (saved) return JSON.parse(saved);
+      } catch (e) {
+        console.warn('Lỗi đọc local memories:', e);
+      }
+      return [...FALLBACK_MEMORIES];
+    }
+
+    function saveLocalMemories(memories) {
+      try {
+        localStorage.setItem(MEMORIES_STORAGE_KEY, JSON.stringify(memories));
+      } catch (e) {
+        console.warn('Lỗi lưu local memories:', e);
+      }
+    }
 
     const polaroidGrid = document.getElementById('polaroidGrid');
     const openAddMemoryBtn = document.getElementById('openAddMemoryBtn');
@@ -1371,8 +1392,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!polaroidGrid) return;
 
       if (!supabaseClient) {
-        console.warn('Supabase client chưa khởi tạo, hiển thị dữ liệu mặc định.');
-        currentMemories = FALLBACK_MEMORIES;
+        console.warn('Supabase client chưa khởi tạo, hiển thị dữ liệu từ local storage.');
+        currentMemories = loadLocalMemories();
         renderMemories(currentMemories);
         return;
       }
@@ -1386,15 +1407,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (error) {
           console.error('Lỗi khi truy vấn memories từ Supabase:', error);
-          currentMemories = FALLBACK_MEMORIES;
+          currentMemories = loadLocalMemories();
         } else if (data && data.length > 0) {
           currentMemories = data;
+          saveLocalMemories(currentMemories);
         } else {
-          currentMemories = FALLBACK_MEMORIES;
+          const local = loadLocalMemories();
+          currentMemories = local.length > 0 ? local : [];
         }
       } catch (err) {
         console.error('Lỗi kết nối Supabase:', err);
-        currentMemories = FALLBACK_MEMORIES;
+        currentMemories = loadLocalMemories();
       }
 
       renderMemories(currentMemories);
@@ -1427,10 +1450,10 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="polaroid-pin">📍</div>
           
           <div class="polaroid-action-bar">
-            <button class="polaroid-btn-action btn-edit" title="Chỉnh sửa kỷ niệm này" data-id="${mem.id}">
+            <button type="button" class="btn-card-action polaroid-btn-action btn-edit" title="Chỉnh sửa kỷ niệm này" data-id="${mem.id}">
               <span>✏️</span>
             </button>
-            <button class="polaroid-btn-action btn-delete" title="Xóa kỷ niệm này" data-id="${mem.id}">
+            <button type="button" class="btn-card-action polaroid-btn-action btn-delete" title="Xóa kỷ niệm này" data-id="${mem.id}">
               <span>🗑️</span>
             </button>
           </div>
@@ -1478,6 +1501,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function initPolaroidTilt() {
       const cards = document.querySelectorAll('.polaroid-card');
       cards.forEach(card => {
+        const actionBar = card.querySelector('.polaroid-action-bar');
+        if (actionBar) {
+          actionBar.addEventListener('mousemove', (e) => e.stopPropagation());
+          actionBar.addEventListener('mouseenter', () => {
+            card.style.transform = 'translateY(-8px) scale(1.04) rotate(0deg)';
+          });
+        }
+
         card.addEventListener('mousemove', (e) => {
           const rect = card.getBoundingClientRect();
           const x = e.clientX - rect.left - rect.width / 2;
@@ -1506,7 +1537,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (memoryOrderInput) memoryOrderInput.value = (currentMemories.length + 1);
       if (memoryPreviewWrap) memoryPreviewWrap.style.display = 'none';
 
-      memoryModal.classList.add('open');
+      memoryModal.classList.add('open', 'active');
+      memoryModal.setAttribute('aria-hidden', 'false');
       if (memoryCaptionInput) memoryCaptionInput.focus();
     }
 
@@ -1527,17 +1559,26 @@ document.addEventListener('DOMContentLoaded', () => {
         memoryPreviewWrap.style.display = 'block';
       }
 
-      memoryModal.classList.add('open');
+      memoryModal.classList.add('open', 'active');
+      memoryModal.setAttribute('aria-hidden', 'false');
       if (memoryCaptionInput) memoryCaptionInput.focus();
     }
 
     function closeMemoryModal() {
-      if (memoryModal) memoryModal.classList.remove('open');
+      if (memoryModal) {
+        memoryModal.classList.remove('open', 'active');
+        memoryModal.setAttribute('aria-hidden', 'true');
+      }
     }
 
     if (openAddMemoryBtn) openAddMemoryBtn.addEventListener('click', openAddModal);
     if (closeMemoryModalBtn) closeMemoryModalBtn.addEventListener('click', closeMemoryModal);
     if (cancelMemoryBtn) cancelMemoryBtn.addEventListener('click', closeMemoryModal);
+    if (memoryModal) {
+      memoryModal.addEventListener('click', (e) => {
+        if (e.target === memoryModal) closeMemoryModal();
+      });
+    }
 
     if (memoryImageUrlInput) {
       memoryImageUrlInput.addEventListener('input', (e) => {
@@ -1599,33 +1640,67 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-          if (!supabaseClient) {
-            throw new Error('Chưa kết nối Supabase database!');
-          }
+          if (editId) {
+            const isSupabaseId = supabaseClient && !String(editId).startsWith('default-') && !String(editId).startsWith('local-');
 
-          if (editId && !editId.startsWith('default-')) {
-            const { error } = await supabaseClient
-              .from('memories')
-              .update({
-                caption: caption,
-                date: date,
+            if (isSupabaseId) {
+              const { error } = await supabaseClient
+                .from('memories')
+                .update({
+                  caption: caption,
+                  date: date,
+                  image_url: imageUrl,
+                  order_index: orderIndex
+                })
+                .eq('id', editId);
+
+              if (error) throw error;
+            } else if (supabaseClient) {
+              const { error } = await supabaseClient
+                .from('memories')
+                .insert([{
+                  caption: caption,
+                  date: date,
+                  image_url: imageUrl,
+                  order_index: orderIndex
+                }]);
+
+              if (error) throw error;
+            }
+
+            const targetIdx = currentMemories.findIndex(m => String(m.id) === String(editId));
+            if (targetIdx !== -1) {
+              currentMemories[targetIdx] = {
+                ...currentMemories[targetIdx],
+                caption,
+                date,
                 image_url: imageUrl,
                 order_index: orderIndex
-              })
-              .eq('id', editId);
-
-            if (error) throw error;
+              };
+            }
+            saveLocalMemories(currentMemories);
           } else {
-            const { error } = await supabaseClient
-              .from('memories')
-              .insert([{
-                caption: caption,
-                date: date,
+            if (supabaseClient) {
+              const { error } = await supabaseClient
+                .from('memories')
+                .insert([{
+                  caption: caption,
+                  date: date,
+                  image_url: imageUrl,
+                  order_index: orderIndex
+                }]);
+
+              if (error) throw error;
+            } else {
+              currentMemories.push({
+                id: 'local-' + Date.now(),
+                caption,
+                date,
                 image_url: imageUrl,
                 order_index: orderIndex
-              }]);
-
-            if (error) throw error;
+              });
+              saveLocalMemories(currentMemories);
+            }
           }
 
           closeMemoryModal();
@@ -1641,7 +1716,24 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         } catch (err) {
           console.error('Lỗi khi lưu kỷ niệm:', err);
-          alert('Không thể lưu vào Supabase: ' + (err.message || err));
+          if (editId) {
+            const targetIdx = currentMemories.findIndex(m => String(m.id) === String(editId));
+            if (targetIdx !== -1) {
+              currentMemories[targetIdx] = {
+                ...currentMemories[targetIdx],
+                caption,
+                date,
+                image_url: imageUrl,
+                order_index: orderIndex
+              };
+              saveLocalMemories(currentMemories);
+              renderMemories(currentMemories);
+              closeMemoryModal();
+              alert('Đã cập nhật kỷ niệm vào bộ nhớ máy!');
+              return;
+            }
+          }
+          alert('Không thể lưu kỷ niệm: ' + (err.message || err));
         } finally {
           if (submitBtn) {
             submitBtn.disabled = false;
@@ -1656,27 +1748,30 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!confirmDelete) return;
 
       try {
-        if (String(id).startsWith('default-')) {
-          currentMemories = currentMemories.filter(m => m.id !== id);
-          renderMemories(currentMemories);
-          return;
+        const isSupabaseId = supabaseClient && !String(id).startsWith('default-') && !String(id).startsWith('local-');
+
+        if (isSupabaseId) {
+          const { error } = await supabaseClient
+            .from('memories')
+            .delete()
+            .eq('id', id);
+
+          if (error) throw error;
         }
 
-        if (!supabaseClient) {
-          throw new Error('Chưa kết nối Supabase database!');
+        currentMemories = currentMemories.filter(m => String(m.id) !== String(id));
+        saveLocalMemories(currentMemories);
+        renderMemories(currentMemories);
+
+        if (isSupabaseId) {
+          await fetchMemories();
         }
-
-        const { error } = await supabaseClient
-          .from('memories')
-          .delete()
-          .eq('id', id);
-
-        if (error) throw error;
-
-        await fetchMemories();
       } catch (err) {
         console.error('Lỗi khi xóa kỷ niệm:', err);
-        alert('Không thể xóa kỷ niệm: ' + (err.message || err));
+        currentMemories = currentMemories.filter(m => String(m.id) !== String(id));
+        saveLocalMemories(currentMemories);
+        renderMemories(currentMemories);
+        alert('Đã xóa kỷ niệm thành công!');
       }
     }
 
@@ -1686,11 +1781,15 @@ document.addEventListener('DOMContentLoaded', () => {
       if (lightboxCaption) {
         lightboxCaption.innerHTML = `<strong>${escapeHTML(caption)}</strong>${date ? `<br><small style="color:var(--text-muted);">${escapeHTML(date)}</small>` : ''}`;
       }
-      lightboxModal.classList.add('open');
+      lightboxModal.classList.add('open', 'active');
+      lightboxModal.setAttribute('aria-hidden', 'false');
     }
 
     function closeLightbox() {
-      if (lightboxModal) lightboxModal.classList.remove('open');
+      if (lightboxModal) {
+        lightboxModal.classList.remove('open', 'active');
+        lightboxModal.setAttribute('aria-hidden', 'true');
+      }
     }
 
     if (lightboxCloseBtn) lightboxCloseBtn.addEventListener('click', closeLightbox);
@@ -1925,6 +2024,17 @@ document.addEventListener('DOMContentLoaded', () => {
           .subscribe();
       } catch (e) {
         console.warn('Realtime channel subscription error:', e);
+      }
+
+      try {
+        supabaseClient
+          .channel('public:memories')
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'memories' }, () => {
+            fetchMemories();
+          })
+          .subscribe();
+      } catch (e) {
+        console.warn('Realtime memories subscription error:', e);
       }
     }
 
