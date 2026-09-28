@@ -500,6 +500,395 @@ function initLoveStoryApp() {
     initYouTubePlayer();
   }
 
+  // --- 3B. FLOATING NEUBRUTALISM AUDIO PLAYER (BOTTOM OF SCREEN) ---
+  function initFloatingAudioPlayer() {
+    floatingAudioBar = document.getElementById('floatingAudioBar');
+    audioPlayBtn = document.getElementById('audioPlayBtn');
+    audioPlayIcon = document.getElementById('audioPlayIcon');
+    audioPauseIcon = document.getElementById('audioPauseIcon');
+    audioCurrentTime = document.getElementById('audioCurrentTime');
+    audioDuration = document.getElementById('audioDuration');
+    audioProgressContainer = document.getElementById('audioProgressContainer');
+    audioProgressFill = document.getElementById('audioProgressFill');
+    audioMuteBtn = document.getElementById('audioMuteBtn');
+    audioVolIcon = document.getElementById('audioVolIcon');
+    audioVolumeSlider = document.getElementById('audioVolumeSlider');
+    audioSettingsBtn = document.getElementById('audioSettingsBtn');
+    audioCollapseBtn = document.getElementById('audioCollapseBtn');
+    collapseIcon = document.getElementById('collapseIcon');
+
+    // Music Settings Modal Elements
+    const musicSettingsModal = document.getElementById('musicSettingsModal');
+    const closeMusicModalBtn = document.getElementById('closeMusicModalBtn');
+    const cancelMusicBtn = document.getElementById('cancelMusicBtn');
+    const musicSettingsForm = document.getElementById('musicSettingsForm');
+    const musicYoutubeUrlInput = document.getElementById('musicYoutubeUrlInput');
+    const musicDetectInfo = document.getElementById('musicDetectInfo');
+    const musicDetectTitle = document.getElementById('musicDetectTitle');
+    const musicDetectArtist = document.getElementById('musicDetectArtist');
+    const musicErrorTip = document.getElementById('musicErrorTip');
+    const musicErrorTipText = document.getElementById('musicErrorTipText');
+    const saveMusicBtnText = document.getElementById('saveMusicBtnText');
+
+    // Sync audio UI with running audio controller
+    updateAudioUI(isPlayingMusic);
+    if (isPlayingMusic) {
+      startProgressTicker();
+    }
+
+    if (audioPlayBtn) {
+      audioPlayBtn.addEventListener('click', () => {
+        if (isPlayingMusic) {
+          stopMusic();
+        } else {
+          startMusic();
+        }
+      });
+    }
+
+    if (audioProgressContainer) {
+      audioProgressContainer.addEventListener('click', (e) => {
+        const rect = audioProgressContainer.getBoundingClientRect();
+        const clickRatio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        let dur = FALLBACK_DURATION;
+        if (ytPlayer && ytPlayerReady && typeof ytPlayer.getDuration === 'function') {
+          const ytDur = ytPlayer.getDuration();
+          if (ytDur && ytDur > 0) dur = ytDur;
+        }
+        const targetSec = clickRatio * dur;
+        currentElapsed = Math.floor(targetSec);
+
+        if (ytPlayer && ytPlayerReady && typeof ytPlayer.seekTo === 'function') {
+          ytPlayer.seekTo(targetSec, true);
+        }
+        updateTrackProgress();
+      });
+    }
+
+    if (audioVolumeSlider) {
+      audioVolumeSlider.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value, 10);
+        currentVolume = val / 100;
+        if (ytPlayer && ytPlayerReady && typeof ytPlayer.setVolume === 'function') {
+          ytPlayer.setVolume(val);
+          if (val > 0 && typeof ytPlayer.isMuted === 'function' && ytPlayer.isMuted()) {
+            ytPlayer.unMute();
+          }
+        }
+        if (audioVolIcon) {
+          audioVolIcon.textContent = val === 0 ? '🔇' : val < 50 ? '🔉' : '🔊';
+        }
+        isMuted = (val === 0);
+      });
+    }
+
+    if (audioMuteBtn) {
+      audioMuteBtn.addEventListener('click', () => {
+        if (isMuted) {
+          isMuted = false;
+          const targetVol = lastVolume > 0 ? lastVolume : 75;
+          currentVolume = targetVol / 100;
+          if (audioVolumeSlider) audioVolumeSlider.value = targetVol;
+          if (audioVolIcon) audioVolIcon.textContent = targetVol < 50 ? '🔉' : '🔊';
+          if (ytPlayer && ytPlayerReady) {
+            if (typeof ytPlayer.unMute === 'function') ytPlayer.unMute();
+            if (typeof ytPlayer.setVolume === 'function') ytPlayer.setVolume(targetVol);
+          }
+        } else {
+          isMuted = true;
+          lastVolume = audioVolumeSlider ? parseInt(audioVolumeSlider.value, 10) : 75;
+          currentVolume = 0;
+          if (audioVolumeSlider) audioVolumeSlider.value = 0;
+          if (audioVolIcon) audioVolIcon.textContent = '🔇';
+          if (ytPlayer && ytPlayerReady && typeof ytPlayer.mute === 'function') {
+            ytPlayer.mute();
+          }
+        }
+      });
+    }
+
+    if (audioCollapseBtn && floatingAudioBar) {
+      audioCollapseBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isCollapsed = floatingAudioBar.classList.toggle('is-collapsed');
+        floatingAudioBar.classList.toggle('collapsed', isCollapsed);
+        if (isCollapsed) {
+          if (collapseIcon) collapseIcon.textContent = '🎵';
+          audioCollapseBtn.title = 'Mở rộng thanh nhạc';
+          audioCollapseBtn.setAttribute('aria-label', 'Mở rộng thanh nhạc');
+        } else {
+          if (collapseIcon) collapseIcon.textContent = '✕';
+          audioCollapseBtn.title = 'Thu gọn thanh nhạc';
+          audioCollapseBtn.setAttribute('aria-label', 'Thu gọn thanh nhạc');
+        }
+      });
+
+      // Allow clicking the collapsed mini-bar to expand it back
+      floatingAudioBar.addEventListener('click', (e) => {
+        if (floatingAudioBar.classList.contains('is-collapsed') || floatingAudioBar.classList.contains('collapsed')) {
+          if (e.target.closest('#audioPlayBtn') || e.target.closest('#audioCollapseBtn') || e.target.closest('#audioSettingsBtn')) return;
+          floatingAudioBar.classList.remove('is-collapsed', 'collapsed');
+          if (collapseIcon) collapseIcon.textContent = '✕';
+          audioCollapseBtn.title = 'Thu gọn thanh nhạc';
+          audioCollapseBtn.setAttribute('aria-label', 'Thu gọn thanh nhạc');
+        }
+      });
+    }
+
+    // Dynamic music switcher & modal functions
+    function applyMusicConfig(config, shouldPlay = true) {
+      if (!config || !config.videoId) return;
+      currentMusicConfig = config;
+
+      const titleEl = document.getElementById('audioTrackTitle') || document.querySelector('.audio-title');
+      const artistEl = document.querySelector('.audio-artist');
+      const discEl = document.getElementById('audioDisc');
+
+      if (titleEl) titleEl.textContent = config.title;
+      if (artistEl) artistEl.textContent = config.artist;
+      if (discEl) discEl.title = `Đang phát nhạc: ${config.title} - ${config.artist}`;
+
+      if (ytPlayer && ytPlayerReady) {
+        let currentUrl = '';
+        try {
+          if (typeof ytPlayer.getVideoUrl === 'function') {
+            currentUrl = ytPlayer.getVideoUrl() || '';
+          }
+        } catch (e) {}
+
+        const isSameVideo = currentUrl.includes(config.videoId);
+
+        if (shouldPlay) {
+          try {
+            if (!isSameVideo && typeof ytPlayer.loadVideoById === 'function') {
+              ytPlayer.loadVideoById(config.videoId);
+            }
+            if (typeof ytPlayer.playVideo === 'function') {
+              ytPlayer.playVideo();
+            }
+            isPlayingMusic = true;
+            updateAudioUI(true);
+          } catch (e) {
+            console.warn('loadVideoById error:', e);
+          }
+        } else {
+          if (!isPlayingMusic && !isSameVideo && typeof ytPlayer.cueVideoById === 'function') {
+            try {
+              ytPlayer.cueVideoById(config.videoId);
+            } catch (e) {
+              console.warn('cueVideoById error:', e);
+            }
+          }
+        }
+      }
+    }
+
+    async function saveMusicToDatabase(config) {
+      try {
+        localStorage.setItem('lovestory_music_config', JSON.stringify(config));
+      } catch (e) {}
+
+      if (!supabaseClient) return;
+
+      try {
+        const { data: existing } = await supabaseClient
+          .from('love_notes')
+          .select('id')
+          .eq('author', '__CONFIG_MUSIC__')
+          .limit(1);
+
+        if (existing && existing.length > 0) {
+          await supabaseClient
+            .from('love_notes')
+            .update({
+              content: JSON.stringify(config),
+              text: `🎵 Nhạc nền: ${config.title} - ${config.artist}`,
+              date: new Date().toLocaleDateString('vi-VN')
+            })
+            .eq('id', existing[0].id);
+        } else {
+          await supabaseClient
+            .from('love_notes')
+            .insert([{
+              author: '__CONFIG_MUSIC__',
+              content: JSON.stringify(config),
+              text: `🎵 Nhạc nền: ${config.title} - ${config.artist}`,
+              date: new Date().toLocaleDateString('vi-VN')
+            }]);
+        }
+        console.log('✨ [Supabase] Đã lưu bài hát thành công vào database!');
+      } catch (err) {
+        console.error('Lỗi khi lưu nhạc vào Supabase:', err);
+      }
+    }
+
+    async function loadMusicFromDatabase() {
+      const local = getLocalMusicConfig();
+      if (local && local.videoId) {
+        currentMusicConfig = local;
+        const titleEl = document.getElementById('audioTrackTitle') || document.querySelector('.audio-title');
+        const artistEl = document.querySelector('.audio-artist');
+        const discEl = document.getElementById('audioDisc');
+        if (titleEl) titleEl.textContent = local.title;
+        if (artistEl) artistEl.textContent = local.artist;
+        if (discEl) discEl.title = `Đang phát nhạc: ${local.title} - ${local.artist}`;
+      }
+
+      if (!supabaseClient) return;
+      try {
+        const { data, error } = await supabaseClient
+          .from('love_notes')
+          .select('*')
+          .eq('author', '__CONFIG_MUSIC__')
+          .limit(1);
+
+        if (!error && data && data.length > 0) {
+          try {
+            const remoteConfig = JSON.parse(data[0].content);
+            if (remoteConfig && remoteConfig.videoId) {
+              const isDifferent = remoteConfig.videoId !== currentMusicConfig.videoId;
+              currentMusicConfig = remoteConfig;
+              localStorage.setItem('lovestory_music_config', JSON.stringify(remoteConfig));
+              if (isDifferent) {
+                applyMusicConfig(remoteConfig, isPlayingMusic);
+              } else {
+                const titleEl = document.getElementById('audioTrackTitle') || document.querySelector('.audio-title');
+                const artistEl = document.querySelector('.audio-artist');
+                const discEl = document.getElementById('audioDisc');
+                if (titleEl) titleEl.textContent = remoteConfig.title;
+                if (artistEl) artistEl.textContent = remoteConfig.artist;
+                if (discEl) discEl.title = `Đang phát nhạc: ${remoteConfig.title} - ${remoteConfig.artist}`;
+              }
+            }
+          } catch (parseErr) {
+            console.warn('Lỗi parse JSON config nhạc:', parseErr);
+          }
+        }
+      } catch (err) {
+        console.warn('Lỗi load config nhạc từ database:', err);
+      }
+    }
+
+    function openMusicModal() {
+      if (!musicSettingsModal) return;
+      musicSettingsModal.style.display = 'flex';
+      musicSettingsModal.classList.add('open', 'active');
+      musicSettingsModal.setAttribute('aria-hidden', 'false');
+      if (musicYoutubeUrlInput) {
+        musicYoutubeUrlInput.value = currentMusicConfig.url || '';
+        setTimeout(() => musicYoutubeUrlInput.focus(), 100);
+      }
+      if (musicDetectInfo) musicDetectInfo.style.display = 'none';
+      if (musicErrorTip) musicErrorTip.style.display = 'none';
+    }
+
+    function closeMusicModal() {
+      if (!musicSettingsModal) return;
+      musicSettingsModal.classList.remove('open', 'active');
+      musicSettingsModal.style.display = 'none';
+      musicSettingsModal.setAttribute('aria-hidden', 'true');
+    }
+
+    if (audioSettingsBtn) {
+      audioSettingsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openMusicModal();
+      });
+    }
+
+    if (closeMusicModalBtn) closeMusicModalBtn.addEventListener('click', closeMusicModal);
+    if (cancelMusicBtn) cancelMusicBtn.addEventListener('click', closeMusicModal);
+
+    if (musicSettingsModal) {
+      musicSettingsModal.addEventListener('click', (e) => {
+        if (e.target === musicSettingsModal) closeMusicModal();
+      });
+    }
+
+    let musicDetectDebounce = null;
+    if (musicYoutubeUrlInput) {
+      musicYoutubeUrlInput.addEventListener('input', () => {
+        if (musicDetectDebounce) clearTimeout(musicDetectDebounce);
+        if (musicErrorTip) musicErrorTip.style.display = 'none';
+
+        const raw = musicYoutubeUrlInput.value.trim();
+        const vId = extractYouTubeId(raw);
+        if (!vId) {
+          if (musicDetectInfo) musicDetectInfo.style.display = 'none';
+          return;
+        }
+
+        musicDetectDebounce = setTimeout(async () => {
+          const meta = await fetchYouTubeMetadata(vId, raw);
+          if (meta && musicDetectInfo && musicDetectTitle && musicDetectArtist) {
+            musicDetectTitle.textContent = meta.title;
+            musicDetectArtist.textContent = meta.artist;
+            musicDetectInfo.style.display = 'block';
+          }
+        }, 350);
+      });
+    }
+
+    if (musicSettingsForm) {
+      musicSettingsForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const raw = (musicYoutubeUrlInput.value || '').trim();
+        const vId = extractYouTubeId(raw);
+
+        if (!vId) {
+          if (musicErrorTip) {
+            musicErrorTip.style.display = 'block';
+            if (musicErrorTipText) musicErrorTipText.textContent = '❌ Link YouTube không hợp lệ hoặc không trích xuất được Video ID.';
+          }
+          return;
+        }
+
+        if (saveMusicBtnText) saveMusicBtnText.textContent = 'Đang lưu & phát...';
+
+        try {
+          const meta = await fetchYouTubeMetadata(vId, raw);
+          const newConfig = {
+            url: raw,
+            videoId: vId,
+            title: meta.title || 'YouTube Track',
+            artist: meta.artist || 'YouTube'
+          };
+
+          applyMusicConfig(newConfig, true);
+          await saveMusicToDatabase(newConfig);
+
+          closeMusicModal();
+
+          if (typeof confetti === 'function') {
+            confetti({
+              particleCount: 50,
+              spread: 60,
+              origin: { y: 0.8 },
+              colors: ['#ffd166', '#ff70a6', '#70e4d0', '#c77dff']
+            });
+          }
+        } catch (err) {
+          console.error('Lỗi khi đổi nhạc:', err);
+          if (musicErrorTip) {
+            musicErrorTip.style.display = 'block';
+            if (musicErrorTipText) musicErrorTipText.textContent = '❌ Đã có lỗi xảy ra. Hãy thử lại!';
+          }
+        } finally {
+          if (saveMusicBtnText) saveMusicBtnText.textContent = 'Lưu & Phát Ngay ♥';
+        }
+      });
+    }
+
+    // Apply saved music config immediately
+    applyMusicConfig(currentMusicConfig, isPlayingMusic);
+
+    // Initial load from Supabase
+    loadMusicFromDatabase();
+  }
+
+  // Initialize floating audio player UI immediately so it appears on the lock screen
+  initFloatingAudioPlayer();
+
   // Attempt immediate autoplay on page load
   try {
     startMusic();
@@ -950,391 +1339,6 @@ Với anh, anh muốn đi tiếp cùng với em.`;
 
     updateLoveCounter();
     setInterval(updateLoveCounter, 1000);
-
-    // --- C. FLOATING AUDIO PLAYER (Hayd - Head In The Clouds) ---
-    floatingAudioBar = document.getElementById('floatingAudioBar');
-    audioPlayBtn = document.getElementById('audioPlayBtn');
-    audioPlayIcon = document.getElementById('audioPlayIcon');
-    audioPauseIcon = document.getElementById('audioPauseIcon');
-    audioCurrentTime = document.getElementById('audioCurrentTime');
-    audioDuration = document.getElementById('audioDuration');
-    audioProgressContainer = document.getElementById('audioProgressContainer');
-    audioProgressFill = document.getElementById('audioProgressFill');
-    audioMuteBtn = document.getElementById('audioMuteBtn');
-    audioVolIcon = document.getElementById('audioVolIcon');
-    audioVolumeSlider = document.getElementById('audioVolumeSlider');
-    audioSettingsBtn = document.getElementById('audioSettingsBtn');
-    audioCollapseBtn = document.getElementById('audioCollapseBtn');
-    collapseIcon = document.getElementById('collapseIcon');
-
-    // Music Settings Modal Elements
-    const musicSettingsModal = document.getElementById('musicSettingsModal');
-    const closeMusicModalBtn = document.getElementById('closeMusicModalBtn');
-    const cancelMusicBtn = document.getElementById('cancelMusicBtn');
-    const musicSettingsForm = document.getElementById('musicSettingsForm');
-    const musicYoutubeUrlInput = document.getElementById('musicYoutubeUrlInput');
-    const musicDetectInfo = document.getElementById('musicDetectInfo');
-    const musicDetectTitle = document.getElementById('musicDetectTitle');
-    const musicDetectArtist = document.getElementById('musicDetectArtist');
-    const musicErrorTip = document.getElementById('musicErrorTip');
-    const musicErrorTipText = document.getElementById('musicErrorTipText');
-    const saveMusicBtnText = document.getElementById('saveMusicBtnText');
-
-    // Sync audio UI with running audio controller
-    updateAudioUI(isPlayingMusic);
-    if (isPlayingMusic) {
-      startProgressTicker();
-    }
-
-    if (audioPlayBtn) {
-      audioPlayBtn.addEventListener('click', () => {
-        if (isPlayingMusic) {
-          stopMusic();
-        } else {
-          startMusic();
-        }
-      });
-    }
-
-    if (audioProgressContainer) {
-      audioProgressContainer.addEventListener('click', (e) => {
-        const rect = audioProgressContainer.getBoundingClientRect();
-        const clickRatio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-        let dur = FALLBACK_DURATION;
-        if (ytPlayer && ytPlayerReady && typeof ytPlayer.getDuration === 'function') {
-          const ytDur = ytPlayer.getDuration();
-          if (ytDur && ytDur > 0) dur = ytDur;
-        }
-        const targetSec = clickRatio * dur;
-        currentElapsed = Math.floor(targetSec);
-
-        if (ytPlayer && ytPlayerReady && typeof ytPlayer.seekTo === 'function') {
-          ytPlayer.seekTo(targetSec, true);
-        }
-        updateTrackProgress();
-      });
-    }
-
-    if (audioVolumeSlider) {
-      audioVolumeSlider.addEventListener('input', (e) => {
-        const val = parseInt(e.target.value, 10);
-        currentVolume = val / 100;
-        if (ytPlayer && ytPlayerReady && typeof ytPlayer.setVolume === 'function') {
-          ytPlayer.setVolume(val);
-          if (val > 0 && typeof ytPlayer.isMuted === 'function' && ytPlayer.isMuted()) {
-            ytPlayer.unMute();
-          }
-        }
-        if (audioVolIcon) {
-          audioVolIcon.textContent = val === 0 ? '🔇' : val < 50 ? '🔉' : '🔊';
-        }
-        isMuted = (val === 0);
-      });
-    }
-
-    if (audioMuteBtn) {
-      audioMuteBtn.addEventListener('click', () => {
-        if (isMuted) {
-          isMuted = false;
-          const targetVol = lastVolume > 0 ? lastVolume : 75;
-          currentVolume = targetVol / 100;
-          if (audioVolumeSlider) audioVolumeSlider.value = targetVol;
-          if (audioVolIcon) audioVolIcon.textContent = targetVol < 50 ? '🔉' : '🔊';
-          if (ytPlayer && ytPlayerReady) {
-            if (typeof ytPlayer.unMute === 'function') ytPlayer.unMute();
-            if (typeof ytPlayer.setVolume === 'function') ytPlayer.setVolume(targetVol);
-          }
-        } else {
-          isMuted = true;
-          lastVolume = audioVolumeSlider ? parseInt(audioVolumeSlider.value, 10) : 75;
-          currentVolume = 0;
-          if (audioVolumeSlider) audioVolumeSlider.value = 0;
-          if (audioVolIcon) audioVolIcon.textContent = '🔇';
-          if (ytPlayer && ytPlayerReady && typeof ytPlayer.mute === 'function') {
-            ytPlayer.mute();
-          }
-        }
-      });
-    }
-
-    if (audioCollapseBtn && floatingAudioBar) {
-      audioCollapseBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const isCollapsed = floatingAudioBar.classList.toggle('is-collapsed');
-        floatingAudioBar.classList.toggle('collapsed', isCollapsed);
-        if (isCollapsed) {
-          if (collapseIcon) collapseIcon.textContent = '🎵';
-          audioCollapseBtn.title = 'Mở rộng thanh nhạc';
-          audioCollapseBtn.setAttribute('aria-label', 'Mở rộng thanh nhạc');
-        } else {
-          if (collapseIcon) collapseIcon.textContent = '✕';
-          audioCollapseBtn.title = 'Thu gọn thanh nhạc';
-          audioCollapseBtn.setAttribute('aria-label', 'Thu gọn thanh nhạc');
-        }
-      });
-
-      // Allow clicking the collapsed mini-bar to expand it back
-      floatingAudioBar.addEventListener('click', (e) => {
-        if (floatingAudioBar.classList.contains('is-collapsed') || floatingAudioBar.classList.contains('collapsed')) {
-          if (e.target.closest('#audioPlayBtn') || e.target.closest('#audioCollapseBtn') || e.target.closest('#audioSettingsBtn')) return;
-          floatingAudioBar.classList.remove('is-collapsed', 'collapsed');
-          if (collapseIcon) collapseIcon.textContent = '✕';
-          audioCollapseBtn.title = 'Thu gọn thanh nhạc';
-          audioCollapseBtn.setAttribute('aria-label', 'Thu gọn thanh nhạc');
-        }
-      });
-    }
-
-    // --- C2. DYNAMIC MUSIC SWITCHER & SUPABASE SYNC ---
-    function applyMusicConfig(config, shouldPlay = true) {
-      if (!config || !config.videoId) return;
-      currentMusicConfig = config;
-
-      const titleEl = document.getElementById('audioTrackTitle') || document.querySelector('.audio-title');
-      const artistEl = document.querySelector('.audio-artist');
-      const discEl = document.getElementById('audioDisc');
-
-      if (titleEl) titleEl.textContent = config.title;
-      if (artistEl) artistEl.textContent = config.artist;
-      if (discEl) discEl.title = `Đang phát nhạc: ${config.title} - ${config.artist}`;
-
-      if (ytPlayer && ytPlayerReady) {
-        let currentUrl = '';
-        try {
-          if (typeof ytPlayer.getVideoUrl === 'function') {
-            currentUrl = ytPlayer.getVideoUrl() || '';
-          }
-        } catch (e) {}
-
-        const isSameVideo = currentUrl.includes(config.videoId);
-
-        if (shouldPlay) {
-          try {
-            // Only reload if it's actually a different video; if same video, just ensure playing
-            if (!isSameVideo && typeof ytPlayer.loadVideoById === 'function') {
-              ytPlayer.loadVideoById(config.videoId);
-            }
-            if (typeof ytPlayer.playVideo === 'function') {
-              ytPlayer.playVideo();
-            }
-            isPlayingMusic = true;
-            updateAudioUI(true);
-          } catch (e) {
-            console.warn('loadVideoById error:', e);
-          }
-        } else {
-          // Never stop or interrupt currently playing music when shouldPlay is false
-          if (!isPlayingMusic && !isSameVideo && typeof ytPlayer.cueVideoById === 'function') {
-            try {
-              ytPlayer.cueVideoById(config.videoId);
-            } catch (e) {
-              console.warn('cueVideoById error:', e);
-            }
-          }
-        }
-      }
-    }
-
-    async function saveMusicToDatabase(config) {
-      try {
-        localStorage.setItem('lovestory_music_config', JSON.stringify(config));
-      } catch (e) {}
-
-      if (!supabaseClient) return;
-
-      try {
-        const { data: existing } = await supabaseClient
-          .from('love_notes')
-          .select('id')
-          .eq('author', '__CONFIG_MUSIC__')
-          .limit(1);
-
-        if (existing && existing.length > 0) {
-          await supabaseClient
-            .from('love_notes')
-            .update({
-              content: JSON.stringify(config),
-              text: `🎵 Nhạc nền: ${config.title} - ${config.artist}`,
-              date: new Date().toLocaleDateString('vi-VN')
-            })
-            .eq('id', existing[0].id);
-        } else {
-          await supabaseClient
-            .from('love_notes')
-            .insert([{
-              author: '__CONFIG_MUSIC__',
-              content: JSON.stringify(config),
-              text: `🎵 Nhạc nền: ${config.title} - ${config.artist}`,
-              date: new Date().toLocaleDateString('vi-VN')
-            }]);
-        }
-        console.log('✨ [Supabase] Đã lưu bài hát thành công vào database!');
-      } catch (err) {
-        console.error('Lỗi khi lưu nhạc vào Supabase:', err);
-      }
-    }
-
-    async function loadMusicFromDatabase() {
-      // 1. Update metadata display from local storage
-      const local = getLocalMusicConfig();
-      if (local && local.videoId) {
-        currentMusicConfig = local;
-        const titleEl = document.getElementById('audioTrackTitle') || document.querySelector('.audio-title');
-        const artistEl = document.querySelector('.audio-artist');
-        const discEl = document.getElementById('audioDisc');
-        if (titleEl) titleEl.textContent = local.title;
-        if (artistEl) artistEl.textContent = local.artist;
-        if (discEl) discEl.title = `Đang phát nhạc: ${local.title} - ${local.artist}`;
-      }
-
-      // 2. Fetch remote config from Supabase
-      if (!supabaseClient) return;
-      try {
-        const { data, error } = await supabaseClient
-          .from('love_notes')
-          .select('*')
-          .eq('author', '__CONFIG_MUSIC__')
-          .limit(1);
-
-        if (!error && data && data.length > 0) {
-          try {
-            const remoteConfig = JSON.parse(data[0].content);
-            if (remoteConfig && remoteConfig.videoId) {
-              const isDifferent = remoteConfig.videoId !== currentMusicConfig.videoId;
-              currentMusicConfig = remoteConfig;
-              localStorage.setItem('lovestory_music_config', JSON.stringify(remoteConfig));
-              if (isDifferent) {
-                applyMusicConfig(remoteConfig, isPlayingMusic);
-              } else {
-                const titleEl = document.getElementById('audioTrackTitle') || document.querySelector('.audio-title');
-                const artistEl = document.querySelector('.audio-artist');
-                const discEl = document.getElementById('audioDisc');
-                if (titleEl) titleEl.textContent = remoteConfig.title;
-                if (artistEl) artistEl.textContent = remoteConfig.artist;
-                if (discEl) discEl.title = `Đang phát nhạc: ${remoteConfig.title} - ${remoteConfig.artist}`;
-              }
-            }
-          } catch (parseErr) {
-            console.warn('Lỗi parse JSON config nhạc:', parseErr);
-          }
-        }
-      } catch (err) {
-        console.warn('Lỗi load config nhạc từ database:', err);
-      }
-    }
-
-    function openMusicModal() {
-      if (!musicSettingsModal) return;
-      musicSettingsModal.style.display = 'flex';
-      musicSettingsModal.classList.add('open', 'active');
-      musicSettingsModal.setAttribute('aria-hidden', 'false');
-      if (musicYoutubeUrlInput) {
-        musicYoutubeUrlInput.value = currentMusicConfig.url || '';
-        setTimeout(() => musicYoutubeUrlInput.focus(), 100);
-      }
-      if (musicDetectInfo) musicDetectInfo.style.display = 'none';
-      if (musicErrorTip) musicErrorTip.style.display = 'none';
-    }
-
-    function closeMusicModal() {
-      if (!musicSettingsModal) return;
-      musicSettingsModal.classList.remove('open', 'active');
-      musicSettingsModal.style.display = 'none';
-      musicSettingsModal.setAttribute('aria-hidden', 'true');
-    }
-
-    if (audioSettingsBtn) {
-      audioSettingsBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        openMusicModal();
-      });
-    }
-
-    if (closeMusicModalBtn) closeMusicModalBtn.addEventListener('click', closeMusicModal);
-    if (cancelMusicBtn) cancelMusicBtn.addEventListener('click', closeMusicModal);
-
-    if (musicSettingsModal) {
-      musicSettingsModal.addEventListener('click', (e) => {
-        if (e.target === musicSettingsModal) closeMusicModal();
-      });
-    }
-
-    let musicDetectDebounce = null;
-    if (musicYoutubeUrlInput) {
-      musicYoutubeUrlInput.addEventListener('input', () => {
-        if (musicDetectDebounce) clearTimeout(musicDetectDebounce);
-        if (musicErrorTip) musicErrorTip.style.display = 'none';
-
-        const raw = musicYoutubeUrlInput.value.trim();
-        const vId = extractYouTubeId(raw);
-        if (!vId) {
-          if (musicDetectInfo) musicDetectInfo.style.display = 'none';
-          return;
-        }
-
-        musicDetectDebounce = setTimeout(async () => {
-          const meta = await fetchYouTubeMetadata(vId, raw);
-          if (meta && musicDetectInfo && musicDetectTitle && musicDetectArtist) {
-            musicDetectTitle.textContent = meta.title;
-            musicDetectArtist.textContent = meta.artist;
-            musicDetectInfo.style.display = 'block';
-          }
-        }, 350);
-      });
-    }
-
-    if (musicSettingsForm) {
-      musicSettingsForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const raw = (musicYoutubeUrlInput.value || '').trim();
-        const vId = extractYouTubeId(raw);
-
-        if (!vId) {
-          if (musicErrorTip) {
-            musicErrorTip.style.display = 'block';
-            if (musicErrorTipText) musicErrorTipText.textContent = '❌ Link YouTube không hợp lệ hoặc không trích xuất được Video ID.';
-          }
-          return;
-        }
-
-        if (saveMusicBtnText) saveMusicBtnText.textContent = 'Đang lưu & phát...';
-
-        try {
-          const meta = await fetchYouTubeMetadata(vId, raw);
-          const newConfig = {
-            url: raw,
-            videoId: vId,
-            title: meta.title || 'YouTube Track',
-            artist: meta.artist || 'YouTube'
-          };
-
-          applyMusicConfig(newConfig, true);
-          await saveMusicToDatabase(newConfig);
-
-          closeMusicModal();
-
-          if (typeof confetti === 'function') {
-            confetti({
-              particleCount: 50,
-              spread: 60,
-              origin: { y: 0.8 },
-              colors: ['#ffd166', '#ff70a6', '#70e4d0', '#c77dff']
-            });
-          }
-        } catch (err) {
-          console.error('Lỗi khi đổi nhạc:', err);
-          if (musicErrorTip) {
-            musicErrorTip.style.display = 'block';
-            if (musicErrorTipText) musicErrorTipText.textContent = '❌ Đã có lỗi xảy ra. Hãy thử lại!';
-          }
-        } finally {
-          if (saveMusicBtnText) saveMusicBtnText.textContent = 'Lưu & Phát Ngay ♥';
-        }
-      });
-    }
-
-    // Apply saved music config immediately
-    applyMusicConfig(currentMusicConfig, isPlayingMusic);
 
     // --- D. INTERACTIVE LOVE ENVELOPE ---
     const envelope = document.getElementById('envelope');
@@ -2297,7 +2301,6 @@ Với anh, anh muốn đi tiếp cùng với em.`;
     // Trigger initial data load from Supabase
     fetchMemories();
     fetchLoveNotes();
-    loadMusicFromDatabase();
   }
 
 }
