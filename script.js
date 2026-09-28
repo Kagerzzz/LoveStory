@@ -563,6 +563,9 @@ function initLoveStoryApp() {
     }
 
     startMusic();
+    setTimeout(() => {
+      startMusic();
+    }, 350);
   }
 
   function showPasswordStep(e) {
@@ -1094,21 +1097,38 @@ Từ hôm ấy là chuỗi ngày những buổi hẹn hò không dứt, những 
       if (artistEl) artistEl.textContent = config.artist;
       if (discEl) discEl.title = `Đang phát nhạc: ${config.title} - ${config.artist}`;
 
-      if (ytPlayer && ytPlayerReady && typeof ytPlayer.loadVideoById === 'function') {
+      if (ytPlayer && ytPlayerReady) {
+        let currentUrl = '';
+        try {
+          if (typeof ytPlayer.getVideoUrl === 'function') {
+            currentUrl = ytPlayer.getVideoUrl() || '';
+          }
+        } catch (e) {}
+
+        const isSameVideo = currentUrl.includes(config.videoId);
+
         if (shouldPlay) {
           try {
-            ytPlayer.loadVideoById(config.videoId);
-            ytPlayer.playVideo();
+            // Only reload if it's actually a different video; if same video, just ensure playing
+            if (!isSameVideo && typeof ytPlayer.loadVideoById === 'function') {
+              ytPlayer.loadVideoById(config.videoId);
+            }
+            if (typeof ytPlayer.playVideo === 'function') {
+              ytPlayer.playVideo();
+            }
             isPlayingMusic = true;
             updateAudioUI(true);
           } catch (e) {
             console.warn('loadVideoById error:', e);
           }
-        } else if (typeof ytPlayer.cueVideoById === 'function') {
-          try {
-            ytPlayer.cueVideoById(config.videoId);
-          } catch (e) {
-            console.warn('cueVideoById error:', e);
+        } else {
+          // Never stop or interrupt currently playing music when shouldPlay is false
+          if (!isPlayingMusic && !isSameVideo && typeof ytPlayer.cueVideoById === 'function') {
+            try {
+              ytPlayer.cueVideoById(config.videoId);
+            } catch (e) {
+              console.warn('cueVideoById error:', e);
+            }
           }
         }
       }
@@ -1154,10 +1174,16 @@ Từ hôm ấy là chuỗi ngày những buổi hẹn hò không dứt, những 
     }
 
     async function loadMusicFromDatabase() {
-      // 1. Check local storage first
+      // 1. Update metadata display from local storage
       const local = getLocalMusicConfig();
       if (local && local.videoId) {
-        applyMusicConfig(local, isPlayingMusic);
+        currentMusicConfig = local;
+        const titleEl = document.getElementById('audioTrackTitle') || document.querySelector('.audio-title');
+        const artistEl = document.querySelector('.audio-artist');
+        const discEl = document.getElementById('audioDisc');
+        if (titleEl) titleEl.textContent = local.title;
+        if (artistEl) artistEl.textContent = local.artist;
+        if (discEl) discEl.title = `Đang phát nhạc: ${local.title} - ${local.artist}`;
       }
 
       // 2. Fetch remote config from Supabase
@@ -1175,8 +1201,17 @@ Từ hôm ấy là chuỗi ngày những buổi hẹn hò không dứt, những 
             if (remoteConfig && remoteConfig.videoId) {
               const isDifferent = remoteConfig.videoId !== currentMusicConfig.videoId;
               currentMusicConfig = remoteConfig;
-              applyMusicConfig(remoteConfig, isDifferent && (isPlayingMusic || pendingPlay));
               localStorage.setItem('lovestory_music_config', JSON.stringify(remoteConfig));
+              if (isDifferent) {
+                applyMusicConfig(remoteConfig, isPlayingMusic);
+              } else {
+                const titleEl = document.getElementById('audioTrackTitle') || document.querySelector('.audio-title');
+                const artistEl = document.querySelector('.audio-artist');
+                const discEl = document.getElementById('audioDisc');
+                if (titleEl) titleEl.textContent = remoteConfig.title;
+                if (artistEl) artistEl.textContent = remoteConfig.artist;
+                if (discEl) discEl.title = `Đang phát nhạc: ${remoteConfig.title} - ${remoteConfig.artist}`;
+              }
             }
           } catch (parseErr) {
             console.warn('Lỗi parse JSON config nhạc:', parseErr);
@@ -1298,7 +1333,7 @@ Từ hôm ấy là chuỗi ngày những buổi hẹn hò không dứt, những 
     }
 
     // Apply saved music config immediately
-    applyMusicConfig(currentMusicConfig, false);
+    applyMusicConfig(currentMusicConfig, isPlayingMusic);
 
     // --- D. INTERACTIVE LOVE ENVELOPE ---
     const envelope = document.getElementById('envelope');
