@@ -1205,7 +1205,7 @@ img {
 /* 5. Horizontal Vintage Twine Band */
 .envelope-twine-line {
   position: absolute;
-  top: 50%;
+  top: 96px;
   left: 0;
   right: 0;
   height: 6px;
@@ -1225,10 +1225,10 @@ img {
 
 /* 6. Romantic Address Block with vintage telegram guidelines */
 .envelope-to-block {
-  margin-top: 80px;
+  margin-top: 72px;
   margin-bottom: 20px;
   padding: 18px 24px;
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.75);
   border: 2px dashed rgba(24, 24, 27, 0.35);
   border-radius: var(--radius-sm);
   position: relative;
@@ -1283,10 +1283,10 @@ img {
 
 /* 7. 3D Embossed Wax Seal Button */
 .envelope-seal-btn {
-  width: 86px;
-  height: 86px;
+  width: 82px;
+  height: 82px;
   position: absolute;
-  top: 50%;
+  top: 96px;
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 10;
@@ -1301,7 +1301,7 @@ img {
 }
 
 .envelope-seal-btn:hover {
-  transform: translate(-50%, -50%) scale(1.2) rotate(6deg) !important;
+  transform: translate(-50%, -50%) scale(1.15) rotate(6deg) !important;
 }
 
 .wax-seal-outer-rim {
@@ -2927,48 +2927,73 @@ img {
 .mobile-bottom-nav {
   display: none;
   position: fixed;
-  bottom: 16px;
+  bottom: 14px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 999;
-  background: #ffffff;
-  border: var(--border);
-  box-shadow: var(--shadow);
+  z-index: 9999;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 2.5px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink);
   border-radius: var(--radius-pill);
-  padding: 6px 12px;
-  gap: 6px;
+  padding: 5px 8px;
+  gap: 8px;
   align-items: center;
+  justify-content: center;
+  max-width: calc(100vw - 20px);
 }
 
 .mobile-nav-item {
   text-decoration: none;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  padding: 6px 12px;
-  border-radius: var(--radius-pill);
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
   color: var(--text-main);
-  font-family: var(--font-title);
-  font-size: 0.72rem;
-  font-weight: 700;
+  background: transparent;
+  border: 2px solid transparent;
   transition: var(--transition-bounce);
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
 }
 
 .mobile-nav-icon {
-  font-size: 1.15rem;
+  font-size: 1.3rem;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-nav-label {
+  display: none !important; /* Hide navigation labels on mobile, keep only icons */
+}
+
+.mobile-nav-item:hover,
+.mobile-nav-item:focus {
+  background: var(--pink-soft);
+  transform: translateY(-2px);
 }
 
 .mobile-nav-item.active {
   background: var(--yellow);
-  border: 1.5px solid var(--ink);
+  border: 2px solid var(--ink);
   box-shadow: 2px 2px 0 var(--ink);
+  transform: translateY(-2px) scale(1.08);
 }
 
 /* --------------------------------------------------------------------------
-   20. RESPONSIVE MEDIA QUERIES (MOBILE PERFECTION)
+   20. RESPONSIVE MEDIA QUERIES (MOBILE PERFECTION & ICON HARMONY)
    -------------------------------------------------------------------------- */
 @media (max-width: 860px) {
+  body {
+    padding-bottom: 140px; /* Ample safe space for bottom nav & floating audio bar */
+  }
+
   .nav-menu {
     display: none; /* Mobile uses floating bottom nav */
   }
@@ -2977,138 +3002,59 @@ img {
     display: flex;
   }
 
-  /* Position floating audio player nicely above mobile bottom nav */
+  /* Compact Navbar for mobile */
+  .navbar {
+    top: 10px;
+    padding: 0 12px;
+  }
+
+  .nav-container {
+    padding: 8px 14px;
+    gap: 10px;
+  }
+
+  .brand-monogram {
+    font-size: 1.1rem;
+    gap: 6px;
+  }
+
+  .brand-tag {
+    font-size: 0.65rem;
+    padding: 2px 8px;
+  }
+
+  .nav-cta-btn {
+    padding: 5px 12px;
+    font-size: 0.78rem;
+  }
+
+  /* Floating audio player: sleek, low-profile, perfectly docked above bottom nav */
   .floating-audio-bar {
-    bottom: 76px;
-    left: 12px;
-    right: 12px;
-    max-width: none;
+    bottom: 72px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: calc(100vw - 20px);
+    max-width: 440px;
     padding: 6px 12px;
     box-shadow: 3px 3px 0 var(--ink);
+    border-radius: var(--radius-pill);
+    z-index: 9998;
   }
 
-  .floating-audio-bar .audio-volume-wrap {
-    display: none; /* Hide volume slider on mobile to stay compact */
-  }
-
-  .floating-audio-bar .audio-progress-container {
-    width: 70px;
-  }
-
-  .hero-title {
-    font-size: 2.4rem;
-  }
-
-  .section-title {
-    font-size: 2rem;
-  }
-
-  .counter-grid {
+  .audio-bar-inner {
     gap: 8px;
+    justify-content: space-between;
+    width: 100%;
   }
 
-  .counter-item {
-    min-width: 68px;
-    padding: 12px 8px;
+  .floating-audio-bar .audio-disc {
+    width: 32px;
+    height: 32px;
   }
 
-  .counter-num {
-    font-size: 2rem;
-  }
-
-  .counter-divider {
-    font-size: 1.4rem;
-  }
-
-  /* Single-sided mobile timeline */
-  .timeline-line-glow {
-    left: 24px;
-    transform: none;
-  }
-
-  .timeline-dot {
-    left: 24px;
-    transform: none;
-    width: 42px;
-    height: 42px;
-    font-size: 1rem;
-  }
-
-  .timeline-card-item,
-  .timeline-card-item.reverse {
-    justify-content: flex-end;
-  }
-
-  .timeline-content {
-    width: calc(100% - 64px);
-    margin-left: auto;
-  }
-
-  .hero-img {
-    height: 300px;
-  }
-}
-
-@media (max-width: 480px) {
-  .hero-title {
-    font-size: 2rem;
-  }
-
-  .counter-item {
-    min-width: 58px;
-    padding: 10px 4px;
-  }
-
-  .counter-num {
-    font-size: 1.65rem;
-  }
-
-  .counter-unit {
+  .floating-audio-bar .disc-center {
     font-size: 0.72rem;
-  }
-
-  .counter-card {
-    padding: 22px 14px;
-  }
-
-  .intro-card {
-    padding: 34px 20px;
-  }
-
-  .intro-names {
-    font-size: 1.8rem;
-  }
-
-  .letter-paper {
-    padding: 24px 16px;
-  }
-
-  .cert-border {
-    padding: 20px 14px;
-  }
-
-  .cert-inner {
-    padding: 16px 12px;
-  }
-
-  .envelope-closed-decor {
-    min-height: 330px;
-    padding: 6px;
-  }
-
-  .envelope-flap {
-    border-left-width: 130px;
-    border-right-width: 130px;
-    border-top-width: 90px;
-  }
-
-  .envelope-to-block {
-    margin-top: 55px;
-    padding: 12px 14px;
-  }
-
-  .to-line .to-name {
-    font-size: 2.1rem;
   }
 
   .floating-audio-bar .audio-meta {
@@ -3117,18 +3063,571 @@ img {
   }
 
   .floating-audio-bar .audio-title {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .floating-audio-bar .audio-artist {
-    font-size: 0.65rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    display: none; /* Hide artist on mobile to prevent crowding */
+  }
+
+  .floating-audio-bar .audio-btn-play {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+  }
+
+  .floating-audio-bar .audio-btn-play svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .floating-audio-bar .audio-timeline-wrap {
+    flex: 1;
+    min-width: 0;
+    gap: 6px;
+  }
+
+  .floating-audio-bar .audio-time {
+    font-size: 0.7rem;
+    min-width: 26px;
+  }
+
+  .floating-audio-bar #audioDuration {
+    display: none; /* Hide duration on mobile to give progress bar space */
   }
 
   .floating-audio-bar .audio-progress-container {
-    width: 50px;
+    width: 100%;
+    flex: 1;
+    min-width: 45px;
+    height: 8px;
+  }
+
+  .floating-audio-bar .audio-volume-wrap,
+  .floating-audio-bar .audio-waves {
+    display: none; /* Hide volume slider and waves to save horizontal space */
+  }
+
+  .floating-audio-bar .audio-collapse-btn {
+    width: 22px;
+    height: 22px;
+    font-size: 0.65rem;
+    flex-shrink: 0;
+  }
+
+  /* Collapsed mobile mini-widget: docks gracefully to bottom-right */
+  .floating-audio-bar.is-collapsed {
+    width: auto;
+    max-width: none;
+    left: auto;
+    right: 14px;
+    bottom: 72px;
+    transform: none;
+    padding: 4px 10px;
+    gap: 6px;
+  }
+
+  /* Hero adjustments */
+  .hero-section {
+    padding: 100px 0 45px;
+  }
+
+  .hero-header-badge {
+    font-size: 0.78rem;
+    padding: 6px 14px;
+    margin-bottom: 18px;
+  }
+
+  .hero-title {
+    font-size: 2.3rem;
+    line-height: 1.25;
+  }
+
+  .hero-subtitle {
+    font-size: 0.98rem;
+    margin-bottom: 28px;
+    padding: 0 8px;
+  }
+
+  .section-title {
+    font-size: 2rem;
+  }
+
+  .section-desc {
+    font-size: 0.92rem;
+    padding: 0 10px;
+  }
+
+  /* Counter card mobile */
+  .counter-card {
+    padding: 22px 14px;
+    max-width: 100%;
+    margin-bottom: 38px;
+  }
+
+  .counter-top-bar {
+    margin-bottom: 16px;
+  }
+
+  .counter-label {
+    font-size: 0.78rem;
+  }
+
+  .counter-grid {
+    gap: 6px;
+    justify-content: center;
+  }
+
+  .counter-item {
+    min-width: 60px;
+    padding: 10px 4px;
+    flex: 1;
+  }
+
+  .counter-num {
+    font-size: 1.85rem;
+  }
+
+  .counter-unit {
+    font-size: 0.68rem;
+  }
+
+  .counter-divider {
+    font-size: 1.3rem;
+    margin: 0 -2px;
+  }
+
+  .hero-img {
+    height: 280px;
+  }
+
+  .hero-photo-badge {
+    bottom: 20px;
+    left: 16px;
+    padding: 4px 12px;
+    font-size: 0.78rem;
+  }
+
+  /* Retro Envelope Mobile Tuning - Zero Icon Overlap */
+  .envelope {
+    padding: 14px;
+  }
+
+  .envelope-closed-decor {
+    min-height: 380px;
+    padding: 6px;
+  }
+
+  .envelope-flap {
+    top: -16px;
+    border-left-width: 140px;
+    border-right-width: 140px;
+    border-top-width: 78px;
+  }
+
+  .flap-stitches {
+    top: -76px;
+    left: -120px;
+    width: 240px;
+  }
+
+  .envelope-twine-line {
+    top: 66px;
+  }
+
+  .envelope-seal-btn {
+    width: 68px;
+    height: 68px;
+    top: 66px;
+  }
+
+  .wax-seal-inner-rim {
+    width: 52px;
+    height: 52px;
+  }
+
+  .seal-heart {
+    font-size: 1.35rem;
+  }
+
+  .seal-prompt {
+    font-size: 0.55rem;
+  }
+
+  .wax-drip-1 {
+    width: 16px;
+    height: 20px;
+    bottom: -4px;
+    right: 8px;
+  }
+
+  .wax-drip-2 {
+    width: 14px;
+    height: 16px;
+    top: -3px;
+    left: 6px;
+  }
+
+  /* Top postal marks header mobile */
+  .envelope-postal-header {
+    gap: 8px;
+  }
+
+  .par-avion-seal {
+    padding: 4px 8px;
+    gap: 6px;
+  }
+
+  .par-avion-icon {
+    font-size: 1.05rem;
+  }
+
+  .par-avion-main {
+    font-size: 0.74rem;
+  }
+
+  .par-avion-sub {
+    font-size: 0.52rem;
+  }
+
+  .vintage-stamps-set {
+    gap: 6px;
+  }
+
+  .v-stamp {
+    width: 48px;
+    height: 58px;
+    padding: 3px;
+  }
+
+  .v-stamp-emoji {
+    font-size: 1rem;
+  }
+
+  .v-stamp-label {
+    font-size: 0.48rem;
+  }
+
+  .v-stamp-val {
+    font-size: 0.52rem;
+  }
+
+  .postmark-ink-stamp {
+    right: -8px;
+    top: 8px;
+  }
+
+  .postmark-circle {
+    width: 42px;
+    height: 42px;
+    font-size: 0.42rem;
+  }
+
+  .postmark-wavy-lines span {
+    width: 26px;
+    height: 1.5px;
+  }
+
+  /* Address block mobile: starts cleanly below the wax seal */
+  .envelope-to-block {
+    margin-top: 54px;
+    margin-bottom: 14px;
+    padding: 12px 14px;
+  }
+
+  .retro-address-line {
+    gap: 6px;
+    padding: 3px 0;
+  }
+
+  .addr-tag {
+    font-size: 0.7rem;
+    min-width: 38px;
+  }
+
+  .addr-content {
+    font-size: 0.82rem;
+    line-height: 1.35;
+  }
+
+  .to-line .to-name {
+    font-size: 2rem;
+  }
+
+  .addr-sub {
+    font-size: 0.72rem;
+  }
+
+  .retro-priority-sticker {
+    font-size: 0.68rem;
+    padding: 3px 12px;
+    margin-top: 6px;
+  }
+
+  /* Letter Paper Mobile */
+  .letter-paper {
+    padding: 24px 16px;
+  }
+
+  .letter-salutation {
+    font-size: 1.2rem;
+  }
+
+  .letter-body {
+    font-size: 0.95rem;
+    line-height: 1.75;
+  }
+
+  .signature-name {
+    font-size: 1.9rem;
+  }
+
+  /* Polaroid Gallery Mobile */
+  .polaroid-grid {
+    grid-template-columns: 1fr;
+    max-width: 340px;
+    margin: 24px auto 0;
+    gap: 28px;
+  }
+
+  .polaroid-card {
+    padding: 12px 12px 18px;
+    transform: none !important; /* Prevent side overflow */
+  }
+
+  .polaroid-action-bar {
+    opacity: 1; /* Always visible for touch screen interaction */
+    top: 8px;
+    right: 8px;
+  }
+
+  .btn-card-action {
+    width: 34px;
+    height: 34px;
+    font-size: 0.88rem;
+  }
+
+  .washi-tape {
+    width: 76px;
+    height: 20px;
+    top: -10px;
+  }
+
+  .btn-add-memory {
+    padding: 12px 20px;
+    font-size: 0.92rem;
+  }
+
+  .btn-badge-live {
+    display: none;
+  }
+
+  /* Reasons Flip Cards Mobile */
+  .flip-cards-grid {
+    grid-template-columns: 1fr;
+    max-width: 340px;
+    margin: 0 auto;
+    gap: 18px;
+  }
+
+  .flip-card {
+    height: 220px;
+  }
+
+  .card-icon {
+    font-size: 2.2rem;
+  }
+
+  .card-title {
+    font-size: 1.2rem;
+  }
+
+  .back-text {
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  /* Vows Certificate Mobile */
+  .cert-border {
+    padding: 18px 12px;
+  }
+
+  .cert-inner {
+    padding: 16px 12px;
+  }
+
+  .cert-stamp {
+    top: 8px;
+    right: 8px;
+    padding: 4px 8px;
+    font-size: 0.68rem;
+  }
+
+  .cert-title {
+    font-size: 1.45rem;
+    margin-top: 10px;
+  }
+
+  .cert-subtitle {
+    font-size: 0.82rem;
+    margin-bottom: 16px;
+  }
+
+  .cert-promises li {
+    font-size: 0.85rem;
+    padding: 8px 10px;
+  }
+
+  .sig-name {
+    font-size: 1.7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-title {
+    font-size: 1.95rem;
+  }
+
+  .counter-grid {
+    gap: 4px;
+  }
+
+  .counter-item {
+    min-width: 50px;
+    padding: 8px 2px;
+  }
+
+  .counter-num {
+    font-size: 1.55rem;
+  }
+
+  .counter-unit {
+    font-size: 0.62rem;
+    margin-top: 4px;
+  }
+
+  .counter-divider {
+    font-size: 1.15rem;
+  }
+
+  .intro-card {
+    padding: 30px 18px;
+  }
+
+  .intro-names {
+    font-size: 1.75rem;
+  }
+
+  .envelope-flap {
+    border-left-width: 110px;
+    border-right-width: 110px;
+    border-top-width: 66px;
+  }
+
+  .envelope-seal-btn {
+    width: 62px;
+    height: 62px;
+    top: 58px;
+  }
+
+  .envelope-twine-line {
+    top: 58px;
+  }
+
+  .envelope-to-block {
+    margin-top: 48px;
+    padding: 10px 10px;
+  }
+
+  .to-line .to-name {
+    font-size: 1.75rem;
+  }
+
+  .v-stamp {
+    width: 42px;
+    height: 52px;
+  }
+
+  .v-stamp-emoji {
+    font-size: 0.9rem;
+  }
+
+  .v-stamp-label {
+    font-size: 0.42rem;
+  }
+
+  .v-stamp-val {
+    font-size: 0.48rem;
+  }
+
+  .postmark-circle {
+    width: 36px;
+    height: 36px;
+    font-size: 0.38rem;
+  }
+
+  .floating-audio-bar {
+    width: calc(100vw - 16px);
+    padding: 5px 8px;
+    bottom: 68px;
+  }
+
+  .floating-audio-bar .audio-meta {
+    max-width: 68px;
+  }
+
+  .floating-audio-bar .audio-title {
+    font-size: 0.74rem;
+  }
+
+  .floating-audio-bar .audio-progress-container {
+    min-width: 35px;
+  }
+
+  .mobile-bottom-nav {
+    bottom: 10px;
+    padding: 4px 6px;
+    gap: 6px;
+  }
+
+  .mobile-nav-item {
+    width: 40px;
+    height: 40px;
+  }
+
+  .mobile-nav-icon {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 380px) {
+  .brand-tag {
+    display: none; /* Hide 'Since 31.08' badge on ultra narrow phones to prevent header cram */
+  }
+
+  .par-avion-sub {
+    display: none;
+  }
+
+  .hero-photo-badge {
+    font-size: 0.72rem;
+    padding: 3px 8px;
+  }
+
+  .mobile-bottom-nav {
+    gap: 4px;
+    padding: 3px 4px;
+  }
+
+  .mobile-nav-item {
+    width: 38px;
+    height: 38px;
+  }
+
+  .mobile-nav-icon {
+    font-size: 1.12rem;
   }
 }
