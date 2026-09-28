@@ -505,12 +505,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const letterSignature = document.getElementById('letterSignature');
     if (letterSignature) letterSignature.textContent = COUPLE_DATA.letterSignature;
 
-    const certHisName = document.getElementById('certHisName');
-    if (certHisName) certHisName.textContent = COUPLE_DATA.hisName;
-
-    const certHerName = document.getElementById('certHerName');
-    if (certHerName) certHerName.textContent = COUPLE_DATA.herName;
-
     const footerNamesDisplay = document.getElementById('footerNamesDisplay');
     if (footerNamesDisplay) {
       footerNamesDisplay.textContent = `${COUPLE_DATA.hisName} (2001) & ${COUPLE_DATA.herName} (1999) • Since 31.08.2026`;
@@ -1193,48 +1187,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // --- G. SURPRISE GIFT BOX & CERTIFICATE ---
-    const giftBox = document.getElementById('giftBox');
-    const openGiftBtn = document.getElementById('openGiftBtn');
-    const giftSecretContent = document.getElementById('giftSecretContent');
-    const giftSparkles = document.getElementById('giftSparkles');
-
-    function triggerGiftOpening() {
-      if (!giftBox) return;
-      if (giftBox.classList.contains('opened')) return;
-
-      giftBox.classList.add('opening');
-
-      if (typeof confetti === 'function') {
-        const count = 200;
-        const defaults = { origin: { y: 0.7 } };
-
-        function fire(particleRatio, opts) {
-          confetti(Object.assign({}, defaults, opts, {
-            particleCount: Math.floor(count * particleRatio)
-          }));
-        }
-
-        fire(0.25, { spread: 26, startVelocity: 55 });
-        fire(0.2, { spread: 60 });
-        fire(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
-        fire(0.1, { spread: 120, startVelocity: 25, decay: 0.92, scalar: 1.2 });
-        fire(0.1, { spread: 120, startVelocity: 45 });
-      }
-
-      setTimeout(() => {
-        giftBox.classList.remove('opening');
-        giftBox.classList.add('opened');
-        if (giftSecretContent) giftSecretContent.style.display = 'block';
-        if (openGiftBtn) openGiftBtn.style.display = 'none';
-        if (giftSparkles) giftSparkles.textContent = '✨ 💖 💍 💖 ✨';
-      }, 700);
-    }
-
-    if (giftBox) giftBox.addEventListener('click', triggerGiftOpening);
-    if (openGiftBtn) openGiftBtn.addEventListener('click', triggerGiftOpening);
-
-    // --- H. INTERACTIVE LOVE NOTES WALL (SUPABASE DATABASE) ---
+    // --- G. INTERACTIVE LOVE NOTES WALL (SUPABASE DATABASE) ---
     const noteAuthorInput = document.getElementById('noteAuthorInput');
     const noteContentInput = document.getElementById('noteContentInput');
     const sendNoteBtn = document.getElementById('sendNoteBtn');
