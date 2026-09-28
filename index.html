@@ -34,13 +34,45 @@
         <span class="seal-text">FOREVER</span>
       </div>
       <p class="intro-quote">"Từ một ánh nhìn trên sân pickleball hôm ấy,<br>cả thế giới của anh đã đổi hướng..."</p>
-      <h2 class="intro-names" id="introNamesDisplay">Thân Hiếu & Khánh Linh</h2>
+      <h2 class="intro-names" id="introNamesDisplay">✦ Our Love Story ✦</h2>
       <button class="intro-btn" id="enterBtn">
         <span>Chạm để mở cánh cửa tình yêu</span>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M5 12h14M12 5l7 7-7 7"/>
         </svg>
       </button>
+
+      <!-- Password Lock Section (Revealed when tapping enterBtn) -->
+      <div class="intro-password-section" id="introPasswordSection" style="display: none;">
+        <div class="password-badge">
+          <span class="badge-lock-icon">🔒</span>
+          <span>MẬT MÃ TRÁI TIM</span>
+        </div>
+        <p class="password-hint">Gợi ý: Ngày bắt đầu tình yêu của chúng mình (DDMM) 💖</p>
+        
+        <form id="introPasswordForm" class="password-form" onsubmit="return false;">
+          <div class="password-input-wrap">
+            <input 
+              type="password" 
+              id="introPasswordInput" 
+              class="intro-pass-input" 
+              maxlength="6" 
+              inputmode="numeric" 
+              pattern="[0-9]*" 
+              placeholder="••••" 
+              autocomplete="off"
+              aria-label="Nhập mật mã 4 số DDMM (ví dụ: 3108)"
+            >
+            <button type="submit" class="btn-pass-unlock" id="submitPassBtn" title="Mở khóa tình yêu">
+              <span>Mở Khóa</span>
+              <span class="pass-unlock-icon">✨</span>
+            </button>
+          </div>
+          <div class="password-error-tip" id="passwordErrorMsg" style="display: none;">
+            <span>❌ Mật mã chưa đúng nè! Gợi ý: Ngày 31/08 (3108) ♥</span>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 

@@ -485,6 +485,139 @@ img {
   box-shadow: var(--shadow-pressed);
 }
 
+/* Intro Password Gate */
+.intro-password-section {
+  margin-top: 14px;
+  animation: introPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.password-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--yellow);
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+  border-radius: var(--radius-pill);
+  padding: 4px 14px;
+  font-family: var(--font-title);
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--ink);
+  margin-bottom: 10px;
+}
+
+.badge-lock-icon {
+  font-size: 0.9rem;
+}
+
+.password-hint {
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.password-input-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  max-width: 340px;
+  margin: 0 auto;
+  flex-wrap: wrap;
+}
+
+.intro-pass-input {
+  width: 140px;
+  height: 50px;
+  background: #ffffff;
+  border: var(--border-thick);
+  box-shadow: var(--shadow);
+  border-radius: var(--radius-md);
+  font-family: var(--font-title);
+  font-size: 1.45rem;
+  font-weight: 800;
+  text-align: center;
+  letter-spacing: 5px;
+  color: var(--ink);
+  outline: none;
+  transition: var(--transition-bounce);
+}
+
+.intro-pass-input:focus {
+  border-color: var(--pink-deep);
+  box-shadow: var(--shadow-hover);
+  background: #fff9fc;
+}
+
+.intro-pass-input.pass-error {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.intro-pass-input.pass-success {
+  border-color: #10b981;
+  background: #ecfdf5;
+}
+
+.btn-pass-unlock {
+  height: 50px;
+  background: var(--pink);
+  color: var(--ink);
+  border: var(--border);
+  box-shadow: var(--shadow);
+  border-radius: var(--radius-md);
+  padding: 0 20px;
+  font-family: var(--font-title);
+  font-size: 0.95rem;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: var(--transition-bounce);
+  flex-shrink: 0;
+}
+
+.btn-pass-unlock:hover {
+  background: var(--yellow);
+  transform: translate(-2px, -2px);
+  box-shadow: var(--shadow-hover);
+}
+
+.btn-pass-unlock:active {
+  transform: translate(2px, 2px);
+  box-shadow: var(--shadow-pressed);
+}
+
+.password-error-tip {
+  margin-top: 12px;
+  background: #fee2e2;
+  border: 1.5px solid #ef4444;
+  box-shadow: 2px 2px 0 var(--ink);
+  border-radius: var(--radius-pill);
+  padding: 6px 14px;
+  font-family: var(--font-title);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #b91c1c;
+  animation: introPop 0.3s ease;
+}
+
+/* Shake Animation for Wrong Pass */
+.shake-anim {
+  animation: shakeCard 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes shakeCard {
+  10%, 90% { transform: translate3d(-3px, 0, 0); }
+  20%, 80% { transform: translate3d(5px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-6px, 0, 0); }
+  40%, 60% { transform: translate3d(6px, 0, 0); }
+}
+
 /* --------------------------------------------------------------------------
    7. NAVBAR (FLOATING NEUBRUTALIST PILL)
    -------------------------------------------------------------------------- */

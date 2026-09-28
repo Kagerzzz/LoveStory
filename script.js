@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (brandCoupleNames) brandCoupleNames.textContent = 'Hiếu & Linh';
 
     const introNamesDisplay = document.getElementById('introNamesDisplay');
-    if (introNamesDisplay) introNamesDisplay.textContent = `${COUPLE_DATA.hisName} & ${COUPLE_DATA.herName}`;
+    if (introNamesDisplay) introNamesDisplay.textContent = '✦ Our Love Story ✦';
 
     const heroHerName = document.getElementById('heroHerName');
     if (heroHerName) heroHerName.textContent = COUPLE_DATA.herName;
@@ -162,11 +162,18 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(updateLoveCounter, 1000);
 
   // ==========================================
-  // 3. CURTAIN INTRO SCREEN & AUDIO TRIGGER
+  // 3. CURTAIN INTRO SCREEN, PASSWORD LOCK & AUDIO TRIGGER
   // ==========================================
   const introScreen = document.getElementById('introScreen');
   const enterBtn = document.getElementById('enterBtn');
   const introSeal = document.getElementById('introSeal');
+  const introPasswordSection = document.getElementById('introPasswordSection');
+  const introPasswordForm = document.getElementById('introPasswordForm');
+  const introPasswordInput = document.getElementById('introPasswordInput');
+  const submitPassBtn = document.getElementById('submitPassBtn');
+  const passwordErrorMsg = document.getElementById('passwordErrorMsg');
+
+  const CORRECT_PASS = '3108'; // Ngày 31/08
 
   function dismissIntro() {
     if (!introScreen) return;
@@ -175,8 +182,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Launch celebratory gentle confetti
     if (typeof confetti === 'function') {
       confetti({
-        particleCount: 50,
-        spread: 60,
+        particleCount: 60,
+        spread: 70,
         origin: { y: 0.6 },
         colors: ['#ff70a6', '#ffd166', '#70e4d0', '#c77dff', '#ffffff']
       });
@@ -186,8 +193,94 @@ document.addEventListener('DOMContentLoaded', () => {
     startMusic();
   }
 
-  if (enterBtn) enterBtn.addEventListener('click', dismissIntro);
-  if (introSeal) introSeal.addEventListener('click', dismissIntro);
+  function showPasswordStep() {
+    if (!introPasswordSection) {
+      dismissIntro();
+      return;
+    }
+
+    if (enterBtn) enterBtn.style.display = 'none';
+    introPasswordSection.style.display = 'block';
+
+    if (introPasswordInput) {
+      setTimeout(() => {
+        introPasswordInput.focus();
+      }, 100);
+    }
+  }
+
+  function handlePasswordCheck() {
+    if (!introPasswordInput) return;
+    const rawVal = (introPasswordInput.value || '').trim();
+    const cleanDigits = rawVal.replace(/[^0-9]/g, '');
+
+    // Accepts '3108', '31/08', '31-08'
+    if (cleanDigits === CORRECT_PASS || rawVal === '31/08' || rawVal === '31-08') {
+      if (passwordErrorMsg) passwordErrorMsg.style.display = 'none';
+      introPasswordInput.classList.remove('pass-error');
+      introPasswordInput.classList.add('pass-success');
+
+      if (typeof confetti === 'function') {
+        confetti({
+          particleCount: 50,
+          spread: 60,
+          origin: { y: 0.6 },
+          colors: ['#ff70a6', '#ffd166', '#70e4d0', '#ff8fab']
+        });
+      }
+
+      setTimeout(() => {
+        dismissIntro();
+      }, 400);
+    } else {
+      // Wrong password
+      if (passwordErrorMsg) {
+        passwordErrorMsg.style.display = 'block';
+      }
+      introPasswordInput.classList.remove('pass-success');
+      introPasswordInput.classList.add('pass-error');
+
+      // Play cute shake animation on intro card
+      const card = document.querySelector('.intro-card');
+      if (card) {
+        card.classList.remove('shake-anim');
+        void card.offsetWidth; // Trigger reflow to restart animation
+        card.classList.add('shake-anim');
+      }
+
+      introPasswordInput.value = '';
+      introPasswordInput.focus();
+    }
+  }
+
+  if (enterBtn) enterBtn.addEventListener('click', showPasswordStep);
+  if (introSeal) introSeal.addEventListener('click', showPasswordStep);
+
+  if (introPasswordForm) {
+    introPasswordForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      handlePasswordCheck();
+    });
+  }
+
+  if (submitPassBtn) {
+    submitPassBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      handlePasswordCheck();
+    });
+  }
+
+  if (introPasswordInput) {
+    introPasswordInput.addEventListener('input', () => {
+      if (passwordErrorMsg) passwordErrorMsg.style.display = 'none';
+      introPasswordInput.classList.remove('pass-error');
+
+      const digits = introPasswordInput.value.replace(/[^0-9]/g, '');
+      if (digits.length === 4) {
+        handlePasswordCheck();
+      }
+    });
+  }
 
   // ==========================================
   // 4. FLOATING NEUBRUTALISM AUDIO PLAYER (BOTTOM BAR)
