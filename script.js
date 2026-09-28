@@ -11,15 +11,21 @@
 document.addEventListener('DOMContentLoaded', () => {
 
   // Prevent mobile auto-scrolling to middle on reload: disable scroll restoration and clear URL hash
-  if ('scrollRestoration' in history) {
-    history.scrollRestoration = 'manual';
+  try {
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+    }
+    if (window.location.hash) {
+      history.replaceState(null, document.title, window.location.pathname + window.location.search);
+    }
+  } catch (e) {
+    console.warn('Scroll/history init:', e);
   }
-  if (window.location.hash) {
-    history.replaceState(null, document.title, window.location.pathname + window.location.search);
-  }
-  window.scrollTo(0, 0);
-  document.documentElement.scrollTop = 0;
-  document.body.scrollTop = 0;
+  try {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  } catch (e) {}
   // 1. STORY & COUPLE DATA
   // ==========================================
   const COUPLE_DATA = {
@@ -300,71 +306,95 @@ document.addEventListener('DOMContentLoaded', () => {
   let chordIndex = 0;
 
   function initAudio() {
-    if (!audioCtx) {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      audioCtx = new AudioContext();
-      masterGainNode = audioCtx.createGain();
-      masterGainNode.gain.setValueAtTime(currentVolume, audioCtx.currentTime);
-      masterGainNode.connect(audioCtx.destination);
-    }
-    if (audioCtx.state === 'suspended') {
-      audioCtx.resume();
+    try {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        audioCtx = new AudioContext();
+        masterGainNode = audioCtx.createGain();
+        masterGainNode.gain.setValueAtTime(currentVolume, audioCtx.currentTime || 0);
+        masterGainNode.connect(audioCtx.destination);
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+      }
+    } catch (e) {
+      console.warn('initAudio error:', e);
     }
   }
 
   function playTone(freq, time, duration = 3.5, volume = 0.05) {
-    if (!audioCtx || !masterGainNode) return;
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    const filter = audioCtx.createBiquadFilter();
+    try {
+      if (!audioCtx || !masterGainNode) return;
+      const t = Math.max(audioCtx.currentTime || 0, time || 0);
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      const filter = audioCtx.createBiquadFilter();
 
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(freq, time);
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, t);
 
-    filter.type = 'lowpass';
-    filter.frequency.setValueAtTime(900, time);
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(900, t);
 
-    gain.gain.setValueAtTime(0.0001, time);
-    gain.gain.linearRampToValueAtTime(volume, time + 0.15);
-    gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.linearRampToValueAtTime(volume, t + 0.15);
+      gain.gain.setTargetAtTime(0.0001, t + 0.2, duration / 3);
 
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(masterGainNode);
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(masterGainNode);
 
-    osc.start(time);
-    osc.stop(time + duration + 0.1);
+      osc.start(t);
+      osc.stop(t + duration + 0.2);
+    } catch (e) {
+      console.warn('playTone error:', e);
+    }
   }
 
   function playArpeggiatedChord() {
-    if (!isPlayingMusic || !audioCtx) return;
-    const currentChord = chords[chordIndex % chords.length];
-    const now = audioCtx.currentTime;
+    try {
+      if (!isPlayingMusic || !audioCtx) return;
+      const currentChord = chords[chordIndex % chords.length];
+      const now = audioCtx.currentTime || 0;
 
-    currentChord.forEach((note, i) => {
-      playTone(note, now + i * 0.18, 4.0, 0.045);
-    });
+      currentChord.forEach((note, i) => {
+        playTone(note, now + i * 0.18, 4.0, 0.045);
+      });
 
-    if (Math.random() > 0.4) {
-      const highNote = currentChord[Math.floor(Math.random() * currentChord.length)] * 2;
-      playTone(highNote, now + 1.2, 3.0, 0.025);
+      if (Math.random() > 0.4) {
+        const highNote = currentChord[Math.floor(Math.random() * currentChord.length)] * 2;
+        playTone(highNote, now + 1.2, 3.0, 0.025);
+      }
+
+      chordIndex++;
+    } catch (e) {
+      console.warn('playArpeggiatedChord error:', e);
     }
-
-    chordIndex++;
   }
 
   function startSynthFallback() {
-    if (synthInterval) return;
-    initAudio();
-    playArpeggiatedChord();
-    synthInterval = setInterval(playArpeggiatedChord, 3800);
+    try {
+      if (synthInterval) return;
+      initAudio();
+      playArpeggiatedChord();
+      synthInterval = setInterval(() => {
+        try {
+          playArpeggiatedChord();
+        } catch (e) {}
+      }, 3800);
+    } catch (e) {
+      console.warn('startSynthFallback error:', e);
+    }
   }
 
   function stopSynthFallback() {
-    if (synthInterval) {
-      clearInterval(synthInterval);
-      synthInterval = null;
-    }
+    try {
+      if (synthInterval) {
+        clearInterval(synthInterval);
+        synthInterval = null;
+      }
+    } catch (e) {}
   }
 
   function formatTimeTrack(seconds) {
@@ -375,106 +405,124 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateTrackProgress() {
-    let dur = FALLBACK_DURATION;
-    let curr = currentElapsed;
+    try {
+      let dur = FALLBACK_DURATION;
+      let curr = currentElapsed;
 
-    if (ytPlayer && ytPlayerReady) {
-      try {
-        const ytDur = ytPlayer.getDuration();
-        if (ytDur && ytDur > 0) dur = ytDur;
-        const ytCurr = ytPlayer.getCurrentTime();
-        if (typeof ytCurr === 'number' && !isNaN(ytCurr)) {
-          curr = ytCurr;
-          currentElapsed = Math.floor(ytCurr);
-        }
-      } catch (e) {}
-    }
+      if (ytPlayer && ytPlayerReady) {
+        try {
+          const ytDur = ytPlayer.getDuration();
+          if (ytDur && ytDur > 0) dur = ytDur;
+          const ytCurr = ytPlayer.getCurrentTime();
+          if (typeof ytCurr === 'number' && !isNaN(ytCurr)) {
+            curr = ytCurr;
+            currentElapsed = Math.floor(ytCurr);
+          }
+        } catch (e) {}
+      }
 
-    if (audioCurrentTime) audioCurrentTime.textContent = formatTimeTrack(curr);
-    if (audioDuration) audioDuration.textContent = formatTimeTrack(dur);
-    if (audioProgressFill) {
-      const pct = Math.min(100, Math.max(0, (curr / dur) * 100));
-      audioProgressFill.style.width = `${pct}%`;
-    }
+      if (audioCurrentTime) audioCurrentTime.textContent = formatTimeTrack(curr);
+      if (audioDuration) audioDuration.textContent = formatTimeTrack(dur);
+      if (audioProgressFill) {
+        const pct = Math.min(100, Math.max(0, (curr / dur) * 100));
+        audioProgressFill.style.width = `${pct}%`;
+      }
+    } catch (e) {}
   }
 
   function startProgressTicker() {
-    if (progressInterval) clearInterval(progressInterval);
-    updateTrackProgress();
-    progressInterval = setInterval(() => {
-      if (!isPlayingMusic) return;
-      if (!ytPlayer || !ytPlayerReady) {
-        currentElapsed++;
-        if (currentElapsed > FALLBACK_DURATION) currentElapsed = 0;
-      }
+    try {
+      if (progressInterval) clearInterval(progressInterval);
       updateTrackProgress();
-    }, 500);
+      progressInterval = setInterval(() => {
+        if (!isPlayingMusic) return;
+        if (!ytPlayer || !ytPlayerReady) {
+          currentElapsed++;
+          if (currentElapsed > FALLBACK_DURATION) currentElapsed = 0;
+        }
+        updateTrackProgress();
+      }, 500);
+    } catch (e) {}
   }
 
   function stopProgressTicker() {
-    if (progressInterval) {
-      clearInterval(progressInterval);
-      progressInterval = null;
-    }
+    try {
+      if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+      }
+    } catch (e) {}
   }
 
   function updateAudioUI(playing) {
-    if (floatingAudioBar) {
-      if (playing) {
-        floatingAudioBar.classList.add('is-playing');
-      } else {
-        floatingAudioBar.classList.remove('is-playing');
+    try {
+      if (floatingAudioBar) {
+        if (playing) {
+          floatingAudioBar.classList.add('is-playing');
+        } else {
+          floatingAudioBar.classList.remove('is-playing');
+        }
       }
-    }
-    if (audioPlayIcon && audioPauseIcon) {
-      if (playing) {
-        audioPlayIcon.style.display = 'none';
-        audioPauseIcon.style.display = 'block';
-      } else {
-        audioPlayIcon.style.display = 'block';
-        audioPauseIcon.style.display = 'none';
+      if (audioPlayIcon && audioPauseIcon) {
+        if (playing) {
+          audioPlayIcon.style.display = 'none';
+          audioPauseIcon.style.display = 'block';
+        } else {
+          audioPlayIcon.style.display = 'block';
+          audioPauseIcon.style.display = 'none';
+        }
       }
-    }
+    } catch (e) {}
   }
 
   function startMusic() {
     isPlayingMusic = true;
-    updateAudioUI(true);
+    try {
+      updateAudioUI(true);
+    } catch (e) {}
 
     try {
       initAudio();
     } catch (e) {}
 
-    if (ytPlayer && ytPlayerReady && typeof ytPlayer.playVideo === 'function') {
-      try {
+    try {
+      if (ytPlayer && ytPlayerReady && typeof ytPlayer.playVideo === 'function') {
         ytPlayer.playVideo();
         stopSynthFallback();
-      } catch (e) {
-        console.warn('ytPlayer.playVideo exception:', e);
+      } else {
+        pendingPlay = true;
         startSynthFallback();
       }
-    } else {
-      pendingPlay = true;
-      startSynthFallback();
+    } catch (e) {
+      console.warn('ytPlayer.playVideo exception:', e);
+      try {
+        startSynthFallback();
+      } catch (err) {}
     }
 
-    startProgressTicker();
+    try {
+      startProgressTicker();
+    } catch (e) {}
   }
 
   function stopMusic() {
     isPlayingMusic = false;
     pendingPlay = false;
-    updateAudioUI(false);
+    try {
+      updateAudioUI(false);
+    } catch (e) {}
 
-    if (ytPlayer && ytPlayerReady && typeof ytPlayer.pauseVideo === 'function') {
-      try {
+    try {
+      if (ytPlayer && ytPlayerReady && typeof ytPlayer.pauseVideo === 'function') {
         ytPlayer.pauseVideo();
-      } catch (e) {
-        console.warn('ytPlayer.pauseVideo exception:', e);
       }
+    } catch (e) {
+      console.warn('ytPlayer.pauseVideo exception:', e);
     }
-    stopSynthFallback();
-    stopProgressTicker();
+    try {
+      stopSynthFallback();
+      stopProgressTicker();
+    } catch (e) {}
   }
 
   function handleYTStateChange(state) {
@@ -570,7 +618,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Autoplay on first touch/click anywhere on page (handles mobile browser policy)
   const autoPlayOnFirstTouch = () => {
-    startMusic();
+    try {
+      startMusic();
+    } catch (e) {}
     window.removeEventListener('pointerdown', autoPlayOnFirstTouch);
     window.removeEventListener('touchstart', autoPlayOnFirstTouch);
     window.removeEventListener('click', autoPlayOnFirstTouch);
@@ -625,20 +675,34 @@ document.addEventListener('DOMContentLoaded', () => {
     startMusic();
   }
 
-  function showPasswordStep() {
-    startMusic();
-    if (!introPasswordSection) {
-      return;
+  function showPasswordStep(e) {
+    if (e && typeof e.preventDefault === 'function' && e.cancelable) {
+      e.preventDefault();
     }
+
+    // 1. Immediately toggle UI elements so user sees feedback without any blocking
     if (enterBtn) enterBtn.style.display = 'none';
-    introPasswordSection.style.display = 'block';
+    if (introPasswordSection) {
+      introPasswordSection.style.display = 'block';
+    }
 
     if (introPasswordInput) {
       setTimeout(() => {
-        introPasswordInput.focus();
+        try {
+          introPasswordInput.focus();
+        } catch (err) {}
       }, 100);
     }
+
+    // 2. Safely attempt to start music
+    try {
+      startMusic();
+    } catch (err) {
+      console.warn('startMusic in showPasswordStep failed:', err);
+    }
   }
+
+  window.showPasswordStepGlobal = showPasswordStep;
 
   async function handlePasswordCheck() {
     if (!introPasswordInput) return;
@@ -664,9 +728,11 @@ document.addEventListener('DOMContentLoaded', () => {
       if (introPasswordInput) introPasswordInput.blur();
 
       // Clear any URL hash so browser does not anchor-jump to middle
-      if (window.location.hash) {
-        history.replaceState(null, document.title, window.location.pathname + window.location.search);
-      }
+      try {
+        if (window.location.hash) {
+          history.replaceState(null, document.title, window.location.pathname + window.location.search);
+        }
+      } catch (e) {}
       window.scrollTo(0, 0);
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
@@ -742,8 +808,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  if (enterBtn) enterBtn.addEventListener('click', showPasswordStep);
-  if (introSeal) introSeal.addEventListener('click', showPasswordStep);
+  if (enterBtn) {
+    enterBtn.addEventListener('click', showPasswordStep);
+    enterBtn.addEventListener('touchend', showPasswordStep);
+  }
+  if (introSeal) {
+    introSeal.addEventListener('click', showPasswordStep);
+    introSeal.addEventListener('touchend', showPasswordStep);
+  }
 
   if (introPasswordForm) {
     introPasswordForm.addEventListener('submit', (e) => {
