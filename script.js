@@ -59,25 +59,25 @@ document.addEventListener('DOMContentLoaded', () => {
     hisName: 'Thân Hiếu',
     herName: 'Khánh Linh',
     startDate: '2026-08-31T00:00:00',
-    letterDate: '30 Tháng 09, 2026',
-    letterSalutation: 'Gửi Em, Cô Gái Bé Nhỏ Của Anh,',
-    letterBody: `Hôm nay là tròn 30 ngày kể từ khoảnh khắc anh lấy hết dũng khí để nắm lấy tay em và nói ra những điều ấp ủ bấy lâu. Một tháng — đối với thế giới có thể chỉ là một cái chớp mắt, nhưng với anh, đó là 30 ngày tràn ngập những nụ cười, những rung động ngọt ngào và những bình yên mà anh chưa từng có trước đây.\n\nAnh nhớ từng buổi tối hai đứa ngồi bên cốc cafe ấm, ánh đèn vàng hắt nhẹ lên khuôn mặt em; nhớ từng cuộc gọi nửa đêm kể đủ thứ chuyện không đầu không cuối; và nhớ nhất là nụ cười rạng rỡ của em mỗi khi nhìn thấy anh.\n\nCảm ơn em vì đã đồng ý bước vào thế giới của anh, bao dung những vụng về của anh và cho anh cơ hội được yêu thương em. 1 tháng mới chỉ là chương mở đầu cho một cuốn sách dài vô tận của chúng ta. Anh muốn cùng em đi qua tháng thứ hai, năm đầu tiên, và thật nhiều năm tháng rực rỡ phía trước nữa.`,
-    letterSignature: 'Thân Hiếu',
+    letterDate: 'Since 31 Tháng 08, 2026',
+    letterSalutation: 'Gửi Khánh Linh — Cô gái xinh xắn chân dài của anh,',
+    letterBody: `Người ta thường bảo duyên số là do trời định, nhưng anh nghĩ vũ trụ đã ưu ái anh quá nhiều vào buổi chiều ngày 17/07 hôm ấy trên sân pickleball. Trong đám đông, anh lập tức bị thu hút bởi một cô bé vừa xinh xắn, dễ thương lại sở hữu đôi chân dài miên man. Buổi đầu tiên ấy, vì ngại ngùng nên anh còn chẳng dám lại gần xin cách liên lạc, cứ ngỡ mình đã bỏ lỡ một điều tuyệt vời...\n\nThế nhưng định mệnh thật khéo sắp đặt! Bằng một cơ duyên tình cờ, anh gặp lại bạn của em trên sân pick, và thế là bằng mọi cách anh đã có được info của em. Để rồi ngày 12/08 định mệnh, buổi hẹn chơi pickleball riêng đầu tiên của hai đứa đã diễn ra. Nhớ hôm đó, đánh bóng thì ít mà hai đứa đi nói chuyện tới tận 12h đêm thì nhiều! Chưa bao giờ anh thấy mình nói chuyện với ai mà lại hợp cạ, cười nhiều và tự nhiên đến thế.\n\nTừ hôm ấy là chuỗi ngày những buổi hẹn hò không dứt, những đêm thức khuya deeptalk từ chuyện trên trời dưới biển đến chuyện tương lai mà không biết chán. Dù em hơn anh 2 tuổi (1999 & 2001), nhưng ở bên em, anh vừa thấy được sự ngọt ngào, tinh tế, vừa thấy một cô người yêu bé bỏng mà anh muốn che chở cả đời. Chuyến đi du lịch biển cuối tháng 8 và khoảnh khắc tỏ tình ngày 31/08/2026 là ngày hạnh phúc nhất cuộc đời anh. Cảm ơn em vì đã đến bên anh, làm đồng đội trên sân pickleball và làm người bạn đời tuyệt vời nhất của anh!`,
+    letterSignature: 'Thân Hiếu (Chàng trai 2001 của em)',
     notes: [
       {
         author: 'Khánh Linh',
-        text: 'Cảm ơn anh vì 1 tháng qua đã luôn cưng chiều và nhường nhịn em. Yêu anh rất nhiều! ♥',
-        date: '30.09.2026 09:30'
+        text: 'Cảm ơn anh người yêu 2001 đã luôn nhường nhịn, cưng chiều và thức đêm buôn chuyện cùng em. Yêu anh nhiều! 🎾💖',
+        date: '31.08.2026 21:00'
       },
       {
         author: 'Thân Hiếu',
-        text: 'Nắm tay anh thật chặt nhé, dù có bão giông thì phía sau lưng em luôn có anh.',
-        date: '30.09.2026 10:15'
+        text: 'May mắn nhất là hôm đó đi chơi pickleball và va phải em. Mãi là đồng đội số 1 của anh nhé bé yêu! 🥰',
+        date: '31.08.2026 21:15'
       },
       {
         author: 'Hai Đứa Mình',
-        text: 'Kỷ niệm 1 tháng ngọt ngào! Mục tiêu tiếp theo: 100 ngày, 1 năm, và mãi mãi!',
-        date: '30.09.2026 11:00'
+        text: 'Từ 31.08.2026 đến mãi mãi về sau — Cùng nhau đi thật nhiều nơi, cười thật nhiều và yêu thương nhau thật nhiều! ✨',
+        date: '31.08.2026 22:00'
       }
     ]
   };
@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function loadConfig() {
     try {
-      const saved = localStorage.getItem('anniversary_config_v3');
+      const saved = localStorage.getItem('anniversary_config_v5');
       if (saved) {
         return { ...DEFAULT_CONFIG, ...JSON.parse(saved) };
       }
@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function saveConfig() {
     try {
-      localStorage.setItem('anniversary_config_v3', JSON.stringify(appConfig));
+      localStorage.setItem('anniversary_config_v5', JSON.stringify(appConfig));
     } catch (e) {
       console.warn('Error saving to localStorage:', e);
     }
@@ -718,6 +718,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (resetDefaultsBtn) {
     resetDefaultsBtn.addEventListener('click', () => {
       if (confirm('Khôi phục lại toàn bộ nội dung mặc định?')) {
+        localStorage.removeItem('anniversary_config_v5');
+        localStorage.removeItem('anniversary_config_v3');
         localStorage.removeItem('anniversary_config_v1');
         appConfig = { ...DEFAULT_CONFIG };
         saveConfig();
