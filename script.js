@@ -482,7 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- A. APPLY STORY & DECRYPTED LETTER TO DOM ---
     const brandCoupleNames = document.getElementById('brandCoupleNames');
-    if (brandCoupleNames) brandCoupleNames.textContent = 'Hiếu & Linh';
+    if (brandCoupleNames) brandCoupleNames.textContent = 'LoveStory';
 
     const heroHerName = document.getElementById('heroHerName');
     if (heroHerName) heroHerName.textContent = COUPLE_DATA.herName;
