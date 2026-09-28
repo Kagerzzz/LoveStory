@@ -2700,6 +2700,20 @@ img {
   transform: translateY(-2px);
 }
 
+.visually-hidden-file-input {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 .file-hint-text {
   font-size: 0.78rem;
   color: var(--text-muted);
@@ -3890,6 +3904,48 @@ img {
 
   .floating-audio-bar .audio-progress-container {
     min-width: 35px;
+  }
+
+  /* Mobile Notes & Memory Dialog ergonomics */
+  .notes-section {
+    padding-bottom: 120px;
+  }
+
+  .note-input-card {
+    padding: 20px 16px;
+    width: 100%;
+    margin-bottom: 28px;
+  }
+
+  #sendNoteBtn {
+    width: 100%;
+    min-height: 46px;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
+  }
+
+  .memory-dialog {
+    width: 95%;
+    max-height: 92vh;
+    padding: 24px 16px;
+  }
+
+  .settings-actions {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .settings-actions button {
+    flex: 1;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: manipulation;
   }
 }
 

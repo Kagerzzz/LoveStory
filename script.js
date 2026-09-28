@@ -1278,6 +1278,86 @@ Với anh, anh muốn đi tiếp cùng với em.`;
   renderCursorGlow();
 
   // ==========================================
+  // CLIENT-SIDE IMAGE COMPRESSION UTILITY (OPTIMIZED FOR MOBILE PHONES & HIGH-RES CAMERAS)
+  // Reduces 5MB-15MB camera photos (HEIC/JPEG/PNG) down to ~150KB (1200px max)
+  // ==========================================
+  function compressImageFile(file, maxDimension = 1200, quality = 0.82) {
+    return new Promise((resolve, reject) => {
+      if (!file) {
+        return reject(new Error('Không có tệp ảnh nào được chọn.'));
+      }
+
+      // Nếu không phải ảnh, đọc theo dạng thông thường
+      if (!file.type || !file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = (e) => reject(e);
+        reader.readAsDataURL(file);
+        return;
+      }
+
+      const objectUrl = URL.createObjectURL(file);
+      const img = new Image();
+
+      img.onload = () => {
+        try {
+          let { width, height } = img;
+
+          // Tính toán tỉ lệ co dãn phù hợp
+          if (width > maxDimension || height > maxDimension) {
+            if (width > height) {
+              height = Math.round((height * maxDimension) / width);
+              width = maxDimension;
+            } else {
+              width = Math.round((width * maxDimension) / height);
+              height = maxDimension;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            throw new Error('Canvas 2D context không khả dụng.');
+          }
+
+          // Nền trắng cho ảnh trong suốt khi nén JPEG
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, width, height);
+
+          // Vẽ ảnh đã rescale
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Chuyển sang DataURL định dạng image/jpeg
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+          URL.revokeObjectURL(objectUrl);
+          resolve(compressedDataUrl);
+        } catch (err) {
+          URL.revokeObjectURL(objectUrl);
+          console.warn('Lỗi canvas resize, fallback FileReader:', err);
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.onerror = (e) => reject(e);
+          reader.readAsDataURL(file);
+        }
+      };
+
+      img.onerror = (err) => {
+        URL.revokeObjectURL(objectUrl);
+        console.warn('Lỗi load Image object, fallback FileReader:', err);
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = (e) => reject(e);
+        reader.readAsDataURL(file);
+      };
+
+      img.src = objectUrl;
+    });
+  }
+
+  // ==========================================
   // 7. PROTECTED APPLICATION INITIALIZER
   // Called ONLY after password verification & DOM mounting
   // ==========================================
@@ -1458,7 +1538,14 @@ Với anh, anh muốn đi tiếp cùng với em.`;
       try {
         localStorage.setItem(MEMORIES_STORAGE_KEY, JSON.stringify(memories));
       } catch (e) {
-        console.warn('Lỗi lưu local memories:', e);
+        console.warn('Lỗi lưu local memories (Quota):', e);
+        try {
+          // Khi bộ nhớ 5MB của trình duyệt bị đầy, cắt bớt và giữ 6 kỷ niệm gần nhất
+          const trimmed = (memories || []).slice(-6);
+          localStorage.setItem(MEMORIES_STORAGE_KEY, JSON.stringify(trimmed));
+        } catch (e2) {
+          console.warn('Không thể lưu local memories ngay cả khi cắt gọn:', e2);
+        }
       }
     }
 
@@ -1755,22 +1842,40 @@ Với anh, anh muốn đi tiếp cùng với em.`;
     }
 
     if (memoryFileInput) {
-      memoryFileInput.addEventListener('change', (e) => {
+      memoryFileInput.addEventListener('change', async (e) => {
         const file = e.target.files && e.target.files[0];
         if (!file) return;
 
-        if (memoryFileNameHint) memoryFileNameHint.textContent = `Đã chọn: ${file.name}`;
+        if (memoryFileNameHint) {
+          memoryFileNameHint.textContent = `⏳ Đang xử lý & tối ưu ảnh...`;
+          memoryFileNameHint.style.color = 'var(--pink-deep)';
+        }
 
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const base64 = event.target.result;
-          if (memoryImageUrlInput) memoryImageUrlInput.value = base64;
+        try {
+          const compressedDataUrl = await compressImageFile(file, 1200, 0.82);
+
+          if (memoryImageUrlInput) {
+            memoryImageUrlInput.value = compressedDataUrl;
+          }
+
           if (memoryPreviewImg && memoryPreviewWrap) {
-            memoryPreviewImg.src = base64;
+            memoryPreviewImg.src = compressedDataUrl;
             memoryPreviewWrap.style.display = 'block';
           }
-        };
-        reader.readAsDataURL(file);
+
+          const approxKb = Math.round((compressedDataUrl.length * 0.75) / 1024);
+          if (memoryFileNameHint) {
+            memoryFileNameHint.textContent = `✓ Đã tối ưu: ${file.name} (~${approxKb} KB)`;
+            memoryFileNameHint.style.color = '#16a34a';
+          }
+        } catch (err) {
+          console.error('Lỗi khi nén ảnh:', err);
+          if (memoryFileNameHint) {
+            memoryFileNameHint.textContent = `⚠️ Lỗi xử lý ảnh: ${file.name}`;
+            memoryFileNameHint.style.color = '#dc2626';
+          }
+          alert('Không thể tối ưu hóa tệp ảnh này. Bạn vui lòng thử chọn ảnh khác nhé!');
+        }
       });
     }
 
@@ -1794,6 +1899,11 @@ Với anh, anh muốn đi tiếp cùng với em.`;
           if (memoryImageUrlInput) memoryImageUrlInput.focus();
           return;
         }
+
+        // Tự động đóng bàn phím trên điện thoại
+        if (memoryCaptionInput) memoryCaptionInput.blur();
+        if (memoryDateInput) memoryDateInput.blur();
+        if (memoryImageUrlInput) memoryImageUrlInput.blur();
 
         const submitBtn = document.getElementById('saveMemoryBtn');
         const originalText = submitBtn ? submitBtn.innerHTML : '';
@@ -1840,30 +1950,56 @@ Với anh, anh muốn đi tiếp cùng với em.`;
             }
             saveLocalMemories(currentMemories);
           } else {
-            if (supabaseClient) {
-              const { error } = await supabaseClient
-                .from('memories')
-                .insert([{
-                  caption: caption,
-                  date: date,
-                  image_url: imageUrl
-                }]);
+            let savedToRemote = false;
+            let newRecord = null;
 
-              if (error) throw error;
-            } else {
-              currentMemories.push({
+            if (supabaseClient) {
+              try {
+                const { data, error } = await supabaseClient
+                  .from('memories')
+                  .insert([{
+                    caption: caption,
+                    date: date,
+                    image_url: imageUrl
+                  }])
+                  .select();
+
+                if (error) {
+                  console.warn('Lỗi Supabase khi lưu memories:', error);
+                } else {
+                  savedToRemote = true;
+                  if (data && data[0]) {
+                    newRecord = data[0];
+                  }
+                }
+              } catch (supErr) {
+                console.warn('Lỗi mạng khi lưu Supabase memories, chuyển sang lưu nội bộ:', supErr);
+              }
+            }
+
+            if (!savedToRemote) {
+              newRecord = {
                 id: 'local-' + Date.now(),
                 caption,
                 date,
                 image_url: imageUrl,
                 created_at: new Date().toISOString()
-              });
+              };
+            }
+
+            if (newRecord) {
+              currentMemories.push(newRecord);
               saveLocalMemories(currentMemories);
             }
           }
 
           closeMemoryModal();
-          await fetchMemories();
+          renderMemories(currentMemories);
+          renderAllMemoriesModal();
+
+          if (supabaseClient) {
+            fetchMemories().catch(() => {});
+          }
 
           if (typeof confetti === 'function') {
             confetti({
@@ -1963,6 +2099,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
 
 
     // --- G. INTERACTIVE LOVE NOTES WALL (SUPABASE DATABASE) ---
+    const noteForm = document.getElementById('noteForm');
     const noteAuthorInput = document.getElementById('noteAuthorInput');
     const noteContentInput = document.getElementById('noteContentInput');
     const sendNoteBtn = document.getElementById('sendNoteBtn');
@@ -1990,7 +2127,13 @@ Với anh, anh muốn đi tiếp cùng với em.`;
       try {
         localStorage.setItem('lovestory_notes_v1', JSON.stringify(appNotes));
       } catch (e) {
-        console.warn('Lỗi lưu local notes:', e);
+        console.warn('Lỗi lưu local notes (Quota):', e);
+        try {
+          const trimmed = (appNotes || []).slice(0, 10);
+          localStorage.setItem('lovestory_notes_v1', JSON.stringify(trimmed));
+        } catch (e2) {
+          console.warn('Không thể lưu local notes ngay cả khi cắt gọn:', e2);
+        }
       }
     }
 
@@ -2163,67 +2306,115 @@ Với anh, anh muốn đi tiếp cùng với em.`;
       });
     }
 
-    if (sendNoteBtn) {
-      sendNoteBtn.addEventListener('click', async () => {
-        const author = (noteAuthorInput && noteAuthorInput.value.trim()) || 'Người Giấu Tên';
-        const text = (noteContentInput && noteContentInput.value.trim()) || '';
+    let isSubmittingNote = false;
 
-        if (!text) {
-          alert('Vui lòng viết một lời nhắn gửi ngọt ngào nhé!');
-          if (noteContentInput) noteContentInput.focus();
-          return;
-        }
+    async function handleSendNote(e) {
+      if (e) {
+        if (typeof e.preventDefault === 'function') e.preventDefault();
+        if (typeof e.stopPropagation === 'function') e.stopPropagation();
+      }
 
-        const now = new Date();
-        const dateStr = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      if (isSubmittingNote) return;
 
-        const originalBtnHTML = sendNoteBtn.innerHTML;
+      const author = (noteAuthorInput && noteAuthorInput.value.trim()) || 'Người Giấu Tên';
+      const text = (noteContentInput && noteContentInput.value.trim()) || '';
+
+      if (!text) {
+        alert('Vui lòng viết một lời nhắn gửi ngọt ngào nhé!');
+        if (noteContentInput) noteContentInput.focus();
+        return;
+      }
+
+      // Thu gọn bàn phím ảo ngay lập tức trên điện thoại
+      if (noteContentInput) noteContentInput.blur();
+      if (noteAuthorInput) noteAuthorInput.blur();
+      if (document.activeElement && typeof document.activeElement.blur === 'function') {
+        document.activeElement.blur();
+      }
+
+      isSubmittingNote = true;
+      const originalBtnHTML = sendNoteBtn ? sendNoteBtn.innerHTML : '<span>Gửi Lời Nhắn Này ♥</span>';
+      if (sendNoteBtn) {
         sendNoteBtn.disabled = true;
         sendNoteBtn.innerHTML = '<span>Đang gửi lời nhắn... 💌</span>';
+      }
 
-        try {
-          if (supabaseClient) {
-            const { error } = await supabaseClient
+      const now = new Date();
+      const dateStr = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      try {
+        let savedToRemote = false;
+        let createdNoteId = 'local-' + Date.now();
+
+        if (supabaseClient) {
+          try {
+            const { data, error } = await supabaseClient
               .from('love_notes')
               .insert([{
                 author: author,
                 content: text,
                 text: text,
                 date: dateStr
-              }]);
+              }])
+              .select();
 
-            if (error) throw error;
-            await fetchLoveNotes();
-          } else {
-            appNotes.unshift({
-              id: 'local-' + Date.now(),
-              author,
-              text,
-              date: dateStr
-            });
-            saveLocalNotes();
-            renderNotes();
-            renderAllNotesModal();
+            if (error) {
+              console.warn('Lỗi Supabase khi lưu lời nhắn:', error);
+            } else {
+              savedToRemote = true;
+              if (data && data[0] && data[0].id) {
+                createdNoteId = data[0].id;
+              }
+            }
+          } catch (supErr) {
+            console.warn('Lỗi mạng khi kết nối Supabase, chuyển sang lưu nội bộ:', supErr);
           }
+        }
 
-          if (noteContentInput) noteContentInput.value = '';
+        // Cập nhật tức thì vào danh sách hiển thị
+        const newNoteObj = {
+          id: createdNoteId,
+          author: author,
+          text: text,
+          date: dateStr
+        };
 
-          if (typeof confetti === 'function') {
-            confetti({
-              particleCount: 40,
-              spread: 60,
-              origin: { y: 0.8 },
-              colors: ['#ff70a6', '#ffd166', '#70e4d0', '#ff8fab']
-            });
-          }
-        } catch (err) {
-          console.error('Lỗi khi lưu lời nhắn vào Supabase:', err);
-          alert('Không thể lưu lời nhắn: ' + (err.message || err));
-        } finally {
+        appNotes = [newNoteObj, ...appNotes.filter(n => n.id !== createdNoteId)];
+        saveLocalNotes();
+        renderNotes();
+        renderAllNotesModal();
+
+        if (noteContentInput) noteContentInput.value = '';
+
+        if (typeof confetti === 'function') {
+          confetti({
+            particleCount: 40,
+            spread: 60,
+            origin: { y: 0.8 },
+            colors: ['#ff70a6', '#ffd166', '#70e4d0', '#ff8fab']
+          });
+        }
+
+        if (savedToRemote && supabaseClient) {
+          fetchLoveNotes().catch(() => {});
+        }
+      } catch (err) {
+        console.error('Lỗi khi gửi lời nhắn:', err);
+        alert('Không thể lưu lời nhắn: ' + (err.message || err));
+      } finally {
+        isSubmittingNote = false;
+        if (sendNoteBtn) {
           sendNoteBtn.disabled = false;
           sendNoteBtn.innerHTML = originalBtnHTML;
         }
-      });
+      }
+    }
+
+    if (noteForm) {
+      noteForm.addEventListener('submit', handleSendNote);
+    }
+    if (sendNoteBtn) {
+      sendNoteBtn.addEventListener('click', handleSendNote);
     }
 
     // Global ESC key listener to close modals

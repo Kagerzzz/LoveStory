@@ -387,17 +387,17 @@
         </div>
 
         <div class="notes-board-wrapper">
-          <div class="note-input-card">
+          <form id="noteForm" class="note-input-card" onsubmit="return false;">
             <div class="input-group">
-              <input type="text" id="noteAuthorInput" placeholder="Tên của bạn (VD: Bé iu / Anh yêu)..." maxlength="30">
+              <input type="text" id="noteAuthorInput" placeholder="Tên của bạn (VD: Bé iu / Anh yêu)..." maxlength="30" autocomplete="name">
             </div>
             <div class="input-group">
               <textarea id="noteContentInput" placeholder="Viết những lời muốn nhắn nhủ vào đây..." rows="3" maxlength="250"></textarea>
             </div>
-            <button id="sendNoteBtn" class="btn-primary btn-small">
+            <button type="submit" id="sendNoteBtn" class="btn-primary btn-small">
               <span>Gửi Lời Nhắn Này ♥</span>
             </button>
-          </div>
+          </form>
 
           <div class="sticky-notes-wall" id="notesWall">
             <!-- Rendered dynamically -->
@@ -467,15 +467,15 @@
           
           <div class="photo-picker-row">
             <span class="photo-picker-text">hoặc</span>
-            <label for="memoryFileInput" class="btn-file-select">
+            <label for="memoryFileInput" class="btn-file-select" id="memoryFileSelectLabel">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                 <polyline points="17 8 12 3 7 8"></polyline>
                 <line x1="12" y1="3" x2="12" y2="15"></line>
               </svg>
-              <span>Chọn ảnh từ máy tính</span>
+              <span>Chọn ảnh từ máy / điện thoại</span>
             </label>
-            <input type="file" id="memoryFileInput" accept="image/*" style="display:none;">
+            <input type="file" id="memoryFileInput" accept="image/*" class="visually-hidden-file-input">
             <span id="memoryFileNameHint" class="file-hint-text">Chưa chọn tệp</span>
           </div>
         </div>
