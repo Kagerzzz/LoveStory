@@ -27,8 +27,7 @@ Chào bạn! Trang web kỷ niệm 1 tháng ngày yêu nhau đã được thiế
    - Các tấm ảnh polaroid đính kèm băng keo washi tape với góc nghiêng tự nhiên.
    - Hiệu ứng nghiêng 3D (`3D Tilt`) di chuyển theo hướng rê chuột.
    - Bấm vào ảnh để phóng to toàn màn hình (`Lightbox`).
-6. **Những Điều Khiến Anh Đắm Say (3D Flip Cards)**:
-   - 6 thẻ lật 3D lật mở những rung động ngọt ngào khi nhấp chuột.
+
 7. **Hộp Quà Kỷ Niệm 1 Tháng (Surprise Gift Box)**:
    - Mở nắp hộp quà bắn tung pháo hoa kim tuyến và trái tim (`Confetti`).
    - Mở ra **"Bản Lời Hứa Tình Yêu Vô Hạn"** được ký kết giữa hai bạn.

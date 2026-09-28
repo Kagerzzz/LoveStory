@@ -1799,13 +1799,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // --- F. 3D FLIP CARDS ("REASONS WHY I LOVE YOU") ---
-    const flipCards = document.querySelectorAll('.flip-card');
-    flipCards.forEach(card => {
-      card.addEventListener('click', () => {
-        card.classList.toggle('flipped');
-      });
-    });
+
 
     // --- G. INTERACTIVE LOVE NOTES WALL (SUPABASE DATABASE) ---
     const noteAuthorInput = document.getElementById('noteAuthorInput');
