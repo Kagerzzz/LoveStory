@@ -1485,7 +1485,6 @@ Với anh, anh muốn đi tiếp cùng với em.`;
     const memoryImageUrlInput = document.getElementById('memoryImageUrlInput');
     const memoryFileInput = document.getElementById('memoryFileInput');
     const memoryFileNameHint = document.getElementById('memoryFileNameHint');
-    const memoryOrderInput = document.getElementById('memoryOrderInput');
     const memoryPreviewWrap = document.getElementById('memoryPreviewWrap');
     const memoryPreviewImg = document.getElementById('memoryPreviewImg');
 
@@ -1509,7 +1508,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
         const { data, error } = await supabaseClient
           .from('memories')
           .select('*')
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: true });
 
         if (error) {
           console.error('Lỗi khi truy vấn memories từ Supabase:', error);
@@ -1693,7 +1692,6 @@ Với anh, anh muốn đi tiếp cùng với em.`;
       if (memoryImageUrlInput) memoryImageUrlInput.value = '';
       if (memoryFileInput) memoryFileInput.value = '';
       if (memoryFileNameHint) memoryFileNameHint.textContent = '';
-      if (memoryOrderInput) memoryOrderInput.value = (currentMemories.length + 1);
       if (memoryPreviewWrap) memoryPreviewWrap.style.display = 'none';
 
       memoryModal.classList.add('open', 'active');
@@ -1711,7 +1709,6 @@ Với anh, anh muốn đi tiếp cùng với em.`;
       if (memoryImageUrlInput) memoryImageUrlInput.value = mem.image_url || '';
       if (memoryFileInput) memoryFileInput.value = '';
       if (memoryFileNameHint) memoryFileNameHint.textContent = '';
-      if (memoryOrderInput) memoryOrderInput.value = mem.order_index || 1;
 
       if (memoryPreviewWrap && memoryPreviewImg && mem.image_url) {
         memoryPreviewImg.src = mem.image_url;
@@ -1785,7 +1782,6 @@ Với anh, anh muốn đi tiếp cùng với em.`;
         const caption = (memoryCaptionInput && memoryCaptionInput.value.trim()) || '';
         const date = (memoryDateInput && memoryDateInput.value.trim()) || '';
         const imageUrl = (memoryImageUrlInput && memoryImageUrlInput.value.trim()) || '';
-        const orderIndex = parseInt((memoryOrderInput && memoryOrderInput.value) || '1', 10);
 
         if (!caption) {
           alert('Vui lòng nhập lời tựa hoặc chú thích cho kỷ niệm nhé!');
@@ -1816,8 +1812,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
                 .update({
                   caption: caption,
                   date: date,
-                  image_url: imageUrl,
-                  order_index: orderIndex
+                  image_url: imageUrl
                 })
                 .eq('id', editId);
 
@@ -1828,8 +1823,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
                 .insert([{
                   caption: caption,
                   date: date,
-                  image_url: imageUrl,
-                  order_index: orderIndex
+                  image_url: imageUrl
                 }]);
 
               if (error) throw error;
@@ -1841,8 +1835,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
                 ...currentMemories[targetIdx],
                 caption,
                 date,
-                image_url: imageUrl,
-                order_index: orderIndex
+                image_url: imageUrl
               };
             }
             saveLocalMemories(currentMemories);
@@ -1853,8 +1846,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
                 .insert([{
                   caption: caption,
                   date: date,
-                  image_url: imageUrl,
-                  order_index: orderIndex
+                  image_url: imageUrl
                 }]);
 
               if (error) throw error;
@@ -1864,7 +1856,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
                 caption,
                 date,
                 image_url: imageUrl,
-                order_index: orderIndex
+                created_at: new Date().toISOString()
               });
               saveLocalMemories(currentMemories);
             }
@@ -1890,8 +1882,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
                 ...currentMemories[targetIdx],
                 caption,
                 date,
-                image_url: imageUrl,
-                order_index: orderIndex
+                image_url: imageUrl
               };
               saveLocalMemories(currentMemories);
               renderMemories(currentMemories);
