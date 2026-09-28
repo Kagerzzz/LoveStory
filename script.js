@@ -44,26 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   ];
 
-  let appNotes = loadNotes();
-
-  function loadNotes() {
-    try {
-      const saved = localStorage.getItem('lovestory_notes_v1');
-      if (saved) return JSON.parse(saved);
-    } catch (e) {
-      console.warn('Error reading notes:', e);
-    }
-    return [...DEFAULT_NOTES];
-  }
-
-  function saveNotes() {
-    try {
-      localStorage.setItem('lovestory_notes_v1', JSON.stringify(appNotes));
-    } catch (e) {
-      console.warn('Error saving notes:', e);
-    }
-    renderNotes();
-  }
+  let appNotes = [...DEFAULT_NOTES];
 
   function applyStoryToDOM() {
     // Brand & Intro
@@ -989,61 +970,209 @@ document.addEventListener('DOMContentLoaded', () => {
   if (openGiftBtn) openGiftBtn.addEventListener('click', triggerGiftOpening);
 
   // ==========================================
-  // 9. INTERACTIVE NOTES WALL
+  // 9. INTERACTIVE LOVE NOTES WALL (SUPABASE DATABASE)
   // ==========================================
   const noteAuthorInput = document.getElementById('noteAuthorInput');
   const noteContentInput = document.getElementById('noteContentInput');
   const sendNoteBtn = document.getElementById('sendNoteBtn');
   const notesWall = document.getElementById('notesWall');
 
+  // Load fallback notes from localStorage
+  function loadLocalNotes() {
+    try {
+      const saved = localStorage.getItem('lovestory_notes_v1');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.warn('Lỗi đọc local notes:', e);
+    }
+    return [...DEFAULT_NOTES];
+  }
+
+  function saveLocalNotes() {
+    try {
+      localStorage.setItem('lovestory_notes_v1', JSON.stringify(appNotes));
+    } catch (e) {
+      console.warn('Lỗi lưu local notes:', e);
+    }
+  }
+
+  // Fetch love notes from Supabase database
+  async function fetchLoveNotes() {
+    if (!notesWall) return;
+
+    if (!supabaseClient) {
+      console.warn('Supabase client chưa khởi tạo, hiển thị lời nhắn từ local storage.');
+      appNotes = loadLocalNotes();
+      renderNotes();
+      return;
+    }
+
+    try {
+      const { data, error } = await supabaseClient
+        .from('love_notes')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Lỗi truy vấn Supabase love_notes:', error);
+        appNotes = loadLocalNotes();
+      } else if (data && data.length > 0) {
+        appNotes = data.map(item => ({
+          id: item.id,
+          author: item.author || 'Người Giấu Tên',
+          text: item.content || item.text || '',
+          date: item.date || ''
+        }));
+      } else {
+        appNotes = [...DEFAULT_NOTES];
+      }
+    } catch (err) {
+      console.error('Lỗi kết nối Supabase love_notes:', err);
+      appNotes = loadLocalNotes();
+    }
+
+    renderNotes();
+  }
+
+  // Render Notes to DOM
   function renderNotes() {
     if (!notesWall) return;
     notesWall.innerHTML = '';
+
+    if (!appNotes || appNotes.length === 0) {
+      notesWall.innerHTML = `
+        <div class="notes-empty-state">
+          <p>Chưa có lời nhắn nào được ghim. Hãy gửi lời nhắn đầu tiên đến người thương nhé! 💌</p>
+        </div>
+      `;
+      return;
+    }
+
     appNotes.forEach(note => {
       const noteEl = document.createElement('div');
       noteEl.className = 'sticky-note';
+      noteEl.setAttribute('data-id', note.id);
       noteEl.innerHTML = `
+        <button type="button" class="btn-delete-note" title="Xóa lời nhắn này" data-id="${note.id}">🗑️</button>
         <p class="sticky-text">"${escapeHTML(note.text)}"</p>
         <div class="sticky-footer">
           <span class="sticky-author">♥ ${escapeHTML(note.author)}</span>
           <span class="sticky-date">${escapeHTML(note.date)}</span>
         </div>
       `;
+
+      const deleteBtn = noteEl.querySelector('.btn-delete-note');
+      if (deleteBtn) {
+        deleteBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          deleteLoveNote(note.id);
+        });
+      }
+
       notesWall.appendChild(noteEl);
     });
   }
 
+  // Delete a love note
+  async function deleteLoveNote(id) {
+    if (!confirm('Bạn có chắc muốn xóa lời nhắn này không?')) return;
+
+    try {
+      if (supabaseClient && !String(id).startsWith('default-') && !String(id).startsWith('local-')) {
+        const { error } = await supabaseClient
+          .from('love_notes')
+          .delete()
+          .eq('id', id);
+
+        if (error) throw error;
+        await fetchLoveNotes();
+        return;
+      }
+
+      appNotes = appNotes.filter(item => item.id !== id);
+      saveLocalNotes();
+      renderNotes();
+    } catch (err) {
+      console.error('Lỗi khi xóa lời nhắn:', err);
+      alert('Không thể xóa lời nhắn: ' + (err.message || err));
+    }
+  }
+
+  // Send a new love note to Supabase database
   if (sendNoteBtn) {
-    sendNoteBtn.addEventListener('click', () => {
+    sendNoteBtn.addEventListener('click', async () => {
       const author = (noteAuthorInput.value || '').trim() || 'Người Giấu Tên';
       const text = (noteContentInput.value || '').trim();
 
       if (!text) {
         alert('Vui lòng viết một lời nhắn gửi ngọt ngào nhé!');
+        if (noteContentInput) noteContentInput.focus();
         return;
       }
 
       const now = new Date();
       const dateStr = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-      appNotes.unshift({
-        author,
-        text,
-        date: dateStr
-      });
+      const originalBtnHTML = sendNoteBtn.innerHTML;
+      sendNoteBtn.disabled = true;
+      sendNoteBtn.innerHTML = '<span>Đang gửi lời nhắn... 💌</span>';
 
-      saveNotes();
-      noteContentInput.value = '';
+      try {
+        if (supabaseClient) {
+          const { error } = await supabaseClient
+            .from('love_notes')
+            .insert([{
+              author: author,
+              content: text,
+              text: text,
+              date: dateStr
+            }]);
 
-      if (typeof confetti === 'function') {
-        confetti({
-          particleCount: 30,
-          spread: 50,
-          origin: { y: 0.8 },
-          colors: ['#ff70a6', '#ffd166', '#70e4d0', '#ff8fab']
-        });
+          if (error) throw error;
+          await fetchLoveNotes();
+        } else {
+          appNotes.unshift({
+            id: 'local-' + Date.now(),
+            author,
+            text,
+            date: dateStr
+          });
+          saveLocalNotes();
+          renderNotes();
+        }
+
+        noteContentInput.value = '';
+
+        if (typeof confetti === 'function') {
+          confetti({
+            particleCount: 40,
+            spread: 60,
+            origin: { y: 0.8 },
+            colors: ['#ff70a6', '#ffd166', '#70e4d0', '#ff8fab']
+          });
+        }
+      } catch (err) {
+        console.error('Lỗi khi lưu lời nhắn vào Supabase:', err);
+        alert('Không thể lưu lời nhắn: ' + (err.message || err));
+      } finally {
+        sendNoteBtn.disabled = false;
+        sendNoteBtn.innerHTML = originalBtnHTML;
       }
     });
+  }
+
+  // Realtime subscription for live love notes sync
+  if (supabaseClient) {
+    try {
+      supabaseClient
+        .channel('public:love_notes')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'love_notes' }, () => {
+          fetchLoveNotes();
+        })
+        .subscribe();
+    } catch (e) {
+      console.warn('Realtime channel subscription error:', e);
+    }
   }
 
   // ==========================================
@@ -1206,7 +1335,8 @@ document.addEventListener('DOMContentLoaded', () => {
     trackedSections.forEach(section => navObserver.observe(section));
   }
 
-  // Initial apply story & fetch memories from Supabase
+  // Initial apply story, fetch memories & fetch love notes from Supabase
   applyStoryToDOM();
   fetchMemories();
+  fetchLoveNotes();
 });

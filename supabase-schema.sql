@@ -1,6 +1,6 @@
 -- ============================================================================
 -- Supabase PostgreSQL Schema & Security Policies for LoveStory (Hiếu & Linh)
--- Bảng: memories (Góc Kỷ Niệm Polaroid)
+-- Bảng: memories (Góc Kỷ Niệm Polaroid) & love_notes (Bảng Lời Nhắn)
 -- ============================================================================
 
 -- 1. Tạo bảng memories lưu trữ kỷ niệm
@@ -13,26 +13,38 @@ create table if not exists memories (
   created_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
--- 2. Kích hoạt Row Level Security (RLS)
+-- Kích hoạt Row Level Security (RLS) cho memories
 alter table memories enable row level security;
 
--- 3. Phân quyền bảo mật (Cho phép truy cập với Public Anon Key)
 drop policy if exists "Public can read memories" on memories;
 drop policy if exists "Public can insert memories" on memories;
 drop policy if exists "Public can update memories" on memories;
 drop policy if exists "Public can delete memories" on memories;
 
-create policy "Public can read memories" 
-  on memories for select using (true);
+create policy "Public can read memories" on memories for select using (true);
+create policy "Public can insert memories" on memories for insert with check (true);
+create policy "Public can update memories" on memories for update using (true);
+create policy "Public can delete memories" on memories for delete using (true);
 
-create policy "Public can insert memories" 
-  on memories for insert with check (true);
+-- 2. Tạo bảng love_notes lưu trữ lời nhắn yêu thương
+create table if not exists love_notes (
+  id uuid default gen_random_uuid() primary key,
+  author text not null,
+  content text not null,
+  text text,
+  date text default '',
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
 
-create policy "Public can update memories" 
-  on memories for update using (true);
+-- Kích hoạt Row Level Security (RLS) cho love_notes
+alter table love_notes enable row level security;
 
-create policy "Public can delete memories" 
-  on memories for delete using (true);
+drop policy if exists "Public can read love_notes" on love_notes;
+drop policy if exists "Public can insert love_notes" on love_notes;
+drop policy if exists "Public can update love_notes" on love_notes;
+drop policy if exists "Public can delete love_notes" on love_notes;
 
--- 4. Dữ liệu kỷ niệm ban đầu (Seed Data)
--- (Bảng này đã được nạp tự động vào Supabase Database của bạn)
+create policy "Public can read love_notes" on love_notes for select using (true);
+create policy "Public can insert love_notes" on love_notes for insert with check (true);
+create policy "Public can update love_notes" on love_notes for update using (true);
+create policy "Public can delete love_notes" on love_notes for delete using (true);

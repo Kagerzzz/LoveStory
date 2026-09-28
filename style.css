@@ -2453,6 +2453,46 @@ img {
   color: var(--text-muted);
 }
 
+.btn-delete-note {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1.5px solid var(--ink);
+  box-shadow: 1px 1px 0 var(--ink);
+  font-size: 0.72rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.75;
+  transition: var(--transition-bounce);
+  z-index: 5;
+}
+
+.sticky-note:hover .btn-delete-note,
+.btn-delete-note:hover {
+  opacity: 1;
+  background: #fee2e2;
+  transform: scale(1.15);
+}
+
+.notes-empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  background: #ffffff;
+  border: var(--border);
+  box-shadow: var(--shadow);
+  border-radius: var(--radius-md);
+  font-family: var(--font-title);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
 /* --------------------------------------------------------------------------
    17. FOOTER
    -------------------------------------------------------------------------- */
