@@ -1595,7 +1595,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
         const { data, error } = await supabaseClient
           .from('memories')
           .select('*')
-          .order('created_at', { ascending: true });
+          .order('created_at', { ascending: false });
 
         if (error) {
           console.error('Lỗi khi truy vấn memories từ Supabase:', error);
@@ -1988,7 +1988,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
             }
 
             if (newRecord) {
-              currentMemories.push(newRecord);
+              currentMemories = [newRecord, ...currentMemories.filter(m => String(m.id) !== String(newRecord.id))];
               saveLocalMemories(currentMemories);
             }
           }
