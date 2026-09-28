@@ -897,9 +897,6 @@ Từ hôm ấy là chuỗi ngày những buổi hẹn hò không dứt, những 
     const heroHerName = document.getElementById('heroHerName');
     if (heroHerName) heroHerName.textContent = COUPLE_DATA.herName;
 
-    const envelopeToName = document.getElementById('envelopeToName');
-    if (envelopeToName) envelopeToName.textContent = COUPLE_DATA.herName;
-
     const letterDateDisplay = document.getElementById('letterDateDisplay');
     if (letterDateDisplay) letterDateDisplay.textContent = COUPLE_DATA.letterDate;
 
