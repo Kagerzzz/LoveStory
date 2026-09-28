@@ -3,7 +3,7 @@
    - Style: Soft & Playful Neubrutalism (Rounded Brutalism)
    - Colors: Sweet Pastel Canvas, Candy Accents (Bubblegum, Buttercup, Lime, Lavender)
    - Accents: Crisp Ink Borders (2.5px - 3px), Hard Drop Shadows, Sticker Badges
-   - Typography: Nunito (Chunky Rounded Cute with full Vietnamese support) & Plus Jakarta Sans + Dancing Script
+   - Typography: Baloo 2 (Bubbly Cute Neubrutalism) & Plus Jakarta Sans + Mali & Dancing Script
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
@@ -65,10 +65,11 @@
   --text-muted: #4b4852;
   --text-dim: #716e79;
 
-  /* Font Families - Full Native Vietnamese Support */
-  --font-title: 'Nunito', 'Plus Jakarta Sans', -apple-system, sans-serif;
-  --font-body: 'Nunito', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-script: 'Dancing Script', cursive;
+  /* Font Families - Cute Bubbly Neubrutalism & Full Native Vietnamese Support */
+  --font-title: 'Baloo 2', cursive, sans-serif;
+  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-script: 'Dancing Script', 'Mali', cursive;
+  --font-hand: 'Mali', 'Dancing Script', cursive;
 
   /* Bouncy Springs */
   --transition-bounce: all 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -1898,10 +1899,11 @@ img {
 }
 
 .sticky-text {
-  font-size: 0.96rem;
+  font-family: var(--font-hand);
+  font-size: 1.05rem;
   line-height: 1.6;
   color: var(--text-main);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .sticky-footer {
