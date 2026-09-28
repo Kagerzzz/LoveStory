@@ -1373,6 +1373,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const memoryModalTitle = document.getElementById('memoryModalTitle');
     const saveMemoryBtnText = document.getElementById('saveMemoryBtnText');
 
+    const viewAllMemoriesWrap = document.getElementById('viewAllMemoriesWrap');
+    const viewAllMemoriesBtn = document.getElementById('viewAllMemoriesBtn');
+    const memoriesTotalCount = document.getElementById('memoriesTotalCount');
+    const allMemoriesModal = document.getElementById('allMemoriesModal');
+    const allMemoriesModalCount = document.getElementById('allMemoriesModalCount');
+    const allMemoriesGrid = document.getElementById('allMemoriesGrid');
+    const closeAllMemoriesModalBtn = document.getElementById('closeAllMemoriesModalBtn');
+
     const memoryEditId = document.getElementById('memoryEditId');
     const memoryCaptionInput = document.getElementById('memoryCaptionInput');
     const memoryDateInput = document.getElementById('memoryDateInput');
@@ -1395,6 +1403,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('Supabase client chưa khởi tạo, hiển thị dữ liệu từ local storage.');
         currentMemories = loadLocalMemories();
         renderMemories(currentMemories);
+        renderAllMemoriesModal();
         return;
       }
 
@@ -1402,8 +1411,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const { data, error } = await supabaseClient
           .from('memories')
           .select('*')
-          .order('order_index', { ascending: true })
-          .order('created_at', { ascending: true });
+          .order('created_at', { ascending: false });
 
         if (error) {
           console.error('Lỗi khi truy vấn memories từ Supabase:', error);
@@ -1421,11 +1429,77 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       renderMemories(currentMemories);
+      renderAllMemoriesModal();
+    }
+
+    function createPolaroidCardElement(mem, index) {
+      const card = document.createElement('div');
+      card.className = 'polaroid-card';
+      card.setAttribute('data-id', mem.id);
+
+      const rotations = [-2.5, 1.8, -1.2, 2.2, -1.8, 1.5];
+      const rot = rotations[index % rotations.length];
+      card.style.setProperty('--rot', `${rot}deg`);
+
+      card.innerHTML = `
+        <div class="polaroid-pin">📍</div>
+        
+        <div class="polaroid-action-bar">
+          <button type="button" class="btn-card-action polaroid-btn-action btn-edit" title="Chỉnh sửa kỷ niệm này" data-id="${mem.id}">
+            <span>✏️</span>
+          </button>
+          <button type="button" class="btn-card-action polaroid-btn-action btn-delete" title="Xóa kỷ niệm này" data-id="${mem.id}">
+            <span>🗑️</span>
+          </button>
+        </div>
+
+        <div class="polaroid-img-wrap" title="Nhấp để phóng to ảnh">
+          <img src="${escapeHTML(mem.image_url)}" alt="${escapeHTML(mem.caption)}" loading="lazy">
+          <div class="polaroid-zoom-hint">🔍 Phóng to</div>
+        </div>
+
+        <div class="polaroid-caption">
+          <p class="polaroid-text">${escapeHTML(mem.caption)}</p>
+          <span class="polaroid-date">${escapeHTML(mem.date || '')}</span>
+        </div>
+      `;
+
+      const imgWrap = card.querySelector('.polaroid-img-wrap');
+      if (imgWrap) {
+        imgWrap.addEventListener('click', () => {
+          openLightbox(mem.image_url, mem.caption, mem.date);
+        });
+      }
+
+      const editBtn = card.querySelector('.btn-edit');
+      if (editBtn) {
+        editBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openEditModal(mem);
+        });
+      }
+
+      const deleteBtn = card.querySelector('.btn-delete');
+      if (deleteBtn) {
+        deleteBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          await handleDeleteMemory(mem.id);
+        });
+      }
+
+      return card;
     }
 
     function renderMemories(memories) {
       if (!polaroidGrid) return;
       polaroidGrid.innerHTML = '';
+
+      const total = (memories && memories.length) || 0;
+      if (memoriesTotalCount) memoriesTotalCount.textContent = total;
+      if (allMemoriesModalCount) allMemoriesModalCount.textContent = total;
+      if (viewAllMemoriesWrap) {
+        viewAllMemoriesWrap.style.display = total > 0 ? 'flex' : 'none';
+      }
 
       if (!memories || memories.length === 0) {
         polaroidGrid.innerHTML = `
@@ -1437,69 +1511,56 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      memories.forEach((mem, index) => {
-        const card = document.createElement('div');
-        card.className = 'polaroid-card';
-        card.setAttribute('data-id', mem.id);
-
-        const rotations = [-2.5, 1.8, -1.2, 2.2, -1.8, 1.5];
-        const rot = rotations[index % rotations.length];
-        card.style.setProperty('--rot', `${rot}deg`);
-
-        card.innerHTML = `
-          <div class="polaroid-pin">📍</div>
-          
-          <div class="polaroid-action-bar">
-            <button type="button" class="btn-card-action polaroid-btn-action btn-edit" title="Chỉnh sửa kỷ niệm này" data-id="${mem.id}">
-              <span>✏️</span>
-            </button>
-            <button type="button" class="btn-card-action polaroid-btn-action btn-delete" title="Xóa kỷ niệm này" data-id="${mem.id}">
-              <span>🗑️</span>
-            </button>
-          </div>
-
-          <div class="polaroid-img-wrap" title="Nhấp để phóng to ảnh">
-            <img src="${escapeHTML(mem.image_url)}" alt="${escapeHTML(mem.caption)}" loading="lazy">
-            <div class="polaroid-zoom-hint">🔍 Phóng to</div>
-          </div>
-
-          <div class="polaroid-caption">
-            <p class="polaroid-text">${escapeHTML(mem.caption)}</p>
-            <span class="polaroid-date">${escapeHTML(mem.date || '')}</span>
-          </div>
-        `;
-
-        const imgWrap = card.querySelector('.polaroid-img-wrap');
-        if (imgWrap) {
-          imgWrap.addEventListener('click', () => {
-            openLightbox(mem.image_url, mem.caption, mem.date);
-          });
-        }
-
-        const editBtn = card.querySelector('.btn-edit');
-        if (editBtn) {
-          editBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            openEditModal(mem);
-          });
-        }
-
-        const deleteBtn = card.querySelector('.btn-delete');
-        if (deleteBtn) {
-          deleteBtn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            await handleDeleteMemory(mem.id);
-          });
-        }
-
-        polaroidGrid.appendChild(card);
+      // Main page strictly displays at most 6 latest memories
+      const displayMems = memories.slice(0, 6);
+      displayMems.forEach((mem, index) => {
+        polaroidGrid.appendChild(createPolaroidCardElement(mem, index));
       });
 
-      initPolaroidTilt();
+      initPolaroidTilt(polaroidGrid);
     }
 
-    function initPolaroidTilt() {
-      const cards = document.querySelectorAll('.polaroid-card');
+    function renderAllMemoriesModal() {
+      if (!allMemoriesGrid) return;
+      allMemoriesGrid.innerHTML = '';
+
+      const total = (currentMemories && currentMemories.length) || 0;
+      if (allMemoriesModalCount) allMemoriesModalCount.textContent = total;
+
+      if (!currentMemories || currentMemories.length === 0) {
+        allMemoriesGrid.innerHTML = `
+          <div class="empty-memories-notice" style="grid-column: 1 / -1; padding: 40px 20px;">
+            <span class="empty-icon">📸</span>
+            <p>Chưa có kỷ niệm nào trong album. Hãy nhấn nút "+ Thêm Kỷ Niệm Mới" để bắt đầu nhé!</p>
+          </div>
+        `;
+        return;
+      }
+
+      currentMemories.forEach((mem, index) => {
+        allMemoriesGrid.appendChild(createPolaroidCardElement(mem, index));
+      });
+
+      initPolaroidTilt(allMemoriesGrid);
+    }
+
+    function openAllMemoriesModal() {
+      if (!allMemoriesModal) return;
+      renderAllMemoriesModal();
+      allMemoriesModal.style.display = 'flex';
+      allMemoriesModal.classList.add('open', 'active');
+      allMemoriesModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeAllMemoriesModal() {
+      if (!allMemoriesModal) return;
+      allMemoriesModal.classList.remove('open', 'active');
+      allMemoriesModal.style.display = 'none';
+      allMemoriesModal.setAttribute('aria-hidden', 'true');
+    }
+
+    function initPolaroidTilt(container = document) {
+      const cards = container.querySelectorAll('.polaroid-card');
       cards.forEach(card => {
         const actionBar = card.querySelector('.polaroid-action-bar');
         if (actionBar) {
@@ -1577,6 +1638,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (memoryModal) {
       memoryModal.addEventListener('click', (e) => {
         if (e.target === memoryModal) closeMemoryModal();
+      });
+    }
+
+    if (viewAllMemoriesBtn) viewAllMemoriesBtn.addEventListener('click', openAllMemoriesModal);
+    if (closeAllMemoriesModalBtn) closeAllMemoriesModalBtn.addEventListener('click', closeAllMemoriesModal);
+    if (allMemoriesModal) {
+      allMemoriesModal.addEventListener('click', (e) => {
+        if (e.target === allMemoriesModal) closeAllMemoriesModal();
       });
     }
 
@@ -1728,6 +1797,7 @@ document.addEventListener('DOMContentLoaded', () => {
               };
               saveLocalMemories(currentMemories);
               renderMemories(currentMemories);
+              renderAllMemoriesModal();
               closeMemoryModal();
               alert('Đã cập nhật kỷ niệm vào bộ nhớ máy!');
               return;
@@ -1762,6 +1832,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentMemories = currentMemories.filter(m => String(m.id) !== String(id));
         saveLocalMemories(currentMemories);
         renderMemories(currentMemories);
+        renderAllMemoriesModal();
 
         if (isSupabaseId) {
           await fetchMemories();
@@ -1771,6 +1842,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentMemories = currentMemories.filter(m => String(m.id) !== String(id));
         saveLocalMemories(currentMemories);
         renderMemories(currentMemories);
+        renderAllMemoriesModal();
         alert('Đã xóa kỷ niệm thành công!');
       }
     }
@@ -1807,6 +1879,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const sendNoteBtn = document.getElementById('sendNoteBtn');
     const notesWall = document.getElementById('notesWall');
 
+    const viewAllNotesWrap = document.getElementById('viewAllNotesWrap');
+    const viewAllNotesBtn = document.getElementById('viewAllNotesBtn');
+    const notesTotalCount = document.getElementById('notesTotalCount');
+    const allNotesModal = document.getElementById('allNotesModal');
+    const allNotesModalCount = document.getElementById('allNotesModalCount');
+    const allNotesWall = document.getElementById('allNotesWall');
+    const closeAllNotesModalBtn = document.getElementById('closeAllNotesModalBtn');
+
     function loadLocalNotes() {
       try {
         const saved = localStorage.getItem('lovestory_notes_v1');
@@ -1832,6 +1912,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn('Supabase client chưa khởi tạo, hiển thị lời nhắn từ local storage.');
         appNotes = loadLocalNotes();
         renderNotes();
+        renderAllNotesModal();
         return;
       }
 
@@ -1865,6 +1946,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       renderNotes();
+      renderAllNotesModal();
     }
 
     async function deleteNote(id) {
@@ -1879,6 +1961,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
           appNotes = appNotes.filter(n => n.id !== id);
           saveLocalNotes();
+          renderNotes();
+          renderAllNotesModal();
         }
         await fetchLoveNotes();
       } catch (err) {
@@ -1887,9 +1971,48 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    function createNoteCardElement(note, index) {
+      const card = document.createElement('div');
+      card.className = 'sticky-note note-card';
+
+      const rotations = [-2, 1.8, -1.5, 2.2, -1.8, 1.5];
+      const tapeColors = ['#ffd166', '#ff70a6', '#70e4d0', '#c77dff', '#ff8fab'];
+
+      const rot = rotations[index % rotations.length];
+      const tapeColor = tapeColors[index % tapeColors.length];
+      card.style.transform = `rotate(${rot}deg)`;
+
+      card.innerHTML = `
+        <div class="note-tape" style="background:${tapeColor};"></div>
+        <button class="btn-delete-note" title="Xóa lời nhắn này" data-id="${escapeHTML(note.id || '')}">✕</button>
+        <p class="sticky-text note-text font-mali">"${escapeHTML(note.text)}"</p>
+        <div class="sticky-footer note-footer">
+          <span class="sticky-author note-author font-title">✦ ${escapeHTML(note.author)}</span>
+          <span class="sticky-date note-date">${escapeHTML(note.date || '')}</span>
+        </div>
+      `;
+
+      const delBtn = card.querySelector('.btn-delete-note');
+      if (delBtn) {
+        delBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          deleteNote(note.id);
+        });
+      }
+
+      return card;
+    }
+
     function renderNotes() {
       if (!notesWall) return;
       notesWall.innerHTML = '';
+
+      const total = (appNotes && appNotes.length) || 0;
+      if (notesTotalCount) notesTotalCount.textContent = total;
+      if (allNotesModalCount) allNotesModalCount.textContent = total;
+      if (viewAllNotesWrap) {
+        viewAllNotesWrap.style.display = total > 0 ? 'flex' : 'none';
+      }
 
       if (!appNotes || appNotes.length === 0) {
         notesWall.innerHTML = `
@@ -1900,36 +2023,54 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const rotations = [-2, 1.8, -1.5, 2.2, -1.8, 1.5];
-      const tapeColors = ['#ffd166', '#ff70a6', '#70e4d0', '#c77dff', '#ff8fab'];
+      // Main page strictly displays at most 6 latest love notes
+      const displayNotes = appNotes.slice(0, 6);
+      displayNotes.forEach((note, index) => {
+        notesWall.appendChild(createNoteCardElement(note, index));
+      });
+    }
 
-      appNotes.forEach((note, index) => {
-        const card = document.createElement('div');
-        card.className = 'sticky-note note-card';
+    function renderAllNotesModal() {
+      if (!allNotesWall) return;
+      allNotesWall.innerHTML = '';
 
-        const rot = rotations[index % rotations.length];
-        const tapeColor = tapeColors[index % tapeColors.length];
-        card.style.transform = `rotate(${rot}deg)`;
+      const total = (appNotes && appNotes.length) || 0;
+      if (allNotesModalCount) allNotesModalCount.textContent = total;
 
-        card.innerHTML = `
-          <div class="note-tape" style="background:${tapeColor};"></div>
-          <button class="btn-delete-note" title="Xóa lời nhắn này" data-id="${escapeHTML(note.id || '')}">✕</button>
-          <p class="sticky-text note-text font-mali">"${escapeHTML(note.text)}"</p>
-          <div class="sticky-footer note-footer">
-            <span class="sticky-author note-author font-title">✦ ${escapeHTML(note.author)}</span>
-            <span class="sticky-date note-date">${escapeHTML(note.date || '')}</span>
+      if (!appNotes || appNotes.length === 0) {
+        allNotesWall.innerHTML = `
+          <div class="notes-empty-state" style="padding: 40px 20px;">
+            <p>Chưa có lời nhắn nào được ghim. Hãy gửi lời nhắn đầu tiên đến người thương nhé! 💌</p>
           </div>
         `;
+        return;
+      }
 
-        const delBtn = card.querySelector('.btn-delete-note');
-        if (delBtn) {
-          delBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            deleteNote(note.id);
-          });
-        }
+      appNotes.forEach((note, index) => {
+        allNotesWall.appendChild(createNoteCardElement(note, index));
+      });
+    }
 
-        notesWall.appendChild(card);
+    function openAllNotesModal() {
+      if (!allNotesModal) return;
+      renderAllNotesModal();
+      allNotesModal.style.display = 'flex';
+      allNotesModal.classList.add('open', 'active');
+      allNotesModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeAllNotesModal() {
+      if (!allNotesModal) return;
+      allNotesModal.classList.remove('open', 'active');
+      allNotesModal.style.display = 'none';
+      allNotesModal.setAttribute('aria-hidden', 'true');
+    }
+
+    if (viewAllNotesBtn) viewAllNotesBtn.addEventListener('click', openAllNotesModal);
+    if (closeAllNotesModalBtn) closeAllNotesModalBtn.addEventListener('click', closeAllNotesModal);
+    if (allNotesModal) {
+      allNotesModal.addEventListener('click', (e) => {
+        if (e.target === allNotesModal) closeAllNotesModal();
       });
     }
 
@@ -1973,6 +2114,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             saveLocalNotes();
             renderNotes();
+            renderAllNotesModal();
           }
 
           if (noteContentInput) noteContentInput.value = '';
@@ -1994,6 +2136,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     }
+
+    // Global ESC key listener to close modals
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeLightbox();
+        closeMemoryModal();
+        closeMusicModal();
+        closeAllMemoriesModal();
+        closeAllNotesModal();
+      }
+    });
 
     // Supabase Realtime Channel Subscription (ONLY active after unlock)
     if (supabaseClient) {

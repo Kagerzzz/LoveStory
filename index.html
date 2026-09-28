@@ -340,6 +340,15 @@
           </div>
         </div>
 
+        <!-- View All Memories Button -->
+        <div class="view-all-wrap" id="viewAllMemoriesWrap" style="display: none;">
+          <button type="button" class="btn-view-all" id="viewAllMemoriesBtn" title="Xem tất cả kỷ niệm trong album">
+            <span class="btn-all-icon">✨</span>
+            <span>Xem Tất Cả Kỷ Niệm (<span id="memoriesTotalCount">0</span>)</span>
+            <span class="btn-all-arrow">➔</span>
+          </button>
+        </div>
+
       </div>
     </section>
 
@@ -372,6 +381,15 @@
 
           <div class="sticky-notes-wall" id="notesWall">
             <!-- Rendered dynamically -->
+          </div>
+
+          <!-- View All Notes Button -->
+          <div class="view-all-wrap" id="viewAllNotesWrap" style="display: none;">
+            <button type="button" class="btn-view-all" id="viewAllNotesBtn" title="Xem tất cả lời nhắn yêu thương">
+              <span class="btn-all-icon">💌</span>
+              <span>Xem Tất Cả Lời Nhắn (<span id="notesTotalCount">0</span>)</span>
+              <span class="btn-all-arrow">➔</span>
+            </button>
           </div>
         </div>
 
@@ -507,6 +525,44 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ALL MEMORIES POPUP MODAL (SHOW ALL POLAROID PHOTOS) -->
+  <div id="allMemoriesModal" class="memory-modal" aria-hidden="true" style="display:none;">
+    <div class="memory-dialog modal-dialog-large">
+      <div class="memory-header">
+        <div class="modal-badge-title">
+          <span class="modal-badge">ALBUM ĐẦY ĐỦ ✦ KHO BÁU TÌNH YÊU</span>
+          <h3 class="memory-title">Tất Cả Kỷ Niệm Polaroid (<span id="allMemoriesModalCount">0</span>)</h3>
+        </div>
+        <button type="button" id="closeAllMemoriesModalBtn" class="modal-close-btn" aria-label="Đóng">&times;</button>
+      </div>
+
+      <div class="modal-all-scroll" id="allMemoriesScroll">
+        <div class="polaroid-grid all-memories-grid" id="allMemoriesGrid">
+          <!-- Render dynamically -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALL NOTES POPUP MODAL (SHOW ALL LOVE NOTES) -->
+  <div id="allNotesModal" class="memory-modal" aria-hidden="true" style="display:none;">
+    <div class="memory-dialog modal-dialog-large">
+      <div class="memory-header">
+        <div class="modal-badge-title">
+          <span class="modal-badge">BỨC TƯỜNG LỜI NHẮN ✦ TOÀN BỘ LỜI CHÚC</span>
+          <h3 class="memory-title">Tất Cả Lời Nhắn Gửi Yêu Thương (<span id="allNotesModalCount">0</span>)</h3>
+        </div>
+        <button type="button" id="closeAllNotesModalBtn" class="modal-close-btn" aria-label="Đóng">&times;</button>
+      </div>
+
+      <div class="modal-all-scroll" id="allNotesScroll">
+        <div class="sticky-notes-wall all-notes-wall" id="allNotesWall">
+          <!-- Render dynamically -->
+        </div>
+      </div>
     </div>
   </div>
 
