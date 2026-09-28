@@ -48,3 +48,20 @@ create policy "Public can read love_notes" on love_notes for select using (true)
 create policy "Public can insert love_notes" on love_notes for insert with check (true);
 create policy "Public can update love_notes" on love_notes for update using (true);
 create policy "Public can delete love_notes" on love_notes for delete using (true);
+
+-- 3. Lưu trữ cấu hình bài hát YouTube (Đồng bộ Realtime):
+-- Hệ thống tự động đồng bộ qua bản ghi author = '__CONFIG_MUSIC__' trong bảng love_notes.
+-- Tùy chọn (Nếu muốn dùng bảng riêng biệt):
+create table if not exists music_settings (
+  id uuid default gen_random_uuid() primary key,
+  url text not null,
+  video_id text not null,
+  title text default 'YouTube Music',
+  artist text default '',
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table music_settings enable row level security;
+create policy "Public can read music_settings" on music_settings for select using (true);
+create policy "Public can insert music_settings" on music_settings for insert with check (true);
+create policy "Public can update music_settings" on music_settings for update using (true);

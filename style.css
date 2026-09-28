@@ -2983,6 +2983,28 @@ img {
   background: var(--pink);
 }
 
+/* Audio Settings Button (YouTube Song Switcher) */
+.audio-settings-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ink);
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  cursor: pointer;
+  margin-left: 2px;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease;
+  flex-shrink: 0;
+}
+
+.audio-settings-btn:hover {
+  background: var(--yellow);
+  transform: rotate(60deg) scale(1.08);
+}
+
 /* Collapsed Mini Pill State */
 .floating-audio-bar.is-collapsed,
 .floating-audio-bar.collapsed {
@@ -2999,10 +3021,12 @@ img {
 .floating-audio-bar.is-collapsed .audio-timeline-wrap,
 .floating-audio-bar.is-collapsed .audio-volume-wrap,
 .floating-audio-bar.is-collapsed .audio-waves,
+.floating-audio-bar.is-collapsed .audio-settings-btn,
 .floating-audio-bar.collapsed .audio-meta,
 .floating-audio-bar.collapsed .audio-timeline-wrap,
 .floating-audio-bar.collapsed .audio-volume-wrap,
-.floating-audio-bar.collapsed .audio-waves {
+.floating-audio-bar.collapsed .audio-waves,
+.floating-audio-bar.collapsed .audio-settings-btn {
   display: none !important;
 }
 
@@ -3235,6 +3259,7 @@ img {
     display: none; /* Hide volume slider and waves to save horizontal space */
   }
 
+  .floating-audio-bar .audio-settings-btn,
   .floating-audio-bar .audio-collapse-btn {
     width: 22px;
     height: 22px;

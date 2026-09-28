@@ -604,6 +604,51 @@
     </div>
   </div>
 
+  <!-- MUSIC SETTINGS POPUP MODAL (NEUBRUTALISM STYLE) -->
+  <div id="musicSettingsModal" class="memory-modal" aria-hidden="true" style="display:none;">
+    <div class="memory-dialog" style="max-width: 480px;">
+      <div class="memory-header">
+        <div class="modal-badge-title">
+          <span class="modal-badge">YOUTUBE ✦ DATABASE LIVE</span>
+          <h3 class="memory-title">Đổi Nhạc Nền Yêu Thích 🎵</h3>
+        </div>
+        <button type="button" id="closeMusicModalBtn" class="modal-close-btn" aria-label="Đóng">&times;</button>
+      </div>
+
+      <form id="musicSettingsForm" class="memory-form">
+        <div class="setting-field">
+          <label for="musicYoutubeUrlInput">Dán Link YouTube bài hát <span class="required-star">*</span></label>
+          <input 
+            type="url" 
+            id="musicYoutubeUrlInput" 
+            placeholder="VD: https://www.youtube.com/watch?v=... hoặc https://youtu.be/..." 
+            required
+            autocomplete="off"
+          >
+          <span class="field-hint">Hỗ trợ link YouTube video hoặc shorts. Bài hát sẽ được lưu vào cơ sở dữ liệu để cả hai đều nghe chung khi vào web.</span>
+        </div>
+
+        <!-- Live preview of detected track -->
+        <div id="musicDetectInfo" style="display:none; background:#fef9c3; border:2px solid var(--ink); border-radius:12px; padding:10px 14px; margin-bottom:14px; box-shadow: 2px 2px 0 var(--ink);">
+          <div style="font-size:0.72rem; font-weight:800; text-transform:uppercase; color:var(--ink-muted); letter-spacing:0.04em;">Bài hát tìm thấy:</div>
+          <div id="musicDetectTitle" style="font-weight:800; font-size:0.95rem; color:var(--ink); margin-top:2px;"></div>
+          <div id="musicDetectArtist" style="font-size:0.82rem; color:var(--ink-muted);"></div>
+        </div>
+
+        <div id="musicErrorTip" class="password-error-tip" style="display:none; margin-bottom:14px;">
+          <span id="musicErrorTipText">❌ Link YouTube không hợp lệ hoặc không trích xuất được Video ID.</span>
+        </div>
+
+        <div class="settings-actions">
+          <button type="button" id="cancelMusicBtn" class="btn-ghost">Hủy Bỏ</button>
+          <button type="submit" id="saveMusicBtn" class="btn-primary">
+            <span id="saveMusicBtnText">Lưu & Phát Ngay ♥</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- AUDIO ELEMENTS -->
   <!-- Web Audio Synth / Optional Audio Stream Element -->
   <audio id="bgAudio" loop preload="none">
@@ -660,6 +705,11 @@
       <div class="audio-waves" id="audioWaves">
         <span></span><span></span><span></span><span></span>
       </div>
+
+      <!-- Music Settings Button (Change YouTube Link) -->
+      <button class="audio-settings-btn" id="audioSettingsBtn" title="Cài đặt / Đổi bài hát (YouTube)" aria-label="Đổi bài hát">
+        <span>⚙️</span>
+      </button>
 
       <!-- Toggle compact button on mobile/desktop -->
       <button class="audio-collapse-btn" id="audioCollapseBtn" title="Thu gọn / Mở rộng" aria-label="Thu gọn">
