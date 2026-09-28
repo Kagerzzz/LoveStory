@@ -932,14 +932,29 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (audioCollapseBtn && floatingAudioBar) {
-      audioCollapseBtn.addEventListener('click', () => {
-        floatingAudioBar.classList.toggle('collapsed');
-        if (floatingAudioBar.classList.contains('collapsed')) {
+      audioCollapseBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isCollapsed = floatingAudioBar.classList.toggle('is-collapsed');
+        floatingAudioBar.classList.toggle('collapsed', isCollapsed);
+        if (isCollapsed) {
           if (collapseIcon) collapseIcon.textContent = '🎵';
           audioCollapseBtn.title = 'Mở rộng thanh nhạc';
+          audioCollapseBtn.setAttribute('aria-label', 'Mở rộng thanh nhạc');
         } else {
           if (collapseIcon) collapseIcon.textContent = '✕';
           audioCollapseBtn.title = 'Thu gọn thanh nhạc';
+          audioCollapseBtn.setAttribute('aria-label', 'Thu gọn thanh nhạc');
+        }
+      });
+
+      // Allow clicking the collapsed mini-bar to expand it back
+      floatingAudioBar.addEventListener('click', (e) => {
+        if (floatingAudioBar.classList.contains('is-collapsed') || floatingAudioBar.classList.contains('collapsed')) {
+          if (e.target.closest('#audioPlayBtn') || e.target.closest('#audioCollapseBtn')) return;
+          floatingAudioBar.classList.remove('is-collapsed', 'collapsed');
+          if (collapseIcon) collapseIcon.textContent = '✕';
+          audioCollapseBtn.title = 'Thu gọn thanh nhạc';
+          audioCollapseBtn.setAttribute('aria-label', 'Thu gọn thanh nhạc');
         }
       });
     }

@@ -2984,20 +2984,42 @@ img {
 }
 
 /* Collapsed Mini Pill State */
-.floating-audio-bar.is-collapsed {
+.floating-audio-bar.is-collapsed,
+.floating-audio-bar.collapsed {
   padding: 6px 12px;
+  cursor: pointer;
+}
+
+.floating-audio-bar.is-collapsed .audio-bar-inner,
+.floating-audio-bar.collapsed .audio-bar-inner {
+  gap: 8px;
 }
 
 .floating-audio-bar.is-collapsed .audio-meta,
 .floating-audio-bar.is-collapsed .audio-timeline-wrap,
 .floating-audio-bar.is-collapsed .audio-volume-wrap,
-.floating-audio-bar.is-collapsed .audio-waves {
-  display: none;
+.floating-audio-bar.is-collapsed .audio-waves,
+.floating-audio-bar.collapsed .audio-meta,
+.floating-audio-bar.collapsed .audio-timeline-wrap,
+.floating-audio-bar.collapsed .audio-volume-wrap,
+.floating-audio-bar.collapsed .audio-waves {
+  display: none !important;
 }
 
-.floating-audio-bar.is-collapsed .audio-collapse-btn #collapseIcon {
+.floating-audio-bar.is-collapsed .audio-collapse-btn,
+.floating-audio-bar.collapsed .audio-collapse-btn {
+  background: var(--yellow);
+}
+
+.floating-audio-bar.is-collapsed .audio-collapse-btn:hover,
+.floating-audio-bar.collapsed .audio-collapse-btn:hover {
+  background: var(--pink);
+}
+
+.floating-audio-bar.is-collapsed .audio-collapse-btn #collapseIcon,
+.floating-audio-bar.collapsed .audio-collapse-btn #collapseIcon {
   display: inline-block;
-  transform: rotate(45deg);
+  transform: none;
 }
 
 /* Navbar CTA link */
@@ -3221,14 +3243,20 @@ img {
   }
 
   /* Collapsed mobile mini-widget: docks gracefully to bottom-right */
-  .floating-audio-bar.is-collapsed {
+  .floating-audio-bar.is-collapsed,
+  .floating-audio-bar.collapsed {
+    width: auto !important;
+    max-width: none !important;
+    left: auto !important;
+    right: 14px !important;
+    bottom: 72px !important;
+    transform: none !important;
+    padding: 4px 10px !important;
+  }
+
+  .floating-audio-bar.is-collapsed .audio-bar-inner,
+  .floating-audio-bar.collapsed .audio-bar-inner {
     width: auto;
-    max-width: none;
-    left: auto;
-    right: 14px;
-    bottom: 72px;
-    transform: none;
-    padding: 4px 10px;
     gap: 6px;
   }
 
