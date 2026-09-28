@@ -72,14 +72,6 @@
             <span></span><span></span><span></span><span></span>
           </div>
         </button>
-
-        <!-- Settings / Edit Details Button -->
-        <button id="openSettingsBtn" class="control-btn settings-btn" title="Chỉnh sửa thông tin kỷ niệm">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3"></circle>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-          </svg>
-        </button>
       </div>
     </div>
   </header>
@@ -257,130 +249,21 @@
           <p class="section-desc">
             Những khoảnh khắc chân thực nhất của chúng ta. Bạn có thể bấm vào ảnh để phóng to hoặc thay ảnh thật của mình bất cứ lúc nào!
           </p>
-          <div class="gallery-upload-prompt">
-            <label for="batchPhotoInput" class="btn-secondary btn-small">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                <polyline points="17 8 12 3 7 8"></polyline>
-                <line x1="12" y1="3" x2="12" y2="15"></line>
-              </svg>
-              <span>Tải ảnh thật của chúng mình lên (Xem trước ngay)</span>
-            </label>
-            <input type="file" id="batchPhotoInput" accept="image/*" multiple style="display:none;">
-            <button id="resetPhotosBtn" class="btn-ghost btn-small" title="Khôi phục lại ảnh mẫu ban đầu">Khôi phục ảnh mẫu</button>
+          <div class="gallery-header-action">
+            <button id="openAddMemoryBtn" class="btn-primary btn-add-memory" title="Thêm khoảnh khắc kỷ niệm mới">
+              <span class="btn-add-icon">📸</span>
+              <span>+ Thêm Kỷ Niệm Mới</span>
+              <span class="btn-badge-live">Supabase Live</span>
+            </button>
           </div>
         </div>
 
         <div class="polaroid-grid" id="polaroidGrid">
-          
-          <!-- Polaroid 1 -->
-          <div class="polaroid-card" data-tilt data-id="1">
-            <div class="washi-tape washi-1"></div>
-            <div class="polaroid-img-wrap">
-              <img src="assets/images/polaroid-1.jpg" alt="Nụ hôn ngọt ngào bên bờ biển" class="polaroid-img">
-              <button class="btn-swap-photo" title="Thay ảnh này" data-target-id="1">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                  <circle cx="12" cy="13" r="4"></circle>
-                </svg>
-              </button>
-            </div>
-            <div class="polaroid-caption">
-              <span class="caption-text">"Chuyến đi biển đầu tiên — ngọt ngào như vị nước dừa tươi."</span>
-              <span class="caption-date">30 - 31.08.2026</span>
-            </div>
+          <!-- Render động từ Supabase PostgreSQL Database -->
+          <div class="gallery-loading" id="galleryLoading">
+            <div class="gallery-loading-spinner">✨</div>
+            <p>Đang mở kho báu kỷ niệm của Hiếu & Linh từ database...</p>
           </div>
-
-          <!-- Polaroid 2 -->
-          <div class="polaroid-card" data-tilt data-id="2">
-            <div class="washi-tape washi-2"></div>
-            <div class="polaroid-img-wrap">
-              <img src="assets/images/polaroid-2.jpg" alt="Phố đêm rực rỡ và nụ cười em" class="polaroid-img">
-              <button class="btn-swap-photo" title="Thay ảnh này" data-target-id="2">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                  <circle cx="12" cy="13" r="4"></circle>
-                </svg>
-              </button>
-            </div>
-            <div class="polaroid-caption">
-              <span class="caption-text">"Nụ cười xinh xắn làm anh 'đổ gục' ngay từ cái nhìn đầu tiên."</span>
-              <span class="caption-date">Sweet Smile ✦ 12.08</span>
-            </div>
-          </div>
-
-          <!-- Polaroid 3 -->
-          <div class="polaroid-card" data-tilt data-id="3">
-            <div class="washi-tape washi-3"></div>
-            <div class="polaroid-img-wrap">
-              <img src="assets/images/polaroid-3.jpg" alt="Bàn tay đan chặt dưới ánh đèn vàng" class="polaroid-img">
-              <button class="btn-swap-photo" title="Thay ảnh này" data-target-id="3">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                  <circle cx="12" cy="13" r="4"></circle>
-                </svg>
-              </button>
-            </div>
-            <div class="polaroid-caption">
-              <span class="caption-text">"Bàn tay đan chặt ấm áp — Luôn là điểm tựa an toàn của em."</span>
-              <span class="caption-date">Always Together</span>
-            </div>
-          </div>
-
-          <!-- Polaroid 4 -->
-          <div class="polaroid-card" data-tilt data-id="4">
-            <div class="washi-tape washi-1"></div>
-            <div class="polaroid-img-wrap">
-              <img src="assets/images/polaroid-4.jpg" alt="Bình yên khi em ngủ say trên đùi anh" class="polaroid-img">
-              <button class="btn-swap-photo" title="Thay ảnh này" data-target-id="4">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                  <circle cx="12" cy="13" r="4"></circle>
-                </svg>
-              </button>
-            </div>
-            <div class="polaroid-caption">
-              <span class="caption-text">"Những đêm deeptalk buôn chuyện mệt rồi ngủ quên lúc nào không hay."</span>
-              <span class="caption-date">Midnight Talk</span>
-            </div>
-          </div>
-
-          <!-- Polaroid 5 -->
-          <div class="polaroid-card" data-tilt data-id="5">
-            <div class="washi-tape washi-2"></div>
-            <div class="polaroid-img-wrap">
-              <img src="assets/images/polaroid-5.jpg" alt="Chiếc nơ hồng và cái ôm từ phía sau" class="polaroid-img">
-              <button class="btn-swap-photo" title="Thay ảnh này" data-target-id="5">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                  <circle cx="12" cy="13" r="4"></circle>
-                </svg>
-              </button>
-            </div>
-            <div class="polaroid-caption">
-              <span class="caption-text">"Chị người yêu 1999 nhưng lúc nào cũng nhí nhảnh, đáng yêu nhất trần đời."</span>
-              <span class="caption-date">My Baby Girl</span>
-            </div>
-          </div>
-
-          <!-- Polaroid 6 -->
-          <div class="polaroid-card" data-tilt data-id="6">
-            <div class="washi-tape washi-3"></div>
-            <div class="polaroid-img-wrap">
-              <img src="assets/images/polaroid-6.jpg" alt="Công chúa kỳ lân và đóa hồng tươi thắm" class="polaroid-img">
-              <button class="btn-swap-photo" title="Thay ảnh này" data-target-id="6">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
-                  <circle cx="12" cy="13" r="4"></circle>
-                </svg>
-              </button>
-            </div>
-            <div class="polaroid-caption">
-              <span class="caption-text">"Công chúa của anh — Ngày 31.08 định mệnh và mãi mãi về sau."</span>
-              <span class="caption-date">Since 31.08.2026</span>
-            </div>
-          </div>
-
         </div>
 
       </div>
@@ -607,47 +490,70 @@
     </div>
   </div>
 
-  <!-- SINGLE PHOTO SWAP INPUT (Hidden) -->
-  <input type="file" id="singlePhotoInput" accept="image/*" style="display: none;">
-
-  <!-- CUSTOMIZATION / SETTINGS MODAL -->
-  <div id="settingsModal" class="settings-modal">
-    <div class="settings-dialog">
-      <div class="settings-header">
-        <h3 class="settings-title">⚙️ Chỉnh Sửa Thông Tin Kỷ Niệm</h3>
-        <button id="closeSettingsBtn" class="settings-close-btn">&times;</button>
+  <!-- MEMORY ADD & EDIT MODAL (NEUBRUTALISM STYLE) -->
+  <div id="memoryModal" class="memory-modal" aria-hidden="true">
+    <div class="memory-dialog">
+      <div class="memory-header">
+        <div class="modal-badge-title">
+          <span class="modal-badge">DATABASE ✦ SUPABASE LIVE</span>
+          <h3 id="memoryModalTitle" class="memory-title">Thêm Kỷ Niệm Mới</h3>
+        </div>
+        <button type="button" id="closeMemoryModalBtn" class="modal-close-btn" aria-label="Đóng">&times;</button>
       </div>
 
-      <div class="settings-body">
-        <p class="settings-intro">
-          Bạn có thể thay đổi tên của hai bạn, ngày bắt đầu yêu, và lời tựa bất cứ lúc nào. Thông tin sẽ được lưu trực tiếp trên trình duyệt của bạn!
-        </p>
+      <form id="memoryForm" class="memory-form">
+        <input type="hidden" id="memoryEditId" value="">
 
         <div class="setting-field">
-          <label for="inputHisName">Tên Bạn Nam (Anh):</label>
-          <input type="text" id="inputHisName" value="Thân Hiếu" placeholder="Nhập tên bạn nam...">
+          <label for="memoryCaptionInput">Lời Tựa / Chú Thích Kỷ Niệm <span class="required-star">*</span></label>
+          <textarea id="memoryCaptionInput" rows="3" placeholder="Nhập cảm xúc ngọt ngào hoặc lời thì thầm..." required maxlength="250"></textarea>
+          <span class="field-hint">Dòng chữ này sẽ được in nắn nót dưới tấm ảnh polaroid.</span>
         </div>
 
         <div class="setting-field">
-          <label for="inputHerName">Tên Bạn Nữ (Em):</label>
-          <input type="text" id="inputHerName" value="Khánh Linh" placeholder="Nhập tên bạn nữ...">
+          <label for="memoryDateInput">Thời Gian / Ngày Kỷ Niệm</label>
+          <input type="text" id="memoryDateInput" placeholder="VD: 31.08.2026 hoặc Đêm hẹn hò đầu tiên...">
         </div>
 
         <div class="setting-field">
-          <label for="inputStartDate">Ngày Bắt Đầu Yêu:</label>
-          <input type="date" id="inputStartDate" value="2026-08-31">
+          <label for="memoryImageUrlInput">Đường Dẫn Hình Ảnh (URL) <span class="required-star">*</span></label>
+          <input type="text" id="memoryImageUrlInput" placeholder="https://... hoặc assets/images/polaroid-1.jpg" required>
+          
+          <div class="photo-picker-row">
+            <span class="photo-picker-text">hoặc</span>
+            <label for="memoryFileInput" class="btn-file-select">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+              <span>Chọn ảnh từ máy tính</span>
+            </label>
+            <input type="file" id="memoryFileInput" accept="image/*" style="display:none;">
+            <span id="memoryFileNameHint" class="file-hint-text">Chưa chọn tệp</span>
+          </div>
         </div>
 
         <div class="setting-field">
-          <label for="inputLetterBody">Nội dung bức thư tình (Tuỳ chọn chỉnh sửa):</label>
-          <textarea id="inputLetterBody" rows="4" placeholder="Viết bức thư của riêng bạn..."></textarea>
+          <label for="memoryOrderInput">Thứ Tự Sắp Xếp (Tùy chọn)</label>
+          <input type="number" id="memoryOrderInput" value="1" min="1" max="999">
+        </div>
+
+        <!-- Live Preview Thumbnail -->
+        <div id="memoryPreviewWrap" class="memory-preview-container" style="display:none;">
+          <span class="preview-badge">Xem trước ảnh Polaroid:</span>
+          <div class="preview-polaroid-frame">
+            <img id="memoryPreviewImg" src="" alt="Xem trước polaroid">
+          </div>
         </div>
 
         <div class="settings-actions">
-          <button id="saveSettingsBtn" class="btn-primary">Lưu Cài Đặt</button>
-          <button id="resetDefaultsBtn" class="btn-ghost">Khôi phục mặc định</button>
+          <button type="button" id="cancelMemoryBtn" class="btn-ghost">Hủy Bỏ</button>
+          <button type="submit" id="saveMemoryBtn" class="btn-primary">
+            <span id="saveMemoryBtnText">Lưu Kỷ Niệm ♥</span>
+          </button>
         </div>
-      </div>
+      </form>
     </div>
   </div>
 
@@ -684,7 +590,13 @@
   <!-- CONFETTI SCRIPT (Self-contained Canvas Confetti for magical moments) -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
   
-  <!-- Main Script -->
+  <!-- SUPABASE JS CLIENT -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- SUPABASE CONFIG -->
+  <script src="supabase-config.js"></script>
+
+  <!-- MAIN SCRIPT -->
   <script src="script.js"></script>
 </body>
 </html>

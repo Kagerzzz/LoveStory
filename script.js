@@ -14,115 +14,104 @@
 document.addEventListener('DOMContentLoaded', () => {
 
   // ==========================================
-  // 1. STATE & LOCAL STORAGE INITIALIZATION
+  // 1. STORY & COUPLE DATA (FIXED & CLEAN)
   // ==========================================
-  const DEFAULT_CONFIG = {
+  const COUPLE_DATA = {
     hisName: 'Thân Hiếu',
     herName: 'Khánh Linh',
     startDate: '2026-08-31T00:00:00',
     letterDate: 'Since 31 Tháng 08, 2026',
     letterSalutation: 'Gửi Khánh Linh — Cô gái xinh xắn chân dài của anh,',
     letterBody: `Người ta thường bảo duyên số là do trời định, nhưng anh nghĩ vũ trụ đã ưu ái anh quá nhiều vào buổi chiều ngày 17/07 hôm ấy trên sân pickleball. Trong đám đông, anh lập tức bị thu hút bởi một cô bé vừa xinh xắn, dễ thương lại sở hữu đôi chân dài miên man. Buổi đầu tiên ấy, vì ngại ngùng nên anh còn chẳng dám lại gần xin cách liên lạc, cứ ngỡ mình đã bỏ lỡ một điều tuyệt vời...\n\nThế nhưng định mệnh thật khéo sắp đặt! Bằng một cơ duyên tình cờ, anh gặp lại bạn của em trên sân pick, và thế là bằng mọi cách anh đã có được info của em. Để rồi ngày 12/08 định mệnh, buổi hẹn chơi pickleball riêng đầu tiên của hai đứa đã diễn ra. Nhớ hôm đó, đánh bóng thì ít mà hai đứa đi nói chuyện tới tận 12h đêm thì nhiều! Chưa bao giờ anh thấy mình nói chuyện với ai mà lại hợp cạ, cười nhiều và tự nhiên đến thế.\n\nTừ hôm ấy là chuỗi ngày những buổi hẹn hò không dứt, những đêm thức khuya deeptalk từ chuyện trên trời dưới biển đến chuyện tương lai mà không biết chán. Dù em hơn anh 2 tuổi (1999 & 2001), nhưng ở bên em, anh vừa thấy được sự ngọt ngào, tinh tế, vừa thấy một cô người yêu bé bỏng mà anh muốn che chở cả đời. Chuyến đi du lịch biển cuối tháng 8 và khoảnh khắc tỏ tình ngày 31/08/2026 là ngày hạnh phúc nhất cuộc đời anh. Cảm ơn em vì đã đến bên anh, làm đồng đội trên sân pickleball và làm người bạn đời tuyệt vời nhất của anh!`,
-    letterSignature: 'Thân Hiếu (Chàng trai 2001 của em)',
-    notes: [
-      {
-        author: 'Khánh Linh',
-        text: 'Cảm ơn anh người yêu 2001 đã luôn nhường nhịn, cưng chiều và thức đêm buôn chuyện cùng em. Yêu anh nhiều! 🎾💖',
-        date: '31.08.2026 21:00'
-      },
-      {
-        author: 'Thân Hiếu',
-        text: 'May mắn nhất là hôm đó đi chơi pickleball và va phải em. Mãi là đồng đội số 1 của anh nhé bé yêu! 🥰',
-        date: '31.08.2026 21:15'
-      },
-      {
-        author: 'Hai Đứa Mình',
-        text: 'Từ 31.08.2026 đến mãi mãi về sau — Cùng nhau đi thật nhiều nơi, cười thật nhiều và yêu thương nhau thật nhiều! ✨',
-        date: '31.08.2026 22:00'
-      }
-    ]
+    letterSignature: 'Thân Hiếu (Chàng trai 2001 của em)'
   };
 
-  let appConfig = loadConfig();
-
-  function loadConfig() {
-    try {
-      const saved = localStorage.getItem('anniversary_config_v5');
-      if (saved) {
-        return { ...DEFAULT_CONFIG, ...JSON.parse(saved) };
-      }
-    } catch (e) {
-      console.warn('Error reading localStorage:', e);
+  const DEFAULT_NOTES = [
+    {
+      author: 'Khánh Linh',
+      text: 'Cảm ơn anh người yêu 2001 đã luôn nhường nhịn, cưng chiều và thức đêm buôn chuyện cùng em. Yêu anh nhiều! 🎾💖',
+      date: '31.08.2026 21:00'
+    },
+    {
+      author: 'Thân Hiếu',
+      text: 'May mắn nhất là hôm đó đi chơi pickleball và va phải em. Mãi là đồng đội số 1 của anh nhé bé yêu! 🥰',
+      date: '31.08.2026 21:15'
+    },
+    {
+      author: 'Hai Đứa Mình',
+      text: 'Từ 31.08.2026 đến mãi mãi về sau — Cùng nhau đi thật nhiều nơi, cười thật nhiều và yêu thương nhau thật nhiều! ✨',
+      date: '31.08.2026 22:00'
     }
-    return { ...DEFAULT_CONFIG };
+  ];
+
+  let appNotes = loadNotes();
+
+  function loadNotes() {
+    try {
+      const saved = localStorage.getItem('lovestory_notes_v1');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.warn('Error reading notes:', e);
+    }
+    return [...DEFAULT_NOTES];
   }
 
-  function saveConfig() {
+  function saveNotes() {
     try {
-      localStorage.setItem('anniversary_config_v5', JSON.stringify(appConfig));
+      localStorage.setItem('lovestory_notes_v1', JSON.stringify(appNotes));
     } catch (e) {
-      console.warn('Error saving to localStorage:', e);
+      console.warn('Error saving notes:', e);
     }
-    applyConfigToDOM();
+    renderNotes();
   }
 
-  function applyConfigToDOM() {
+  function applyStoryToDOM() {
     // Brand & Intro
     const brandCoupleNames = document.getElementById('brandCoupleNames');
-    if (brandCoupleNames) {
-      const hisShort = appConfig.hisName.split(' ').pop();
-      const herShort = appConfig.herName.split(' ').pop();
-      brandCoupleNames.textContent = `${hisShort} & ${herShort}`;
-    }
+    if (brandCoupleNames) brandCoupleNames.textContent = 'Hiếu & Linh';
 
     const introNamesDisplay = document.getElementById('introNamesDisplay');
-    if (introNamesDisplay) {
-      introNamesDisplay.textContent = `${appConfig.hisName} & ${appConfig.herName}`;
-    }
+    if (introNamesDisplay) introNamesDisplay.textContent = `${COUPLE_DATA.hisName} & ${COUPLE_DATA.herName}`;
 
     const heroHerName = document.getElementById('heroHerName');
-    if (heroHerName) heroHerName.textContent = appConfig.herName;
+    if (heroHerName) heroHerName.textContent = COUPLE_DATA.herName;
 
     const envelopeToName = document.getElementById('envelopeToName');
-    if (envelopeToName) envelopeToName.textContent = appConfig.herName;
+    if (envelopeToName) envelopeToName.textContent = COUPLE_DATA.herName;
 
     // Love Letter
     const letterDateDisplay = document.getElementById('letterDateDisplay');
-    if (letterDateDisplay) letterDateDisplay.textContent = appConfig.letterDate;
+    if (letterDateDisplay) letterDateDisplay.textContent = COUPLE_DATA.letterDate;
 
     const letterDearText = document.getElementById('letterDearText');
-    if (letterDearText) letterDearText.textContent = appConfig.letterSalutation;
+    if (letterDearText) letterDearText.textContent = COUPLE_DATA.letterSalutation;
 
     const letterBodyContent = document.getElementById('letterBodyContent');
     if (letterBodyContent) {
-      const paragraphs = appConfig.letterBody.split('\n\n').filter(p => p.trim());
+      const paragraphs = COUPLE_DATA.letterBody.split('\n\n').filter(p => p.trim());
       letterBodyContent.innerHTML = paragraphs.map(p => `<p>${escapeHTML(p)}</p>`).join('');
     }
 
     const letterSignature = document.getElementById('letterSignature');
-    if (letterSignature) letterSignature.textContent = appConfig.letterSignature;
+    if (letterSignature) letterSignature.textContent = COUPLE_DATA.letterSignature;
 
     // Vows Certificate
     const certHisName = document.getElementById('certHisName');
-    if (certHisName) certHisName.textContent = appConfig.hisName;
+    if (certHisName) certHisName.textContent = COUPLE_DATA.hisName;
 
     const certHerName = document.getElementById('certHerName');
-    if (certHerName) certHerName.textContent = appConfig.herName;
+    if (certHerName) certHerName.textContent = COUPLE_DATA.herName;
 
     // Footer
     const footerNamesDisplay = document.getElementById('footerNamesDisplay');
     if (footerNamesDisplay) {
-      footerNamesDisplay.textContent = `${appConfig.hisName} & ${appConfig.herName} • Since ${formatDateShort(appConfig.startDate)}`;
+      footerNamesDisplay.textContent = `${COUPLE_DATA.hisName} (2001) & ${COUPLE_DATA.herName} (1999) • Since 31.08.2026`;
     }
 
     // Counter label
     const counterStartDateLabel = document.getElementById('counterStartDateLabel');
     if (counterStartDateLabel) {
-      const d = new Date(appConfig.startDate);
-      const day = String(d.getDate()).padStart(2, '0');
-      const month = String(d.getMonth() + 1).padStart(2, '0');
-      const year = d.getFullYear();
-      counterStartDateLabel.textContent = `Tính từ ngày ${day} tháng ${month}, ${year} ✦ Từng giây từng phút đều trân quý`;
+      counterStartDateLabel.textContent = `Tính từ ngày 31 tháng 08, 2026 ✦ Từng giây từng phút đều trân quý`;
     }
 
     renderNotes();
@@ -154,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const cntSeconds = document.getElementById('cntSeconds');
 
   function updateLoveCounter() {
-    const start = new Date(appConfig.startDate).getTime();
+    const start = new Date(COUPLE_DATA.startDate).getTime();
     const now = Date.now();
     const diff = Math.max(0, now - start);
 
@@ -340,60 +329,194 @@ document.addEventListener('DOMContentLoaded', () => {
   if (toggleLetterBtn) toggleLetterBtn.addEventListener('click', toggleLetter);
 
   // ==========================================
-  // 6. POLAROID 3D TILT, LIGHTBOX & CUSTOM IMAGES
+  // 6. GÓC KỶ NIỆM SUPABASE (CRUD: Thêm, Sửa, Xóa & Lightbox)
   // ==========================================
-  const polaroids = document.querySelectorAll('.polaroid-card');
+  const FALLBACK_MEMORIES = [
+    {
+      id: 'default-1',
+      caption: 'Chuyến đi biển đầu tiên — ngọt ngào như vị nước dừa tươi.',
+      date: '30 - 31.08.2026',
+      image_url: 'assets/images/polaroid-1.jpg',
+      order_index: 1
+    },
+    {
+      id: 'default-2',
+      caption: 'Nụ cười xinh xắn làm anh "đổ gục" ngay từ cái nhìn đầu tiên.',
+      date: 'Sweet Smile ✦ 12.08',
+      image_url: 'assets/images/polaroid-2.jpg',
+      order_index: 2
+    },
+    {
+      id: 'default-3',
+      caption: 'Bàn tay đan chặt ấm áp — Luôn là điểm tựa an toàn của em.',
+      date: 'Always Together',
+      image_url: 'assets/images/polaroid-3.jpg',
+      order_index: 3
+    },
+    {
+      id: 'default-4',
+      caption: 'Những đêm deeptalk buôn chuyện mệt rồi ngủ quên lúc nào không hay.',
+      date: 'Midnight Talk',
+      image_url: 'assets/images/polaroid-4.jpg',
+      order_index: 4
+    },
+    {
+      id: 'default-5',
+      caption: 'Chị người yêu 1999 nhưng lúc nào cũng nhí nhảnh, đáng yêu nhất trần đời.',
+      date: 'My Baby Girl',
+      image_url: 'assets/images/polaroid-5.jpg',
+      order_index: 5
+    },
+    {
+      id: 'default-6',
+      caption: 'Công chúa của anh — Ngày 31.08 định mệnh và mãi mãi về sau.',
+      date: 'Since 31.08.2026',
+      image_url: 'assets/images/polaroid-6.jpg',
+      order_index: 6
+    }
+  ];
+
+  let currentMemories = [];
+
+  const polaroidGrid = document.getElementById('polaroidGrid');
+  const openAddMemoryBtn = document.getElementById('openAddMemoryBtn');
+  const memoryModal = document.getElementById('memoryModal');
+  const closeMemoryModalBtn = document.getElementById('closeMemoryModalBtn');
+  const cancelMemoryBtn = document.getElementById('cancelMemoryBtn');
+  const memoryForm = document.getElementById('memoryForm');
+  const memoryModalTitle = document.getElementById('memoryModalTitle');
+  const saveMemoryBtnText = document.getElementById('saveMemoryBtnText');
+
+  const memoryEditId = document.getElementById('memoryEditId');
+  const memoryCaptionInput = document.getElementById('memoryCaptionInput');
+  const memoryDateInput = document.getElementById('memoryDateInput');
+  const memoryImageUrlInput = document.getElementById('memoryImageUrlInput');
+  const memoryFileInput = document.getElementById('memoryFileInput');
+  const memoryFileNameHint = document.getElementById('memoryFileNameHint');
+  const memoryOrderInput = document.getElementById('memoryOrderInput');
+  const memoryPreviewWrap = document.getElementById('memoryPreviewWrap');
+  const memoryPreviewImg = document.getElementById('memoryPreviewImg');
+
   const lightboxModal = document.getElementById('lightboxModal');
   const lightboxImg = document.getElementById('lightboxImg');
   const lightboxCaption = document.getElementById('lightboxCaption');
   const lightboxCloseBtn = document.getElementById('lightboxCloseBtn');
 
-  // Load saved custom polaroid photos from localStorage
-  function loadSavedPolaroids() {
-    try {
-      const savedPhotos = JSON.parse(localStorage.getItem('custom_polaroid_photos_v4') || '{}');
-      polaroids.forEach(card => {
-        const id = card.getAttribute('data-id');
-        if (savedPhotos[id]) {
-          const img = card.querySelector('.polaroid-img');
-          if (img) img.src = savedPhotos[id];
-        }
-      });
-    } catch (e) {
-      console.warn('Error loading custom polaroid photos:', e);
+  // Fetch memories from Supabase Database
+  async function fetchMemories() {
+    if (!polaroidGrid) return;
+
+    if (!supabaseClient) {
+      console.warn('Supabase client chưa khởi tạo, hiển thị dữ liệu mặc định.');
+      currentMemories = FALLBACK_MEMORIES;
+      renderMemories(currentMemories);
+      return;
     }
+
+    try {
+      const { data, error } = await supabaseClient
+        .from('memories')
+        .select('*')
+        .order('order_index', { ascending: true })
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Lỗi truy vấn Supabase:', error);
+        currentMemories = FALLBACK_MEMORIES;
+      } else if (data && data.length > 0) {
+        currentMemories = data;
+      } else {
+        currentMemories = FALLBACK_MEMORIES;
+      }
+    } catch (e) {
+      console.error('Lỗi kết nối Supabase:', e);
+      currentMemories = FALLBACK_MEMORIES;
+    }
+
+    renderMemories(currentMemories);
   }
 
-  loadSavedPolaroids();
+  // Render Memories Grid
+  function renderMemories(memories) {
+    if (!polaroidGrid) return;
+    polaroidGrid.innerHTML = '';
 
-  // 3D Mouse Tilt
-  polaroids.forEach(card => {
-    card.addEventListener('mousemove', (e) => {
-      const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left - rect.width / 2;
-      const y = e.clientY - rect.top - rect.height / 2;
-      const rotateX = (-y / rect.height) * 14;
-      const rotateY = (x / rect.width) * 14;
-      card.style.transform = `perspective(600px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`;
+    if (!memories || memories.length === 0) {
+      polaroidGrid.innerHTML = `
+        <div class="gallery-loading">
+          <p>Chưa có khoảnh khắc nào trong album. Hãy bấm <strong>"+ Thêm Kỷ Niệm Mới"</strong> để ghi dấu yêu thương nhé! 💖</p>
+        </div>
+      `;
+      return;
+    }
+
+    memories.forEach((m, index) => {
+      const card = document.createElement('div');
+      card.className = 'polaroid-card';
+      card.setAttribute('data-id', m.id);
+
+      const washiIndex = (index % 3) + 1;
+
+      card.innerHTML = `
+        <div class="washi-tape washi-${washiIndex}"></div>
+        <div class="polaroid-action-bar">
+          <button type="button" class="btn-card-action btn-edit" title="Chỉnh sửa kỷ niệm này" data-id="${m.id}">✏️</button>
+          <button type="button" class="btn-card-action btn-delete" title="Xóa kỷ niệm này" data-id="${m.id}">🗑️</button>
+        </div>
+        <div class="polaroid-img-wrap">
+          <img src="${escapeHTML(m.image_url)}" alt="${escapeHTML(m.caption)}" class="polaroid-img" loading="lazy">
+        </div>
+        <div class="polaroid-caption">
+          <span class="caption-text">"${escapeHTML(m.caption)}"</span>
+          ${m.date ? `<span class="caption-date">${escapeHTML(m.date)}</span>` : ''}
+        </div>
+      `;
+
+      // 3D Tilt Effect
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left - rect.width / 2;
+        const y = e.clientY - rect.top - rect.height / 2;
+        const rotateX = (-y / rect.height) * 14;
+        const rotateY = (x / rect.width) * 14;
+        card.style.transform = `perspective(600px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(1.05)`;
+      });
+
+      card.addEventListener('mouseleave', () => {
+        card.style.transform = '';
+      });
+
+      // Card Events
+      card.addEventListener('click', (e) => {
+        // Edit button
+        const editBtn = e.target.closest('.btn-edit');
+        if (editBtn) {
+          e.stopPropagation();
+          openEditModal(m);
+          return;
+        }
+
+        // Delete button
+        const delBtn = e.target.closest('.btn-delete');
+        if (delBtn) {
+          e.stopPropagation();
+          deleteMemoryItem(m);
+          return;
+        }
+
+        // Click on photo / card opens Lightbox
+        if (lightboxModal && lightboxImg) {
+          lightboxImg.src = m.image_url;
+          if (lightboxCaption) lightboxCaption.textContent = m.caption;
+          lightboxModal.classList.add('active');
+        }
+      });
+
+      polaroidGrid.appendChild(card);
     });
+  }
 
-    card.addEventListener('mouseleave', () => {
-      card.style.transform = '';
-    });
-
-    // Click to view in Lightbox (unless clicking swap photo button)
-    card.addEventListener('click', (e) => {
-      if (e.target.closest('.btn-swap-photo')) return;
-      const img = card.querySelector('.polaroid-img');
-      const caption = card.querySelector('.caption-text');
-      if (img && lightboxImg) {
-        lightboxImg.src = img.src;
-        if (lightboxCaption && caption) lightboxCaption.textContent = caption.textContent;
-        if (lightboxModal) lightboxModal.classList.add('active');
-      }
-    });
-  });
-
+  // Lightbox close events
   if (lightboxCloseBtn && lightboxModal) {
     lightboxCloseBtn.addEventListener('click', () => lightboxModal.classList.remove('active'));
     lightboxModal.addEventListener('click', (e) => {
@@ -401,84 +524,187 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Individual photo replacement
-  const singlePhotoInput = document.getElementById('singlePhotoInput');
-  let currentTargetPolaroidId = null;
-
-  document.querySelectorAll('.btn-swap-photo').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      currentTargetPolaroidId = btn.getAttribute('data-target-id');
-      if (singlePhotoInput) singlePhotoInput.click();
-    });
-  });
-
-  if (singlePhotoInput) {
-    singlePhotoInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file && currentTargetPolaroidId) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const base64 = event.target.result;
-          const targetCard = document.querySelector(`.polaroid-card[data-id="${currentTargetPolaroidId}"]`);
-          if (targetCard) {
-            const img = targetCard.querySelector('.polaroid-img');
-            if (img) img.src = base64;
-          }
-          savePolaroidPhoto(currentTargetPolaroidId, base64);
-        };
-        reader.readAsDataURL(file);
-      }
-      singlePhotoInput.value = '';
-    });
+  // Open Modal to Add Memory
+  function openAddModal() {
+    if (!memoryModal) return;
+    memoryForm.reset();
+    memoryEditId.value = '';
+    memoryModalTitle.textContent = 'Thêm Kỷ Niệm Mới';
+    saveMemoryBtnText.textContent = 'Lưu Kỷ Niệm ♥';
+    if (memoryFileNameHint) memoryFileNameHint.textContent = 'Chưa chọn tệp';
+    if (memoryPreviewWrap) memoryPreviewWrap.style.display = 'none';
+    if (memoryPreviewImg) memoryPreviewImg.src = '';
+    if (memoryOrderInput) memoryOrderInput.value = (currentMemories.length + 1).toString();
+    memoryModal.classList.add('active');
   }
 
-  // Batch photo upload
-  const batchPhotoInput = document.getElementById('batchPhotoInput');
-  if (batchPhotoInput) {
-    batchPhotoInput.addEventListener('change', (e) => {
-      const files = Array.from(e.target.files);
-      if (!files.length) return;
+  // Open Modal to Edit Memory
+  function openEditModal(m) {
+    if (!memoryModal) return;
+    memoryEditId.value = m.id;
+    memoryModalTitle.textContent = 'Chỉnh Sửa Kỷ Niệm';
+    saveMemoryBtnText.textContent = 'Cập Nhật Kỷ Niệm ♥';
+    if (memoryCaptionInput) memoryCaptionInput.value = m.caption || '';
+    if (memoryDateInput) memoryDateInput.value = m.date || '';
+    if (memoryImageUrlInput) memoryImageUrlInput.value = m.image_url || '';
+    if (memoryOrderInput) memoryOrderInput.value = m.order_index || 1;
+    if (memoryFileNameHint) memoryFileNameHint.textContent = 'Đang dùng ảnh hiện tại';
 
-      files.forEach((file, index) => {
-        if (index >= polaroids.length) return;
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          const base64 = event.target.result;
-          const card = polaroids[index];
-          if (card) {
-            const img = card.querySelector('.polaroid-img');
-            if (img) img.src = base64;
-            const id = card.getAttribute('data-id');
-            savePolaroidPhoto(id, base64);
-          }
-        };
-        reader.readAsDataURL(file);
-      });
-      batchPhotoInput.value = '';
-    });
-  }
-
-  function savePolaroidPhoto(id, dataUrl) {
-    try {
-      const savedPhotos = JSON.parse(localStorage.getItem('custom_polaroid_photos_v4') || '{}');
-      savedPhotos[id] = dataUrl;
-      localStorage.setItem('custom_polaroid_photos_v4', JSON.stringify(savedPhotos));
-    } catch (e) {
-      console.warn('Storage quota exceeded, photo preview active in memory:', e);
+    if (m.image_url && memoryPreviewImg && memoryPreviewWrap) {
+      memoryPreviewImg.src = m.image_url;
+      memoryPreviewWrap.style.display = 'block';
+    } else if (memoryPreviewWrap) {
+      memoryPreviewWrap.style.display = 'none';
     }
+
+    memoryModal.classList.add('active');
   }
 
-  // Reset photos
-  const resetPhotosBtn = document.getElementById('resetPhotosBtn');
-  if (resetPhotosBtn) {
-    resetPhotosBtn.addEventListener('click', () => {
-      if (confirm('Khôi phục lại ảnh kỷ niệm ban đầu của chúng mình?')) {
-        localStorage.removeItem('custom_polaroid_photos');
-        localStorage.removeItem('custom_polaroid_photos_v4');
-        location.reload();
+  function closeMemoryModal() {
+    if (memoryModal) memoryModal.classList.remove('active');
+  }
+
+  if (openAddMemoryBtn) openAddMemoryBtn.addEventListener('click', openAddModal);
+  if (closeMemoryModalBtn) closeMemoryModalBtn.addEventListener('click', closeMemoryModal);
+  if (cancelMemoryBtn) cancelMemoryBtn.addEventListener('click', closeMemoryModal);
+  if (memoryModal) {
+    memoryModal.addEventListener('click', (e) => {
+      if (e.target === memoryModal) closeMemoryModal();
+    });
+  }
+
+  // Live preview when typing image URL
+  if (memoryImageUrlInput) {
+    memoryImageUrlInput.addEventListener('input', () => {
+      const val = memoryImageUrlInput.value.trim();
+      if (val && memoryPreviewImg && memoryPreviewWrap) {
+        memoryPreviewImg.src = val;
+        memoryPreviewWrap.style.display = 'block';
+      } else if (memoryPreviewWrap) {
+        memoryPreviewWrap.style.display = 'none';
       }
     });
+  }
+
+  // Live preview when selecting image file
+  if (memoryFileInput) {
+    memoryFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (memoryFileNameHint) memoryFileNameHint.textContent = file.name;
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64 = event.target.result;
+        if (memoryImageUrlInput) memoryImageUrlInput.value = base64;
+        if (memoryPreviewImg) memoryPreviewImg.src = base64;
+        if (memoryPreviewWrap) memoryPreviewWrap.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Save Memory (Insert / Update)
+  if (memoryForm) {
+    memoryForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const caption = (memoryCaptionInput.value || '').trim();
+      const date = (memoryDateInput.value || '').trim();
+      const imageUrl = (memoryImageUrlInput.value || '').trim();
+      const orderIndex = parseInt(memoryOrderInput.value, 10) || 1;
+      const editId = memoryEditId.value;
+
+      if (!caption || !imageUrl) {
+        alert('Vui lòng điền lời tựa và hình ảnh kỷ niệm nhé!');
+        return;
+      }
+
+      const saveBtn = document.getElementById('saveMemoryBtn');
+      if (saveBtn) {
+        saveBtn.disabled = true;
+        saveMemoryBtnText.textContent = 'Đang lưu vào Supabase...';
+      }
+
+      try {
+        if (!supabaseClient) {
+          throw new Error('Supabase Client chưa được khởi tạo.');
+        }
+
+        if (editId && !editId.startsWith('default-')) {
+          // Update in Supabase
+          const { error } = await supabaseClient
+            .from('memories')
+            .update({
+              caption,
+              date,
+              image_url: imageUrl,
+              order_index: orderIndex
+            })
+            .eq('id', editId);
+
+          if (error) throw error;
+        } else {
+          // Insert into Supabase
+          const { error } = await supabaseClient
+            .from('memories')
+            .insert([{
+              caption,
+              date,
+              image_url: imageUrl,
+              order_index: orderIndex
+            }]);
+
+          if (error) throw error;
+        }
+
+        // Magical celebration confetti
+        if (typeof confetti === 'function') {
+          confetti({
+            particleCount: 50,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#ff70a6', '#ffd166', '#70e4d0', '#ff8fab', '#18181b']
+          });
+        }
+
+        closeMemoryModal();
+        await fetchMemories();
+      } catch (err) {
+        console.error('Lỗi khi lưu kỷ niệm:', err);
+        alert('Không thể lưu vào Supabase: ' + (err.message || err));
+      } finally {
+        if (saveBtn) {
+          saveBtn.disabled = false;
+          saveMemoryBtnText.textContent = editId ? 'Cập Nhật Kỷ Niệm ♥' : 'Lưu Kỷ Niệm ♥';
+        }
+      }
+    });
+  }
+
+  // Delete Memory
+  async function deleteMemoryItem(m) {
+    const ok = confirm(`Bạn có chắc muốn xóa kỷ niệm "${m.caption}" không?`);
+    if (!ok) return;
+
+    try {
+      if (supabaseClient && !m.id.startsWith('default-')) {
+        const { error } = await supabaseClient
+          .from('memories')
+          .delete()
+          .eq('id', m.id);
+
+        if (error) throw error;
+      } else {
+        currentMemories = currentMemories.filter(item => item.id !== m.id);
+        renderMemories(currentMemories);
+        return;
+      }
+
+      await fetchMemories();
+    } catch (err) {
+      console.error('Lỗi khi xóa kỷ niệm:', err);
+      alert('Không thể xóa kỷ niệm: ' + (err.message || err));
+    }
   }
 
   // ==========================================
@@ -569,7 +795,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderNotes() {
     if (!notesWall) return;
     notesWall.innerHTML = '';
-    appConfig.notes.forEach(note => {
+    appNotes.forEach(note => {
       const noteEl = document.createElement('div');
       noteEl.className = 'sticky-note';
       noteEl.innerHTML = `
@@ -596,13 +822,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const now = new Date();
       const dateStr = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-      appConfig.notes.unshift({
+      appNotes.unshift({
         author,
         text,
         date: dateStr
       });
 
-      saveConfig();
+      saveNotes();
       noteContentInput.value = '';
 
       if (typeof confetti === 'function') {
@@ -612,82 +838,6 @@ document.addEventListener('DOMContentLoaded', () => {
           origin: { y: 0.8 },
           colors: ['#ff70a6', '#ffd166', '#70e4d0', '#ff8fab']
         });
-      }
-    });
-  }
-
-  // ==========================================
-  // 10. CUSTOMIZATION / SETTINGS MODAL
-  // ==========================================
-  const openSettingsBtn = document.getElementById('openSettingsBtn');
-  const closeSettingsBtn = document.getElementById('closeSettingsBtn');
-  const settingsModal = document.getElementById('settingsModal');
-  const saveSettingsBtn = document.getElementById('saveSettingsBtn');
-  const resetDefaultsBtn = document.getElementById('resetDefaultsBtn');
-
-  const inputHisName = document.getElementById('inputHisName');
-  const inputHerName = document.getElementById('inputHerName');
-  const inputStartDate = document.getElementById('inputStartDate');
-  const inputLetterBody = document.getElementById('inputLetterBody');
-
-  function openSettings() {
-    if (!settingsModal) return;
-    if (inputHisName) inputHisName.value = appConfig.hisName;
-    if (inputHerName) inputHerName.value = appConfig.herName;
-    if (inputStartDate) {
-      const d = new Date(appConfig.startDate);
-      if (!isNaN(d.getTime())) {
-        inputStartDate.value = d.toISOString().split('T')[0];
-      }
-    }
-    if (inputLetterBody) inputLetterBody.value = appConfig.letterBody;
-    settingsModal.classList.add('active');
-  }
-
-  function closeSettings() {
-    if (settingsModal) settingsModal.classList.remove('active');
-  }
-
-  if (openSettingsBtn) openSettingsBtn.addEventListener('click', openSettings);
-  if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', closeSettings);
-  if (settingsModal) {
-    settingsModal.addEventListener('click', (e) => {
-      if (e.target === settingsModal) closeSettings();
-    });
-  }
-
-  if (saveSettingsBtn) {
-    saveSettingsBtn.addEventListener('click', () => {
-      const his = (inputHisName.value || '').trim();
-      const her = (inputHerName.value || '').trim();
-      const dateVal = inputStartDate.value;
-      const letter = (inputLetterBody.value || '').trim();
-
-      if (his) appConfig.hisName = his;
-      if (her) appConfig.herName = her;
-      if (dateVal) appConfig.startDate = `${dateVal}T00:00:00`;
-      if (letter) appConfig.letterBody = letter;
-
-      appConfig.letterSignature = appConfig.hisName;
-      saveConfig();
-      updateLoveCounter();
-      closeSettings();
-
-      alert('Đã cập nhật thông tin kỷ niệm của hai bạn thành công! ✨');
-    });
-  }
-
-  if (resetDefaultsBtn) {
-    resetDefaultsBtn.addEventListener('click', () => {
-      if (confirm('Khôi phục lại toàn bộ nội dung mặc định?')) {
-        localStorage.removeItem('anniversary_config_v5');
-        localStorage.removeItem('anniversary_config_v3');
-        localStorage.removeItem('anniversary_config_v1');
-        appConfig = { ...DEFAULT_CONFIG };
-        saveConfig();
-        updateLoveCounter();
-        closeSettings();
-        location.reload();
       }
     });
   }
@@ -852,7 +1002,7 @@ document.addEventListener('DOMContentLoaded', () => {
     trackedSections.forEach(section => navObserver.observe(section));
   }
 
-  // Initial apply
-  applyConfigToDOM();
-
+  // Initial apply story & fetch memories from Supabase
+  applyStoryToDOM();
+  fetchMemories();
 });
