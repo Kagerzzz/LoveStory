@@ -36,7 +36,7 @@ function initLoveStoryApp() {
     hisName: 'Thân Hiếu',
     herName: 'Khánh Linh',
     startDate: '2026-08-31T00:00:00',
-    letterDate: 'Since 31 Tháng 08, 2026',
+    letterDate: '00:00 29 thg 09, 2026',
     letterSalutation: 'Gửi em, nàng thơ của anh',
     // AES-GCM 256-bit encrypted ciphertext of the secret love letter
     letterBodyCipher: {
