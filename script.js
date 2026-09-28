@@ -284,10 +284,7 @@ function initLoveStoryApp() {
   let audioCollapseBtn = null;
   let collapseIcon = null;
 
-  let audioCtx = null;
-  let masterGainNode = null;
-  let isPlayingMusic = false;
-  let synthInterval = null;
+  let isPlayingMusic = true;
   let progressInterval = null;
 
   const FALLBACK_DURATION = 165; // Hayd - Head In The Clouds (~2:45)
@@ -295,107 +292,6 @@ function initLoveStoryApp() {
   let currentVolume = 0.75;
   let isMuted = false;
   let lastVolume = 75;
-
-  // Web Audio synthesizer (romantic arpeggiated piano fallback)
-  const chords = [
-    [174.61, 220.00, 261.63, 329.63], // Fmaj7
-    [196.00, 246.94, 293.66, 329.63], // G6
-    [164.81, 196.00, 246.94, 293.66], // Em7
-    [220.00, 261.63, 329.63, 392.00]  // Am7
-  ];
-  let chordIndex = 0;
-
-  function initAudio() {
-    try {
-      if (!audioCtx) {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (!AudioContext) return;
-        audioCtx = new AudioContext();
-        masterGainNode = audioCtx.createGain();
-        masterGainNode.gain.setValueAtTime(currentVolume, audioCtx.currentTime || 0);
-        masterGainNode.connect(audioCtx.destination);
-      }
-      if (audioCtx && audioCtx.state === 'suspended') {
-        audioCtx.resume().catch(() => {});
-      }
-    } catch (e) {
-      console.warn('initAudio error:', e);
-    }
-  }
-
-  function playTone(freq, time, duration = 3.5, volume = 0.05) {
-    try {
-      if (!audioCtx || !masterGainNode) return;
-      const t = Math.max(audioCtx.currentTime || 0, time || 0);
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      const filter = audioCtx.createBiquadFilter();
-
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(freq, t);
-
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(900, t);
-
-      gain.gain.setValueAtTime(0.0001, t);
-      gain.gain.linearRampToValueAtTime(volume, t + 0.15);
-      gain.gain.setTargetAtTime(0.0001, t + 0.2, duration / 3);
-
-      osc.connect(filter);
-      filter.connect(gain);
-      gain.connect(masterGainNode);
-
-      osc.start(t);
-      osc.stop(t + duration + 0.2);
-    } catch (e) {
-      console.warn('playTone error:', e);
-    }
-  }
-
-  function playArpeggiatedChord() {
-    try {
-      if (!isPlayingMusic || !audioCtx) return;
-      const currentChord = chords[chordIndex % chords.length];
-      const now = audioCtx.currentTime || 0;
-
-      currentChord.forEach((note, i) => {
-        playTone(note, now + i * 0.18, 4.0, 0.045);
-      });
-
-      if (Math.random() > 0.4) {
-        const highNote = currentChord[Math.floor(Math.random() * currentChord.length)] * 2;
-        playTone(highNote, now + 1.2, 3.0, 0.025);
-      }
-
-      chordIndex++;
-    } catch (e) {
-      console.warn('playArpeggiatedChord error:', e);
-    }
-  }
-
-  function startSynthFallback() {
-    try {
-      if (synthInterval) return;
-      initAudio();
-      playArpeggiatedChord();
-      synthInterval = setInterval(() => {
-        try {
-          playArpeggiatedChord();
-        } catch (e) {}
-      }, 3800);
-    } catch (e) {
-      console.warn('startSynthFallback error:', e);
-    }
-  }
-
-  function stopSynthFallback() {
-    try {
-      if (synthInterval) {
-        clearInterval(synthInterval);
-        synthInterval = null;
-      }
-    } catch (e) {}
-  }
 
   function formatTimeTrack(seconds) {
     if (isNaN(seconds) || seconds < 0) seconds = 0;
@@ -482,22 +378,14 @@ function initLoveStoryApp() {
     } catch (e) {}
 
     try {
-      initAudio();
-    } catch (e) {}
-
-    try {
       if (ytPlayer && ytPlayerReady && typeof ytPlayer.playVideo === 'function') {
         ytPlayer.playVideo();
-        stopSynthFallback();
       } else {
         pendingPlay = true;
-        startSynthFallback();
       }
     } catch (e) {
       console.warn('ytPlayer.playVideo exception:', e);
-      try {
-        startSynthFallback();
-      } catch (err) {}
+      pendingPlay = true;
     }
 
     try {
@@ -520,7 +408,6 @@ function initLoveStoryApp() {
       console.warn('ytPlayer.pauseVideo exception:', e);
     }
     try {
-      stopSynthFallback();
       stopProgressTicker();
     } catch (e) {}
   }
@@ -529,8 +416,8 @@ function initLoveStoryApp() {
     // 1: PLAYING, 2: PAUSED, 0: ENDED
     if (state === 1) { // PLAYING
       isPlayingMusic = true;
+      pendingPlay = false;
       updateAudioUI(true);
-      stopSynthFallback();
       startProgressTicker();
     } else if (state === 2) { // PAUSED
       isPlayingMusic = false;
@@ -545,10 +432,7 @@ function initLoveStoryApp() {
   }
 
   function handleYTError(err) {
-    console.warn('YouTube Player error code:', err ? err.data : 'unknown', '- switching to synth fallback');
-    if (isPlayingMusic) {
-      startSynthFallback();
-    }
+    console.warn('YouTube Player error code:', err ? err.data : 'unknown');
   }
 
   function initYouTubePlayer() {
@@ -563,6 +447,7 @@ function initLoveStoryApp() {
           autoplay: 1,
           controls: 0,
           disablekb: 1,
+          enablejsapi: 1,
           fs: 0,
           iv_load_policy: 3,
           modestbranding: 1,
@@ -576,13 +461,15 @@ function initLoveStoryApp() {
             ytPlayerReady = true;
             try {
               if (typeof ytPlayer.setVolume === 'function') {
-                ytPlayer.setVolume(75);
+                ytPlayer.setVolume(Math.round(currentVolume * 100));
+              }
+              if (typeof ytPlayer.unMute === 'function') {
+                ytPlayer.unMute();
               }
             } catch (e) {}
             if (isPlayingMusic || pendingPlay) {
               try {
                 ytPlayer.playVideo();
-                stopSynthFallback();
               } catch (e) {
                 console.warn('ytPlayer.playVideo exception:', e);
               }
@@ -601,6 +488,8 @@ function initLoveStoryApp() {
     }
   }
 
+  window.initYouTubePlayerGlobal = initYouTubePlayer;
+
   // Hook global YouTube API callback
   window.onYouTubeIframeAPIReady = function() {
     initYouTubePlayer();
@@ -618,6 +507,7 @@ function initLoveStoryApp() {
 
   // Autoplay on first touch/click anywhere on page (handles mobile browser policy)
   const autoPlayOnFirstTouch = () => {
+    pendingPlay = true;
     try {
       startMusic();
     } catch (e) {}
@@ -1131,9 +1021,6 @@ Từ hôm ấy là chuỗi ngày những buổi hẹn hò không dứt, những 
             ytPlayer.unMute();
           }
         }
-        if (masterGainNode && audioCtx) {
-          masterGainNode.gain.setValueAtTime(currentVolume, audioCtx.currentTime);
-        }
         if (audioVolIcon) {
           audioVolIcon.textContent = val === 0 ? '🔇' : val < 50 ? '🔉' : '🔊';
         }
@@ -1153,9 +1040,6 @@ Từ hôm ấy là chuỗi ngày những buổi hẹn hò không dứt, những 
             if (typeof ytPlayer.unMute === 'function') ytPlayer.unMute();
             if (typeof ytPlayer.setVolume === 'function') ytPlayer.setVolume(targetVol);
           }
-          if (masterGainNode && audioCtx) {
-            masterGainNode.gain.setValueAtTime(currentVolume, audioCtx.currentTime);
-          }
         } else {
           isMuted = true;
           lastVolume = audioVolumeSlider ? parseInt(audioVolumeSlider.value, 10) : 75;
@@ -1164,9 +1048,6 @@ Từ hôm ấy là chuỗi ngày những buổi hẹn hò không dứt, những 
           if (audioVolIcon) audioVolIcon.textContent = '🔇';
           if (ytPlayer && ytPlayerReady && typeof ytPlayer.mute === 'function') {
             ytPlayer.mute();
-          }
-          if (masterGainNode && audioCtx) {
-            masterGainNode.gain.setValueAtTime(0, audioCtx.currentTime);
           }
         }
       });
@@ -1276,7 +1157,7 @@ Từ hôm ấy là chuỗi ngày những buổi hẹn hò không dứt, những 
       // 1. Check local storage first
       const local = getLocalMusicConfig();
       if (local && local.videoId) {
-        applyMusicConfig(local, false);
+        applyMusicConfig(local, isPlayingMusic);
       }
 
       // 2. Fetch remote config from Supabase
@@ -1294,7 +1175,7 @@ Từ hôm ấy là chuỗi ngày những buổi hẹn hò không dứt, những 
             if (remoteConfig && remoteConfig.videoId) {
               const isDifferent = remoteConfig.videoId !== currentMusicConfig.videoId;
               currentMusicConfig = remoteConfig;
-              applyMusicConfig(remoteConfig, isDifferent && isPlayingMusic);
+              applyMusicConfig(remoteConfig, isDifferent && (isPlayingMusic || pendingPlay));
               localStorage.setItem('lovestory_music_config', JSON.stringify(remoteConfig));
             }
           } catch (parseErr) {
