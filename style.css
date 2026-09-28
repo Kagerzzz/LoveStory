@@ -3,7 +3,7 @@
    - Style: Soft & Playful Neubrutalism (Rounded Brutalism)
    - Colors: Sweet Pastel Canvas, Candy Accents (Bubblegum, Buttercup, Lime, Lavender)
    - Accents: Crisp Ink Borders (2.5px - 3px), Hard Drop Shadows, Sticker Badges
-   - Typography: Fredoka (Chunky Cute Titles) & Plus Jakarta Sans + Dancing Script
+   - Typography: Nunito (Chunky Rounded Cute with full Vietnamese support) & Plus Jakarta Sans + Dancing Script
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
@@ -65,9 +65,9 @@
   --text-muted: #4b4852;
   --text-dim: #716e79;
 
-  /* Font Families */
-  --font-title: 'Fredoka', 'Plus Jakarta Sans', -apple-system, sans-serif;
-  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Font Families - Full Native Vietnamese Support */
+  --font-title: 'Nunito', 'Plus Jakarta Sans', -apple-system, sans-serif;
+  --font-body: 'Nunito', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-script: 'Dancing Script', cursive;
 
   /* Bouncy Springs */
@@ -231,7 +231,7 @@ img {
 .section-title {
   font-family: var(--font-title);
   font-size: 2.5rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-main);
   letter-spacing: -0.5px;
   margin-bottom: 12px;
@@ -435,8 +435,8 @@ img {
 
 .intro-names {
   font-family: var(--font-title);
-  font-size: 2.2rem;
-  font-weight: 700;
+  font-size: 2.3rem;
+  font-weight: 800;
   color: var(--text-main);
   margin-bottom: 8px;
 }
@@ -715,7 +715,7 @@ img {
 .hero-title {
   font-family: var(--font-title);
   font-size: 3.3rem;
-  font-weight: 700;
+  font-weight: 800;
   line-height: 1.25;
   color: var(--text-main);
   margin-bottom: 20px;
@@ -834,7 +834,7 @@ img {
 .counter-num {
   font-family: var(--font-title);
   font-size: 2.8rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--text-main);
   line-height: 1;
 }
