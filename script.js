@@ -390,7 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load saved custom polaroid photos from localStorage
   function loadSavedPolaroids() {
     try {
-      const savedPhotos = JSON.parse(localStorage.getItem('custom_polaroid_photos') || '{}');
+      const savedPhotos = JSON.parse(localStorage.getItem('custom_polaroid_photos_v4') || '{}');
       polaroids.forEach(card => {
         const id = card.getAttribute('data-id');
         if (savedPhotos[id]) {
@@ -500,9 +500,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function savePolaroidPhoto(id, dataUrl) {
     try {
-      const savedPhotos = JSON.parse(localStorage.getItem('custom_polaroid_photos') || '{}');
+      const savedPhotos = JSON.parse(localStorage.getItem('custom_polaroid_photos_v4') || '{}');
       savedPhotos[id] = dataUrl;
-      localStorage.setItem('custom_polaroid_photos', JSON.stringify(savedPhotos));
+      localStorage.setItem('custom_polaroid_photos_v4', JSON.stringify(savedPhotos));
     } catch (e) {
       console.warn('Storage quota exceeded, photo preview active in memory:', e);
     }
@@ -512,8 +512,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const resetPhotosBtn = document.getElementById('resetPhotosBtn');
   if (resetPhotosBtn) {
     resetPhotosBtn.addEventListener('click', () => {
-      if (confirm('Khôi phục lại ảnh kỷ niệm mẫu ban đầu?')) {
+      if (confirm('Khôi phục lại ảnh kỷ niệm ban đầu của chúng mình?')) {
         localStorage.removeItem('custom_polaroid_photos');
+        localStorage.removeItem('custom_polaroid_photos_v4');
         location.reload();
       }
     });
