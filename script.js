@@ -48,16 +48,19 @@ function initLoveStoryApp() {
 
   const DEFAULT_NOTES = [
     {
+      id: 'default-1',
       author: 'Khánh Linh',
       text: 'Cảm ơn anh người yêu 2001 đã luôn nhường nhịn, cưng chiều và thức đêm buôn chuyện cùng em. Yêu anh nhiều! 🎾💖',
       date: '31.08.2026 21:00'
     },
     {
+      id: 'default-2',
       author: 'Thân Hiếu',
       text: 'May mắn nhất là hôm đó đi chơi pickleball và va phải em. Mãi là đồng đội số 1 của anh nhé bé yêu! 🥰',
       date: '31.08.2026 21:15'
     },
     {
+      id: 'default-3',
       author: 'Hai Đứa Mình',
       text: 'Từ 31.08.2026 đến mãi mãi về sau — Cùng nhau đi thật nhiều nơi, cười thật nhiều và yêu thương nhau thật nhiều! ✨',
       date: '31.08.2026 22:00'
@@ -65,6 +68,8 @@ function initLoveStoryApp() {
   ];
 
   let appNotes = [...DEFAULT_NOTES];
+  let appComments = [];
+  let activeNoteDetailId = null;
 
   // Helper: HTML escaping
   function escapeHTML(str) {
@@ -2113,6 +2118,18 @@ Với anh, anh muốn đi tiếp cùng với em.`;
     const allNotesWall = document.getElementById('allNotesWall');
     const closeAllNotesModalBtn = document.getElementById('closeAllNotesModalBtn');
 
+    // Note detail & comment elements
+    const noteDetailModal = document.getElementById('noteDetailModal');
+    const closeNoteDetailBtn = document.getElementById('closeNoteDetailBtn');
+    const noteDetailFeatured = document.getElementById('noteDetailFeatured');
+    const noteDetailCommentBadge = document.getElementById('noteDetailCommentBadge');
+    const noteCommentsList = document.getElementById('noteCommentsList');
+    const noteCommentForm = document.getElementById('noteCommentForm');
+    const commentAuthorInput = document.getElementById('commentAuthorInput');
+    const commentTextInput = document.getElementById('commentTextInput');
+    const sendCommentBtn = document.getElementById('sendCommentBtn');
+    const authorChips = document.querySelectorAll('.btn-author-chip');
+
     function loadLocalNotes() {
       try {
         const saved = localStorage.getItem('lovestory_notes_v1');
@@ -2137,14 +2154,45 @@ Với anh, anh muốn đi tiếp cùng với em.`;
       }
     }
 
+    function loadLocalComments() {
+      try {
+        const saved = localStorage.getItem('lovestory_comments_v1');
+        if (saved) return JSON.parse(saved);
+      } catch (e) {
+        console.warn('Lỗi đọc local comments:', e);
+      }
+      return [];
+    }
+
+    function saveLocalComments() {
+      try {
+        localStorage.setItem('lovestory_comments_v1', JSON.stringify(appComments));
+      } catch (e) {
+        console.warn('Lỗi lưu local comments:', e);
+      }
+    }
+
+    function getBubbleClass(author) {
+      const norm = (author || '').toLowerCase();
+      if (norm.includes('anh') || norm.includes('hiếu') || norm.includes('híu')) {
+        return 'bubble-anh';
+      }
+      if (norm.includes('linh') || norm.includes('bé') || norm.includes('em') || norm.includes('vịu') || norm.includes('vịu')) {
+        return 'bubble-linh';
+      }
+      return 'bubble-default';
+    }
+
     async function fetchLoveNotes() {
       if (!notesWall) return;
 
       if (!supabaseClient) {
         console.warn('Supabase client chưa khởi tạo, hiển thị lời nhắn từ local storage.');
         appNotes = loadLocalNotes();
+        appComments = loadLocalComments();
         renderNotes();
         renderAllNotesModal();
+        if (activeNoteDetailId) renderNoteDetailComments(activeNoteDetailId);
         return;
       }
 
@@ -2157,8 +2205,11 @@ Với anh, anh muốn đi tiếp cùng với em.`;
         if (error) {
           console.error('Lỗi truy vấn Supabase love_notes:', error);
           appNotes = loadLocalNotes();
+          appComments = loadLocalComments();
         } else if (data && data.length > 0) {
-          const userNotes = data.filter(item => item.author !== '__CONFIG_MUSIC__');
+          const userNotes = data.filter(item => item.author !== '__CONFIG_MUSIC__' && item.author !== '__COMMENT__');
+          const commentRows = data.filter(item => item.author === '__COMMENT__');
+
           if (userNotes.length > 0) {
             appNotes = userNotes.map(item => ({
               id: item.id,
@@ -2169,33 +2220,75 @@ Với anh, anh muốn đi tiếp cùng với em.`;
           } else {
             appNotes = [...DEFAULT_NOTES];
           }
+
+          appComments = commentRows.map(item => {
+            let parsed = {};
+            try {
+              parsed = typeof item.content === 'string' ? JSON.parse(item.content) : (item.content || {});
+            } catch (e) {
+              parsed = { text: item.content || item.text, author: 'Người Giấu Tên', note_id: item.text };
+            }
+            return {
+              id: item.id,
+              noteId: parsed.note_id || item.text,
+              author: parsed.author || 'Người Giấu Tên',
+              text: parsed.text || '',
+              date: parsed.date || item.date || '',
+              created_at: item.created_at || (parsed.timestamp ? new Date(parsed.timestamp).toISOString() : '')
+            };
+          });
+
+          saveLocalNotes();
+          saveLocalComments();
         } else {
           appNotes = [...DEFAULT_NOTES];
+          appComments = loadLocalComments();
         }
       } catch (err) {
         console.error('Lỗi kết nối Supabase love_notes:', err);
         appNotes = loadLocalNotes();
+        appComments = loadLocalComments();
       }
 
       renderNotes();
       renderAllNotesModal();
+      if (activeNoteDetailId) {
+        renderNoteDetailComments(activeNoteDetailId);
+      }
     }
 
     async function deleteNote(id) {
       if (!confirm('Bạn có chắc muốn xóa lời nhắn này không?')) return;
       try {
-        if (supabaseClient && !String(id).startsWith('local-')) {
+        if (supabaseClient && !String(id).startsWith('local-') && !String(id).startsWith('default-')) {
           const { error } = await supabaseClient
             .from('love_notes')
             .delete()
             .eq('id', id);
           if (error) throw error;
-        } else {
-          appNotes = appNotes.filter(n => n.id !== id);
-          saveLocalNotes();
-          renderNotes();
-          renderAllNotesModal();
+
+          try {
+            await supabaseClient
+              .from('love_notes')
+              .delete()
+              .eq('author', '__COMMENT__')
+              .eq('text', String(id));
+          } catch (delCmtErr) {
+            console.warn('Lỗi xóa bình luận kèm theo:', delCmtErr);
+          }
         }
+
+        appNotes = appNotes.filter(n => String(n.id) !== String(id));
+        appComments = appComments.filter(c => String(c.noteId) !== String(id));
+        saveLocalNotes();
+        saveLocalComments();
+        renderNotes();
+        renderAllNotesModal();
+
+        if (String(activeNoteDetailId) === String(id)) {
+          closeNoteDetailModal();
+        }
+
         await fetchLoveNotes();
       } catch (err) {
         console.error('Lỗi khi xóa lời nhắn:', err);
@@ -2214,6 +2307,10 @@ Với anh, anh muốn đi tiếp cùng với em.`;
       const tapeColor = tapeColors[index % tapeColors.length];
       card.style.transform = `rotate(${rot}deg)`;
 
+      const noteComments = appComments.filter(c => String(c.noteId) === String(note.id));
+      const commentCount = noteComments.length;
+      const badgeText = commentCount > 0 ? `💬 ${commentCount} phản hồi` : `💬 Thảo luận`;
+
       card.innerHTML = `
         <div class="note-tape" style="background:${tapeColor};"></div>
         <button class="btn-delete-note" title="Xóa lời nhắn này" data-id="${escapeHTML(note.id || '')}">✕</button>
@@ -2222,7 +2319,15 @@ Với anh, anh muốn đi tiếp cùng với em.`;
           <span class="sticky-author note-author font-title">✦ ${escapeHTML(note.author)}</span>
           <span class="sticky-date note-date">${escapeHTML(note.date || '')}</span>
         </div>
+        <div class="note-comment-pill" title="Bấm để xem và trả lời lời nhắn này">
+          <span>${badgeText}</span>
+        </div>
       `;
+
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.btn-delete-note')) return;
+        openNoteDetailModal(note.id);
+      });
 
       const delBtn = card.querySelector('.btn-delete-note');
       if (delBtn) {
@@ -2303,6 +2408,270 @@ Với anh, anh muốn đi tiếp cùng với em.`;
     if (allNotesModal) {
       allNotesModal.addEventListener('click', (e) => {
         if (e.target === allNotesModal) closeAllNotesModal();
+      });
+    }
+
+    function openNoteDetailModal(noteId) {
+      const note = appNotes.find(n => String(n.id) === String(noteId));
+      if (!note) return;
+
+      activeNoteDetailId = note.id;
+
+      if (noteDetailFeatured) {
+        noteDetailFeatured.innerHTML = `
+          <div class="note-featured-tape"></div>
+          <p class="note-featured-text font-mali">"${escapeHTML(note.text)}"</p>
+          <div class="note-featured-footer">
+            <span class="note-featured-author font-title">✦ ${escapeHTML(note.author)}</span>
+            <span class="note-featured-date">${escapeHTML(note.date || '')}</span>
+          </div>
+        `;
+      }
+
+      renderNoteDetailComments(note.id);
+
+      if (noteDetailModal) {
+        noteDetailModal.style.display = 'flex';
+        noteDetailModal.classList.add('open', 'active');
+        noteDetailModal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+      }
+
+      const savedAuthor = localStorage.getItem('lovestory_comment_author') || (noteAuthorInput ? noteAuthorInput.value.trim() : '');
+      if (commentAuthorInput && !commentAuthorInput.value && savedAuthor) {
+        commentAuthorInput.value = savedAuthor;
+      }
+
+      if (commentTextInput) {
+        setTimeout(() => commentTextInput.focus(), 150);
+      }
+    }
+
+    function closeNoteDetailModal() {
+      if (noteDetailModal) {
+        noteDetailModal.classList.remove('open', 'active');
+        noteDetailModal.style.display = 'none';
+        noteDetailModal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+      }
+      activeNoteDetailId = null;
+      if (commentTextInput) commentTextInput.value = '';
+    }
+
+    function renderNoteDetailComments(noteId) {
+      if (!noteCommentsList) return;
+
+      const comments = appComments
+        .filter(c => String(c.noteId) === String(noteId))
+        .sort((a, b) => {
+          const tA = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const tB = b.created_at ? new Date(b.created_at).getTime() : 0;
+          return tA - tB;
+        });
+
+      if (noteDetailCommentBadge) {
+        noteDetailCommentBadge.textContent = comments.length > 0 ? `${comments.length} phản hồi` : '0 phản hồi';
+      }
+
+      if (comments.length === 0) {
+        noteCommentsList.innerHTML = `
+          <div class="comments-empty-state">
+            <div class="empty-icon">💬</div>
+            <p class="empty-text">Chưa có phản hồi nào</p>
+            <p class="empty-sub">Hãy là người đầu tiên gửi lời đối đáp yêu thương nhé!</p>
+          </div>
+        `;
+        return;
+      }
+
+      noteCommentsList.innerHTML = '';
+      comments.forEach(c => {
+        const bubble = document.createElement('div');
+        const bubbleClass = getBubbleClass(c.author);
+        bubble.className = `comment-bubble ${bubbleClass}`;
+
+        bubble.innerHTML = `
+          <div class="comment-bubble-header">
+            <span class="comment-author-badge font-title">${escapeHTML(c.author)}</span>
+            <div class="comment-header-right">
+              <span class="comment-time">${escapeHTML(c.date || '')}</span>
+              <button type="button" class="btn-delete-comment" title="Xóa phản hồi này" data-id="${escapeHTML(c.id || '')}">✕</button>
+            </div>
+          </div>
+          <p class="comment-bubble-content font-mali">${escapeHTML(c.text)}</p>
+        `;
+
+        const delBtn = bubble.querySelector('.btn-delete-comment');
+        if (delBtn) {
+          delBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            deleteComment(c.id);
+          });
+        }
+
+        noteCommentsList.appendChild(bubble);
+      });
+
+      setTimeout(() => {
+        noteCommentsList.scrollTop = noteCommentsList.scrollHeight;
+      }, 50);
+    }
+
+    async function deleteComment(commentId) {
+      if (!confirm('Bạn có chắc muốn xóa lời hồi đáp này không?')) return;
+      try {
+        if (supabaseClient && !String(commentId).startsWith('local-') && !String(commentId).startsWith('temp-')) {
+          const { error } = await supabaseClient
+            .from('love_notes')
+            .delete()
+            .eq('id', commentId);
+          if (error) throw error;
+        }
+
+        appComments = appComments.filter(c => String(c.id) !== String(commentId));
+        saveLocalComments();
+
+        if (activeNoteDetailId) {
+          renderNoteDetailComments(activeNoteDetailId);
+        }
+        renderNotes();
+        renderAllNotesModal();
+      } catch (err) {
+        console.error('Lỗi khi xóa phản hồi:', err);
+        alert('Không thể xóa phản hồi: ' + (err.message || err));
+      }
+    }
+
+    if (noteCommentForm) {
+      noteCommentForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!activeNoteDetailId) return;
+
+        const author = (commentAuthorInput && commentAuthorInput.value.trim()) || 'Người Giấu Tên';
+        const text = (commentTextInput && commentTextInput.value.trim()) || '';
+
+        if (!text) {
+          alert('Vui lòng nhập nội dung phản hồi nhé!');
+          if (commentTextInput) commentTextInput.focus();
+          return;
+        }
+
+        try {
+          localStorage.setItem('lovestory_comment_author', author);
+        } catch (e) {}
+
+        const now = new Date();
+        const dateStr = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+        const commentData = {
+          note_id: String(activeNoteDetailId),
+          author: author,
+          text: text,
+          date: dateStr,
+          timestamp: Date.now()
+        };
+
+        const origBtnHTML = sendCommentBtn ? sendCommentBtn.innerHTML : '';
+        if (sendCommentBtn) {
+          sendCommentBtn.disabled = true;
+          sendCommentBtn.innerHTML = '<span>Đang gửi phản hồi... 💌</span>';
+        }
+
+        try {
+          if (supabaseClient) {
+            const { data, error } = await supabaseClient
+              .from('love_notes')
+              .insert([{
+                author: '__COMMENT__',
+                content: JSON.stringify(commentData),
+                text: String(activeNoteDetailId),
+                date: dateStr
+              }])
+              .select();
+
+            if (error) throw error;
+
+            const newId = (data && data[0] && data[0].id) ? data[0].id : ('temp-' + Date.now());
+            appComments.push({
+              id: newId,
+              noteId: String(activeNoteDetailId),
+              author: author,
+              text: text,
+              date: dateStr,
+              created_at: new Date().toISOString()
+            });
+          } else {
+            const newComment = {
+              id: 'local-cmt-' + Date.now(),
+              noteId: String(activeNoteDetailId),
+              author: author,
+              text: text,
+              date: dateStr,
+              created_at: new Date().toISOString()
+            };
+            appComments.push(newComment);
+            saveLocalComments();
+          }
+
+          if (commentTextInput) commentTextInput.value = '';
+
+          renderNoteDetailComments(activeNoteDetailId);
+          renderNotes();
+          renderAllNotesModal();
+
+          if (typeof confetti === 'function') {
+            confetti({
+              particleCount: 28,
+              spread: 50,
+              origin: { y: 0.7 },
+              colors: ['#ff70a6', '#ffd166', '#70e4d0', '#ff8fab']
+            });
+          }
+        } catch (err) {
+          console.error('Lỗi khi gửi phản hồi:', err);
+          alert('Không thể gửi phản hồi: ' + (err.message || err));
+        } finally {
+          if (sendCommentBtn) {
+            sendCommentBtn.disabled = false;
+            sendCommentBtn.innerHTML = origBtnHTML;
+          }
+        }
+      });
+    }
+
+    // Quick Author chips
+    authorChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        const name = chip.getAttribute('data-name');
+        if (commentAuthorInput && name) {
+          commentAuthorInput.value = name;
+          try {
+            localStorage.setItem('lovestory_comment_author', name);
+          } catch (e) {}
+        }
+      });
+    });
+
+    if (closeNoteDetailBtn) {
+      closeNoteDetailBtn.addEventListener('click', closeNoteDetailModal);
+    }
+
+    if (noteDetailModal) {
+      noteDetailModal.addEventListener('click', (e) => {
+        if (e.target === noteDetailModal) {
+          closeNoteDetailModal();
+        }
+      });
+    }
+
+    if (commentTextInput) {
+      commentTextInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          if (noteCommentForm) {
+            noteCommentForm.requestSubmit();
+          }
+        }
       });
     }
 
@@ -2425,6 +2794,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
         closeMusicModal();
         closeAllMemoriesModal();
         closeAllNotesModal();
+        if (activeNoteDetailId) closeNoteDetailModal();
       }
     });
 

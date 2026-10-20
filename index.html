@@ -538,6 +538,68 @@
     </div>
   </div>
 
+  <!-- NOTE DETAIL & COMMENT THREAD MODAL (NEUBRUTALISM STYLE) -->
+  <div id="noteDetailModal" class="memory-modal" aria-hidden="true" style="display:none;">
+    <div class="memory-dialog note-detail-dialog">
+      <div class="memory-header">
+        <div class="modal-badge-title">
+          <span class="modal-badge">✦ LỜI NHẮN & HỒI ĐÁP ✦</span>
+          <h3 class="memory-title">Chi Tiết Lời Nhắn</h3>
+        </div>
+        <button type="button" id="closeNoteDetailBtn" class="modal-close-btn" aria-label="Đóng">&times;</button>
+      </div>
+
+      <div class="note-detail-content">
+        <!-- Original Note Display Card -->
+        <div class="note-featured-card" id="noteDetailFeatured">
+          <!-- Dynamically populated -->
+        </div>
+
+        <!-- Comments & Conversation Section -->
+        <div class="comments-thread-container">
+          <div class="comments-thread-header">
+            <span class="thread-title">
+              <span class="thread-icon">💬</span> Lời Hồi Đáp & Trò Chuyện
+            </span>
+            <span id="noteDetailCommentBadge" class="thread-badge-count">0 phản hồi</span>
+          </div>
+
+          <!-- Scrollable Comments List -->
+          <div class="note-comments-list" id="noteCommentsList">
+            <!-- Dynamically populated -->
+          </div>
+
+          <!-- Add Comment Form -->
+          <form id="noteCommentForm" class="comment-input-box">
+            <!-- Author quick selector chips -->
+            <div class="comment-chips-row">
+              <span class="chips-label">Tôi là:</span>
+              <button type="button" class="btn-author-chip" data-name="Anh 💙">Anh 💙</button>
+              <button type="button" class="btn-author-chip" data-name="Bé iu 💖">Bé iu 💖</button>
+              <button type="button" class="btn-author-chip" data-name="Khánh Linh 🌸">Khánh Linh 🌸</button>
+              <button type="button" class="btn-author-chip" data-name="Thân Hiếu ✦">Thân Hiếu ✦</button>
+            </div>
+
+            <div class="comment-form-grid">
+              <div class="comment-field-author">
+                <input type="text" id="commentAuthorInput" placeholder="Tên bạn..." maxlength="25" required>
+              </div>
+              <div class="comment-field-text">
+                <textarea id="commentTextInput" placeholder="Viết lời hồi đáp hoặc trêu đùa đối phương..." rows="2" maxlength="300" required></textarea>
+              </div>
+            </div>
+
+            <div class="comment-form-actions">
+              <button type="submit" id="sendCommentBtn" class="btn-primary btn-send-comment">
+                <span>Gửi Lời Hồi Đáp 💌</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   </template>
 
   <!-- MUSIC SETTINGS POPUP MODAL (NEUBRUTALISM STYLE) -->

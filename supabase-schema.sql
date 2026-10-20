@@ -65,3 +65,11 @@ alter table music_settings enable row level security;
 create policy "Public can read music_settings" on music_settings for select using (true);
 create policy "Public can insert music_settings" on music_settings for insert with check (true);
 create policy "Public can update music_settings" on music_settings for update using (true);
+
+-- 4. Lưu trữ bình luận / hồi đáp vào lời nhắn (Love Note Comments):
+-- Hệ thống tự động tái sử dụng bảng love_notes với:
+--   author = '__COMMENT__'
+--   text = ID của lời nhắn gốc (note.id)
+--   content = JSON chuỗi { note_id, author, text, date, timestamp }
+-- Không cần tạo bảng mới, tự động đồng bộ realtime qua channel public:love_notes.
+
