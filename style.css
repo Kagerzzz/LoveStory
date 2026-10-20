@@ -2312,6 +2312,11 @@ img {
   transition: var(--transition-fast);
 }
 
+.input-group textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
 .input-group input:focus,
 .input-group textarea:focus {
   background: #ffffff;
