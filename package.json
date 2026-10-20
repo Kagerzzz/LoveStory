@@ -1,0 +1,13 @@
+{
+  "name": "lovestory",
+  "version": "1.0.0",
+  "description": "Love Story Web Push Notification System",
+  "main": "push-listener.js",
+  "scripts": {
+    "start": "node push-listener.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.118.0",
+    "web-push": "^3.6.7"
+  }
+}

@@ -269,6 +269,17 @@ function initLoveStoryApp() {
     }
   }
 
+  // Trigger cloud Web Push notification to all subscribers
+  function triggerCloudWebPush(payload) {
+    try {
+      fetch('/api/send-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(() => {});
+    } catch (e) {}
+  }
+
   // Register service worker for web notifications if supported
   if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
     const registerSW = () => {
@@ -2294,6 +2305,13 @@ Với anh, anh muốn đi tiếp cùng với em.`;
                     if (newRecord.id) {
                       myRecentlySentIds.add(newRecord.id);
                       setTimeout(() => myRecentlySentIds.delete(newRecord.id), 45000);
+
+                      triggerCloudWebPush({
+                        title: '📸 Có ảnh kỷ niệm mới!',
+                        body: caption || 'Một khoảnh khắc mới vừa được lưu giữ',
+                        icon: imageUrl,
+                        action: 'OPEN_GALLERY'
+                      });
                     }
                   }
                 }
@@ -2938,6 +2956,13 @@ Với anh, anh muốn đi tiếp cùng với em.`;
               date: dateStr,
               created_at: new Date().toISOString()
             });
+
+            triggerCloudWebPush({
+              title: `💬 Thảo luận mới từ ${author}!`,
+              body: text,
+              action: 'OPEN_NOTE',
+              noteId: String(activeNoteDetailId)
+            });
           } else {
             const newComment = {
               id: 'local-cmt-' + Date.now(),
@@ -3073,6 +3098,13 @@ Với anh, anh muốn đi tiếp cùng với em.`;
                 createdNoteId = data[0].id;
                 myRecentlySentIds.add(createdNoteId);
                 setTimeout(() => myRecentlySentIds.delete(createdNoteId), 45000);
+
+                triggerCloudWebPush({
+                  title: `💌 Lời nhắn mới từ ${author}!`,
+                  body: text,
+                  action: 'OPEN_NOTE',
+                  noteId: createdNoteId
+                });
               }
             }
           } catch (supErr) {
