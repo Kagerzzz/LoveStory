@@ -2296,8 +2296,10 @@ img {
 .sticky-note,
 .note-card {
   width: 270px;
-  min-height: 190px;
-  padding: 28px 20px 18px;
+  height: 275px;
+  min-height: 275px;
+  max-width: 100%;
+  padding: 26px 18px 14px;
   border: var(--border-thick);
   box-shadow: var(--shadow);
   border-radius: var(--radius-md);
@@ -2308,6 +2310,7 @@ img {
   transition: var(--transition-bounce);
   background: var(--yellow-soft);
   cursor: pointer;
+  box-sizing: border-box;
 }
 
 /* Washi Tape on top */
@@ -2362,19 +2365,26 @@ img {
 .sticky-text,
 .note-text {
   font-family: var(--font-hand);
-  font-size: 1.05rem;
-  line-height: 1.6;
+  font-size: 1.02rem;
+  line-height: 1.5;
   color: var(--text-main);
   font-weight: 600;
   margin: 0;
   word-break: break-word;
-  white-space: pre-wrap;
+  white-space: pre-line;
+  display: -webkit-box;
+  -webkit-line-clamp: 6;
+  line-clamp: 6;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
 }
 
 .sticky-footer,
 .note-footer {
-  margin-top: 16px;
-  padding-top: 10px;
+  margin-top: auto;
+  padding-top: 8px;
   border-top: 2px dashed rgba(24, 24, 27, 0.2);
   display: flex;
   justify-content: space-between;
@@ -2382,6 +2392,7 @@ img {
   font-family: var(--font-title);
   font-size: 0.8rem;
   font-weight: 800;
+  flex-shrink: 0;
 }
 
 .sticky-author,
@@ -2398,7 +2409,7 @@ img {
 }
 
 .note-comment-pill {
-  margin-top: 10px;
+  margin-top: 8px;
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -2413,6 +2424,7 @@ img {
   box-shadow: 1.5px 1.5px 0 var(--ink);
   transition: var(--transition-fast);
   width: fit-content;
+  flex-shrink: 0;
 }
 
 .sticky-note:hover .note-comment-pill,
@@ -2794,6 +2806,10 @@ img {
 /* --------------------------------------------------------------------------
    18.1 NOTE DETAIL & COMMENT THREAD MODAL
    -------------------------------------------------------------------------- */
+#noteDetailModal {
+  z-index: 10010;
+}
+
 .note-detail-dialog {
   max-width: 580px;
   width: 100%;

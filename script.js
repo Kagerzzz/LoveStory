@@ -2299,6 +2299,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
     function createNoteCardElement(note, index) {
       const card = document.createElement('div');
       card.className = 'sticky-note note-card';
+      card.title = 'Nhấp để xem chi tiết lời nhắn này';
 
       const rotations = [-2, 1.8, -1.5, 2.2, -1.8, 1.5];
       const tapeColors = ['#ffd166', '#ff70a6', '#70e4d0', '#c77dff', '#ff8fab'];
