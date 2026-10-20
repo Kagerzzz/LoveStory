@@ -93,8 +93,17 @@ async function sendPushToAllSubscribers(notificationData) {
       supabase.from('love_notes').delete().in('id', staleDuplicateIds).then(() => {});
     }
 
-    const uniqueTargets = Array.from(uniqueSubsMap.values());
-    console.log(`🔔 [Push Daemon] Đang gửi thông báo đến ${uniqueTargets.length} thiết bị độc nhất (đã lọc sạch trùng lặp)...`);
+    let uniqueTargets = Array.from(uniqueSubsMap.values());
+
+    if (notificationData.excludeDeviceId) {
+      const beforeCount = uniqueTargets.length;
+      uniqueTargets = uniqueTargets.filter(({ subObj }) => subObj.deviceId !== notificationData.excludeDeviceId);
+      if (uniqueTargets.length < beforeCount) {
+        console.log(`⏩ [Push Daemon] Đã bỏ qua thiết bị gửi [${notificationData.excludeDeviceId}] (không tự gửi push cho chính mình).`);
+      }
+    }
+
+    console.log(`🔔 [Push Daemon] Đang gửi thông báo đến ${uniqueTargets.length} thiết bị nhận...`);
 
     const notifTag = notificationData.tag || (notificationData.noteId ? 'note-' + notificationData.noteId : 'lovestory-push');
 
@@ -154,10 +163,12 @@ supabase
     if (row.author === '__COMMENT__') {
       let cmtAuthor = 'Người ấy';
       let cmtText = 'Vừa để lại một phản hồi mới';
+      let senderDevice = null;
       try {
         const parsed = JSON.parse(row.content);
         if (parsed.author) cmtAuthor = parsed.author;
         if (parsed.text) cmtText = parsed.text;
+        if (parsed.sender_device) senderDevice = parsed.sender_device;
       } catch (e) {
         if (row.text) cmtText = row.text;
       }
@@ -167,7 +178,8 @@ supabase
         body: cmtText,
         tag: 'comment-' + row.id,
         action: 'OPEN_NOTE',
-        noteId: row.text
+        noteId: row.text,
+        excludeDeviceId: senderDevice
       });
     } else {
       // Lời nhắn mới

@@ -173,45 +173,11 @@ function initLoveStoryApp() {
     }
 
     // 2. Web Browser Native Notification (System Banner / Background)
-    // Nếu người dùng đang mở trang web ngay trước mắt, banner in-app toast đã hiển thị.
-    // Chỉ kích hoạt system notification khi trang web đang bị ẩn (đang ở tab khác hoặc khóa máy), hoặc đồng bộ cùng tag để không bị nhân đôi.
-    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
-      try {
-        const notifTag = action && noteId ? `${action}-${noteId}` : 'lovestory-notif';
-        const notifOptions = {
-          body: body,
-          icon: (typeof icon === 'string' && icon.includes('/')) ? icon : 'assets/images/IMG_1373.JPG',
-          badge: 'assets/images/IMG_1373.JPG',
-          tag: notifTag,
-          renotify: false, // Tránh duplicate thông báo cho cùng 1 tin
-          data: { action, noteId, url: window.location.href }
-        };
-
-        // Nếu tab đang ẩn (người dùng đang làm việc khác), ưu tiên bắn thông báo hệ thống
-        if (document.visibilityState === 'hidden') {
-          if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.ready.then(reg => {
-              if (reg && typeof reg.showNotification === 'function') {
-                return reg.showNotification(title, notifOptions);
-              }
-            }).catch(() => {});
-          } else {
-            try {
-              if (typeof Notification === 'function') {
-                const n = new Notification(title, notifOptions);
-                n.onclick = () => {
-                  window.focus();
-                  if (typeof onClick === 'function') onClick();
-                  n.close();
-                };
-              }
-            } catch (e) {}
-          }
-        }
-      } catch (e) {
-        console.warn('System Notification error:', e);
-      }
-    }
+    // LƯU Ý KỸ THUẬT QUAN TRỌNG:
+    // Tuyệt đối KHÔNG gọi `reg.showNotification` tại đây!
+    // Hệ thống Web Push (push-listener.js -> Apple APNs / Google FCM -> sw.js) đã đảm nhận
+    // việc bắn thông báo hệ thống khi màn hình khóa hoặc tab bị ẩn.
+    // Nếu gọi song song tại đây, trình duyệt / iOS sẽ nhận 2 thông báo cùng lúc (1 từ WebSocket, 1 từ Web Push).
   }
 
   // Helper: Convert VAPID key to Uint8Array for PushManager
@@ -333,19 +299,14 @@ function initLoveStoryApp() {
 
   // Trigger cloud Web Push notification to all subscribers
   function triggerCloudWebPush(payload) {
-    try {
-      fetch('/api/send-push', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      }).catch(() => {});
-    } catch (e) {}
+    // Không cần gọi HTTP API riêng biệt vì daemon push-listener.js
+    // đã tự động đón sự kiện INSERT thời gian thực từ Supabase để gửi Web Push tới toàn bộ thiết bị.
   }
 
   // Register service worker for web notifications if supported
   if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
     const registerSW = () => {
-      navigator.serviceWorker.register('sw.js').then(reg => {
+      navigator.serviceWorker.register('sw.js?v=2.2').then(reg => {
         console.log('✅ Service Worker registered successfully:', reg.scope);
         if (Notification.permission === 'granted') {
           syncWebPushSubscription().catch(() => {});
@@ -2979,11 +2940,13 @@ Với anh, anh muốn đi tiếp cùng với em.`;
         const now = new Date();
         const dateStr = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
+        const myDeviceId = (typeof localStorage !== 'undefined' && localStorage.getItem('lovestory_device_id')) || '';
         const commentData = {
           note_id: String(activeNoteDetailId),
           author: author,
           text: text,
           date: dateStr,
+          sender_device: myDeviceId,
           timestamp: Date.now()
         };
 

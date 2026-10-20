@@ -1,5 +1,5 @@
 // ============================================================================
-// Service Worker for LoveStory Web Notifications
+// Service Worker v2.2 for LoveStory Web Notifications (Deduplicated Push)
 // ============================================================================
 self.addEventListener('install', (event) => {
   self.skipWaiting();
