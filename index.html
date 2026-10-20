@@ -149,9 +149,10 @@
 
       <div class="container hero-container">
         
-        <div class="hero-header-badge">
-          <span class="badge-dot"></span>
-          <span>✦ OUR LOVE STORY • SINCE 31.08.2026 ✦</span>
+        <div class="hero-header-badge" id="heroHeaderBadge" role="button" tabindex="0" title="Bấm để bật thông báo khi có ảnh kỷ niệm, lời nhắn hoặc thảo luận mới">
+          <span class="badge-dot" id="heroBadgeDot"></span>
+          <span id="heroBadgeText">✦ OUR LOVE STORY • SINCE 31.08.2026 ✦</span>
+          <span class="badge-notif-bell" id="heroBadgeBell" title="Bật thông báo">🔔</span>
         </div>
 
         <h1 class="hero-title">
@@ -716,6 +717,9 @@
 
     </div>
   </aside>
+
+  <!-- FLOATING IN-APP TOAST NOTIFICATION CONTAINER -->
+  <div id="appToastContainer" class="app-toast-container" aria-live="polite"></div>
 
   <!-- HIDDEN YOUTUBE AUDIO CONTAINER (Head In The Clouds - Hayd) -->
   <div id="ytAudioContainer" style="position:fixed;bottom:0;right:0;width:200px;height:200px;opacity:0.001;pointer-events:none;z-index:-10;overflow:hidden;" aria-hidden="true">

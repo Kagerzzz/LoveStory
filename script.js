@@ -70,6 +70,7 @@ function initLoveStoryApp() {
   let appNotes = [...DEFAULT_NOTES];
   let appComments = [];
   let activeNoteDetailId = null;
+  let appOpenNoteDetailModal = null;
 
   // Helper: HTML escaping
   function escapeHTML(str) {
@@ -80,6 +81,155 @@ function initLoveStoryApp() {
       "'": '&#39;',
       '"': '&quot;'
     }[tag] || tag));
+  }
+
+  // ==========================================
+  // NOTIFICATION SYSTEM & HELPERS
+  // ==========================================
+  const myRecentlySentIds = new Set();
+
+  function playNotificationChime() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+
+      const osc1 = ctx.createOscillator();
+      const osc2 = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(587.33, now); // D5
+      osc1.frequency.exponentialRampToValueAtTime(880.00, now + 0.15); // A5
+
+      osc2.type = 'triangle';
+      osc2.frequency.setValueAtTime(880.00, now + 0.12);
+      osc2.frequency.exponentialRampToValueAtTime(1174.66, now + 0.28); // D6
+
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.18, now + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.55);
+
+      osc1.connect(gain);
+      osc2.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc1.start(now);
+      osc2.start(now + 0.1);
+      osc1.stop(now + 0.55);
+      osc2.stop(now + 0.55);
+    } catch (e) {}
+  }
+
+  function showAppNotification({ title, body, icon, action, noteId, onClick }) {
+    playNotificationChime();
+
+    // 1. In-App Floating Toast Notification
+    const container = document.getElementById('appToastContainer');
+    if (container) {
+      const toast = document.createElement('div');
+      toast.className = 'app-toast';
+
+      const isImgUrl = typeof icon === 'string' && (icon.includes('/') || icon.startsWith('data:image'));
+      const iconHTML = isImgUrl
+        ? `<img src="${escapeHTML(icon)}" class="app-toast-img" alt="Icon">`
+        : `<span class="app-toast-icon">${icon || '💖'}</span>`;
+
+      toast.innerHTML = `
+        ${iconHTML}
+        <div class="app-toast-body">
+          <h5 class="app-toast-title">${escapeHTML(title)}</h5>
+          <p class="app-toast-text">${escapeHTML(body)}</p>
+        </div>
+        <button type="button" class="app-toast-close" title="Đóng">✕</button>
+        <div class="app-toast-progress" style="animation-duration: 6s;"></div>
+      `;
+
+      const closeBtn = toast.querySelector('.app-toast-close');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          toast.classList.remove('show');
+          setTimeout(() => toast.remove(), 350);
+        });
+      }
+
+      toast.addEventListener('click', () => {
+        if (typeof onClick === 'function') onClick();
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 350);
+      });
+
+      container.appendChild(toast);
+      requestAnimationFrame(() => toast.classList.add('show'));
+
+      setTimeout(() => {
+        if (toast.parentElement) {
+          toast.classList.remove('show');
+          setTimeout(() => toast.remove(), 350);
+        }
+      }, 6000);
+    }
+
+    // 2. Web Browser Native Notification (System Banner / Background)
+    if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+      try {
+        const notifOptions = {
+          body: body,
+          icon: (typeof icon === 'string' && icon.includes('/')) ? icon : 'assets/images/IMG_1373.JPG',
+          badge: 'assets/images/IMG_1373.JPG',
+          data: { action, noteId, url: window.location.href }
+        };
+
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.ready.then(reg => {
+            reg.showNotification(title, notifOptions);
+          }).catch(() => {
+            const n = new Notification(title, notifOptions);
+            n.onclick = () => {
+              window.focus();
+              if (typeof onClick === 'function') onClick();
+              n.close();
+            };
+          });
+        } else {
+          const n = new Notification(title, notifOptions);
+          n.onclick = () => {
+            window.focus();
+            if (typeof onClick === 'function') onClick();
+            n.close();
+          };
+        }
+      } catch (e) {
+        console.warn('System Notification error:', e);
+      }
+    }
+  }
+
+  // Register service worker for web notifications if supported
+  if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(err => {
+        console.warn('Service Worker registration note:', err);
+      });
+    });
+
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'NOTIFICATION_ACTION') {
+        const { action, data } = event.data;
+        if (action === 'OPEN_NOTE' && data && data.noteId) {
+          if (typeof appOpenNoteDetailModal === 'function') {
+            appOpenNoteDetailModal(data.noteId);
+          } else if (typeof window !== 'undefined' && typeof window.__openNoteDetailModal === 'function') {
+            window.__openNoteDetailModal(data.noteId);
+          }
+        } else if (action === 'OPEN_GALLERY') {
+          const gallery = document.getElementById('gallery');
+          if (gallery) gallery.scrollIntoView({ behavior: 'smooth' });
+        }
+      }
+    });
   }
 
   // ==========================================
@@ -1400,6 +1550,97 @@ Với anh, anh muốn đi tiếp cùng với em.`;
       counterStartDateLabel.textContent = `Tính từ ngày 31 tháng 08, 2026 ✦ Từng giây từng phút đều trân quý`;
     }
 
+    // --- NOTIFICATION PERMISSION & HERO HEADER BADGE ---
+    const heroHeaderBadge = document.getElementById('heroHeaderBadge');
+    const heroBadgeDot = document.getElementById('heroBadgeDot');
+    const heroBadgeBell = document.getElementById('heroBadgeBell');
+
+    function updateBadgeNotificationState() {
+      if (!heroHeaderBadge) return;
+      if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
+        heroHeaderBadge.classList.add('notif-enabled');
+        heroHeaderBadge.setAttribute('title', 'Thông báo đang BẬT 🔔 (Nhấp để gửi thông báo thử nghiệm)');
+        if (heroBadgeBell) heroBadgeBell.textContent = '🔔';
+      } else if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'denied') {
+        heroHeaderBadge.classList.remove('notif-enabled');
+        heroHeaderBadge.setAttribute('title', 'Thông báo đang bị chặn. Hãy bấm vào biểu tượng cài đặt trình duyệt để cho phép.');
+        if (heroBadgeBell) heroBadgeBell.textContent = '🔕';
+      } else {
+        heroHeaderBadge.classList.remove('notif-enabled');
+        heroHeaderBadge.setAttribute('title', 'Nhấp để bật thông báo khi có ảnh kỷ niệm, lời nhắn hoặc thảo luận mới 🔔');
+        if (heroBadgeBell) heroBadgeBell.textContent = '🔔';
+      }
+    }
+
+    updateBadgeNotificationState();
+
+    if (heroHeaderBadge) {
+      heroHeaderBadge.addEventListener('click', async () => {
+        if (!('Notification' in window)) {
+          showAppNotification({
+            title: 'Thông báo LoveStory',
+            body: 'Trình duyệt này không hỗ trợ Web Notification, nhưng bạn vẫn sẽ nhận được thông báo trực tiếp trên trang web khi có cập nhật mới! 💖',
+            icon: '🔔'
+          });
+          return;
+        }
+
+        if (Notification.permission === 'granted') {
+          showAppNotification({
+            title: 'LoveStory 💕 Thông báo đang hoạt động!',
+            body: 'Bạn sẽ nhận được thông báo tức thì khi có ảnh kỷ niệm, lời nhắn hoặc thảo luận mới từ người thương 💌',
+            icon: 'assets/images/IMG_1373.JPG'
+          });
+          return;
+        }
+
+        if (Notification.permission === 'denied') {
+          showAppNotification({
+            title: 'Quyền thông báo đang bị chặn',
+            body: 'Bạn vui lòng nhấp vào biểu tượng ổ khóa / cài đặt trang web trên trình duyệt để cho phép thông báo nhé! 🔔',
+            icon: '🔕'
+          });
+          return;
+        }
+
+        try {
+          const perm = await Notification.requestPermission();
+          updateBadgeNotificationState();
+
+          if (perm === 'granted') {
+            if (typeof confetti === 'function') {
+              confetti({
+                particleCount: 35,
+                spread: 60,
+                origin: { y: 0.3 },
+                colors: ['#ff70a6', '#ffd166', '#70e4d0', '#ff8fab']
+              });
+            }
+            showAppNotification({
+              title: 'LoveStory 💕 Đã bật thông báo!',
+              body: 'Tuyệt vời! Từ giờ bạn sẽ nhận được thông báo ngay khi có ảnh kỷ niệm, lời nhắn hoặc thảo luận mới từ người thương.',
+              icon: 'assets/images/IMG_1373.JPG'
+            });
+          } else {
+            showAppNotification({
+              title: 'Chưa cấp quyền thông báo',
+              body: 'Bạn có thể bấm lại vào huy hiệu này bất kỳ lúc nào để bật lại thông báo nhé! 💌',
+              icon: '🔔'
+            });
+          }
+        } catch (err) {
+          console.warn('Lỗi yêu cầu quyền thông báo:', err);
+        }
+      });
+
+      heroHeaderBadge.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          heroHeaderBadge.click();
+        }
+      });
+    }
+
     // --- B. LIVE LOVE COUNTER ---
     const cntDays = document.getElementById('cntDays');
     const cntHours = document.getElementById('cntHours');
@@ -1975,6 +2216,10 @@ Với anh, anh muốn đi tiếp cùng với em.`;
                   savedToRemote = true;
                   if (data && data[0]) {
                     newRecord = data[0];
+                    if (newRecord.id) {
+                      myRecentlySentIds.add(newRecord.id);
+                      setTimeout(() => myRecentlySentIds.delete(newRecord.id), 45000);
+                    }
                   }
                 }
               } catch (supErr) {
@@ -2413,8 +2658,16 @@ Với anh, anh muốn đi tiếp cùng với em.`;
     }
 
     function openNoteDetailModal(noteId) {
-      const note = appNotes.find(n => String(n.id) === String(noteId));
-      if (!note) return;
+      let note = appNotes.find(n => String(n.id) === String(noteId));
+      if (!note) {
+        if (typeof fetchLoveNotes === 'function') {
+          fetchLoveNotes().then(() => {
+            const found = appNotes.find(n => String(n.id) === String(noteId));
+            if (found) openNoteDetailModal(noteId);
+          });
+        }
+        return;
+      }
 
       activeNoteDetailId = note.id;
 
@@ -2446,6 +2699,12 @@ Với anh, anh muốn đi tiếp cùng với em.`;
       if (commentTextInput) {
         setTimeout(() => commentTextInput.focus(), 150);
       }
+    }
+
+    // Expose openNoteDetailModal for notifications and SW deep-links
+    appOpenNoteDetailModal = openNoteDetailModal;
+    if (typeof window !== 'undefined') {
+      window.__openNoteDetailModal = openNoteDetailModal;
     }
 
     function closeNoteDetailModal() {
@@ -2593,6 +2852,9 @@ Với anh, anh muốn đi tiếp cùng với em.`;
             if (error) throw error;
 
             const newId = (data && data[0] && data[0].id) ? data[0].id : ('temp-' + Date.now());
+            myRecentlySentIds.add(newId);
+            setTimeout(() => myRecentlySentIds.delete(newId), 45000);
+
             appComments.push({
               id: newId,
               noteId: String(activeNoteDetailId),
@@ -2734,6 +2996,8 @@ Với anh, anh muốn đi tiếp cùng với em.`;
               savedToRemote = true;
               if (data && data[0] && data[0].id) {
                 createdNoteId = data[0].id;
+                myRecentlySentIds.add(createdNoteId);
+                setTimeout(() => myRecentlySentIds.delete(createdNoteId), 45000);
               }
             }
           } catch (supErr) {
@@ -2816,6 +3080,54 @@ Với anh, anh muốn đi tiếp cùng với em.`;
               } catch (e) {
                 console.warn('Lỗi phân tích Realtime music payload:', e);
               }
+            } else if (payload && payload.eventType === 'INSERT' && payload.new) {
+              const newRow = payload.new;
+              const rowId = newRow.id;
+
+              if (!myRecentlySentIds.has(rowId)) {
+                if (newRow.author === '__COMMENT__') {
+                  let cmtAuthor = 'Người ấy';
+                  let cmtText = 'Vừa để lại một phản hồi mới 💬';
+                  try {
+                    const parsed = JSON.parse(newRow.content);
+                    if (parsed.author) cmtAuthor = parsed.author;
+                    if (parsed.text) cmtText = parsed.text;
+                  } catch (e) {
+                    if (newRow.text) cmtText = newRow.text;
+                  }
+                  const noteTargetId = newRow.text;
+                  showAppNotification({
+                    title: `💬 Thảo luận mới từ ${cmtAuthor}`,
+                    body: cmtText,
+                    icon: '💬',
+                    action: 'OPEN_NOTE',
+                    noteId: noteTargetId,
+                    onClick: () => {
+                      if (typeof openNoteDetailModal === 'function' && noteTargetId) {
+                        openNoteDetailModal(noteTargetId);
+                      }
+                    }
+                  });
+                } else if (newRow.author !== '__CONFIG_MUSIC__') {
+                  const authorName = newRow.author || 'Người thương';
+                  const noteBody = newRow.content || newRow.text || 'Gửi đến bạn một lời nhắn ngọt ngào 💕';
+                  showAppNotification({
+                    title: `💌 Lời nhắn mới từ ${authorName}!`,
+                    body: noteBody,
+                    icon: '💌',
+                    action: 'OPEN_NOTE',
+                    noteId: rowId,
+                    onClick: () => {
+                      if (typeof openNoteDetailModal === 'function' && rowId) {
+                        openNoteDetailModal(rowId);
+                      } else {
+                        const notesSection = document.getElementById('notes');
+                        if (notesSection) notesSection.scrollIntoView({ behavior: 'smooth' });
+                      }
+                    }
+                  });
+                }
+              }
             }
             fetchLoveNotes();
           })
@@ -2827,7 +3139,24 @@ Với anh, anh muốn đi tiếp cùng với em.`;
       try {
         supabaseClient
           .channel('public:memories')
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'memories' }, () => {
+          .on('postgres_changes', { event: '*', schema: 'public', table: 'memories' }, (payload) => {
+            if (payload && payload.eventType === 'INSERT' && payload.new) {
+              const newRow = payload.new;
+              const rowId = newRow.id;
+              if (!myRecentlySentIds.has(rowId)) {
+                const captionText = newRow.caption ? `"${newRow.caption}"` : 'Một khoảnh khắc mới vừa được lưu giữ';
+                showAppNotification({
+                  title: '📸 Có ảnh kỷ niệm mới!',
+                  body: captionText,
+                  icon: newRow.image_url || '📸',
+                  action: 'OPEN_GALLERY',
+                  onClick: () => {
+                    const gallery = document.getElementById('gallery');
+                    if (gallery) gallery.scrollIntoView({ behavior: 'smooth' });
+                  }
+                });
+              }
+            }
             fetchMemories();
           })
           .subscribe();
