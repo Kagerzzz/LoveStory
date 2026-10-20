@@ -49,8 +49,9 @@ async function sendPushToAllSubscribers(notificationData) {
   try {
     const { data, error } = await supabase
       .from('love_notes')
-      .select('id, content, text, date')
-      .eq('author', '__PUSH_SUB__');
+      .select('id, content, text, date, created_at')
+      .eq('author', '__PUSH_SUB__')
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('❌ [Push Daemon] Lỗi lấy danh sách push subscriptions:', error);
@@ -62,7 +63,38 @@ async function sendPushToAllSubscribers(notificationData) {
       return;
     }
 
-    console.log(`🔔 [Push Daemon] Đang gửi thông báo đến ${data.length} thiết bị đăng ký...`);
+    // Deduplication Map: Mỗi thiết bị vật lý (hoặc endpoint độc nhất) CHỈ nhận đúng 1 thông báo
+    const uniqueSubsMap = new Map();
+    const staleDuplicateIds = [];
+
+    for (const row of data) {
+      let subObj = null;
+      try {
+        subObj = typeof row.content === 'string' ? JSON.parse(row.content) : row.content;
+      } catch (e) {
+        continue;
+      }
+      if (!subObj || !subObj.endpoint) continue;
+
+      // Ưu tiên deviceId bền vững, fallback sang endpoint
+      const deviceKey = subObj.deviceId || subObj.endpoint;
+
+      if (uniqueSubsMap.has(deviceKey)) {
+        // Vì data đã sort theo created_at giảm dần, bản ghi này cũ hơn -> gom lại để xóa
+        staleDuplicateIds.push(row.id);
+      } else {
+        uniqueSubsMap.set(deviceKey, { row, subObj });
+      }
+    }
+
+    // Tự động dọn dẹp các bản ghi trùng lặp trong cơ sở dữ liệu Supabase
+    if (staleDuplicateIds.length > 0) {
+      console.log(`🧹 [Push Daemon] Đang xóa ${staleDuplicateIds.length} bản ghi subscription trùng lặp khỏi DB:`, staleDuplicateIds);
+      supabase.from('love_notes').delete().in('id', staleDuplicateIds).then(() => {});
+    }
+
+    const uniqueTargets = Array.from(uniqueSubsMap.values());
+    console.log(`🔔 [Push Daemon] Đang gửi thông báo đến ${uniqueTargets.length} thiết bị độc nhất (đã lọc sạch trùng lặp)...`);
 
     const notifTag = notificationData.tag || (notificationData.noteId ? 'note-' + notificationData.noteId : 'lovestory-push');
 
@@ -79,20 +111,10 @@ async function sendPushToAllSubscribers(notificationData) {
     });
 
     const results = await Promise.allSettled(
-      data.map(async (row) => {
-        let subObj = null;
-        try {
-          subObj = typeof row.content === 'string' ? JSON.parse(row.content) : row.content;
-        } catch (e) {
-          console.warn('Lỗi parse subscription:', e);
-          return;
-        }
-
-        if (!subObj || !subObj.endpoint) return;
-
+      uniqueTargets.map(async ({ row, subObj }) => {
         try {
           const res = await webpush.sendNotification(subObj, payloadString);
-          console.log(`✅ [Push Daemon] Gửi thành công tới [${row.date || 'Device'}]: HTTP ${res.statusCode}`);
+          console.log(`✅ [Push Daemon] Gửi thành công tới [${row.date || 'Device'} - ${subObj.deviceId || 'legacy'}]: HTTP ${res.statusCode}`);
           return { success: true };
         } catch (pushErr) {
           console.error(`❌ [Push Daemon] Lỗi gửi tới [${row.date || 'Device'}]:`, pushErr.message);
@@ -106,7 +128,7 @@ async function sendPushToAllSubscribers(notificationData) {
     );
 
     const successCount = results.filter(r => r.status === 'fulfilled' && r.value && r.value.success).length;
-    console.log(`✨ [Push Daemon] Hoàn tất: ${successCount}/${data.length} thiết bị đã nhận được thông báo!`);
+    console.log(`✨ [Push Daemon] Hoàn tất: ${successCount}/${uniqueTargets.length} thiết bị đã nhận được thông báo!`);
   } catch (err) {
     console.error('❌ [Push Daemon] Lỗi gửi push:', err);
   }
@@ -143,7 +165,7 @@ supabase
       await sendPushToAllSubscribers({
         title: `💬 Thảo luận mới từ ${cmtAuthor}!`,
         body: cmtText,
-        tag: 'comment-' + (row.text || row.id),
+        tag: 'comment-' + row.id,
         action: 'OPEN_NOTE',
         noteId: row.text
       });

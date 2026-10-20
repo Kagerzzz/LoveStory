@@ -57,8 +57,9 @@ module.exports = async (req, res) => {
 
     const { data: subs, error } = await supabase
       .from('love_notes')
-      .select('id, content, text, date')
-      .eq('author', '__PUSH_SUB__');
+      .select('id, content, text, date, created_at')
+      .eq('author', '__PUSH_SUB__')
+      .order('created_at', { ascending: false });
 
     if (error) {
       return res.status(500).json({ error: error.message });
@@ -67,6 +68,33 @@ module.exports = async (req, res) => {
     if (!subs || subs.length === 0) {
       return res.status(200).json({ message: 'No subscriptions found', sent: 0 });
     }
+
+    // Deduplication Map: Mỗi thiết bị chỉ nhận đúng 1 push
+    const uniqueSubsMap = new Map();
+    const staleDuplicateIds = [];
+
+    for (const row of subs) {
+      let subObj = null;
+      try {
+        subObj = typeof row.content === 'string' ? JSON.parse(row.content) : row.content;
+      } catch (e) {
+        continue;
+      }
+      if (!subObj || !subObj.endpoint) continue;
+
+      const deviceKey = subObj.deviceId || subObj.endpoint;
+      if (uniqueSubsMap.has(deviceKey)) {
+        staleDuplicateIds.push(row.id);
+      } else {
+        uniqueSubsMap.set(deviceKey, { row, subObj });
+      }
+    }
+
+    if (staleDuplicateIds.length > 0) {
+      supabase.from('love_notes').delete().in('id', staleDuplicateIds).then(() => {});
+    }
+
+    const uniqueTargets = Array.from(uniqueSubsMap.values());
 
     const payload = JSON.stringify({
       title: title || 'LoveStory 💕',
@@ -81,13 +109,10 @@ module.exports = async (req, res) => {
     });
 
     const results = await Promise.allSettled(
-      subs.map(async (row) => {
+      uniqueTargets.map(async ({ row, subObj }) => {
         try {
-          const subObj = typeof row.content === 'string' ? JSON.parse(row.content) : row.content;
-          if (subObj && subObj.endpoint) {
-            await webpush.sendNotification(subObj, payload);
-            return { success: true };
-          }
+          await webpush.sendNotification(subObj, payload);
+          return { success: true };
         } catch (err) {
           if (err.statusCode === 404 || err.statusCode === 410) {
             await supabase.from('love_notes').delete().eq('id', row.id);
@@ -102,7 +127,7 @@ module.exports = async (req, res) => {
     return res.status(200).json({
       success: true,
       sent: successCount,
-      total: subs.length
+      total: uniqueTargets.length
     });
   } catch (err) {
     return res.status(500).json({ error: err.message });

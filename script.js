@@ -226,7 +226,7 @@ function initLoveStoryApp() {
     return outputArray;
   }
 
-  // Subscribe to Web Push and sync to Supabase
+  // Subscribe to Web Push and sync to Supabase (Deduplicated per physical device)
   async function syncWebPushSubscription() {
     if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
     try {
@@ -241,23 +241,89 @@ function initLoveStoryApp() {
       }
       if (supabaseClient && sub) {
         const endpoint = sub.endpoint;
-        const { data: existing } = await supabaseClient
-          .from('love_notes')
-          .select('id')
-          .eq('author', '__PUSH_SUB__')
-          .eq('text', endpoint)
-          .limit(1);
 
-        if (!existing || existing.length === 0) {
+        // 1. Quản lý Device ID bền vững trong localStorage
+        let deviceId = localStorage.getItem('lovestory_device_id');
+        if (!deviceId) {
+          deviceId = 'dev_' + Math.random().toString(36).substring(2, 10) + '_' + Date.now().toString(36);
+          localStorage.setItem('lovestory_device_id', deviceId);
+        }
+
+        // 2. Dọn dẹp endpoint cũ nếu trình duyệt đổi push token (tránh nhân đôi trên iOS APNs)
+        const oldEndpoint = localStorage.getItem('lovestory_push_endpoint');
+        if (oldEndpoint && oldEndpoint !== endpoint) {
+          try {
+            await supabaseClient
+              .from('love_notes')
+              .delete()
+              .eq('author', '__PUSH_SUB__')
+              .eq('text', oldEndpoint);
+            console.log('🧹 [WebPush] Đã dọn dẹp push endpoint cũ:', oldEndpoint);
+          } catch (e) {
+            console.warn('Lỗi dọn dẹp push endpoint cũ:', e);
+          }
+        }
+        localStorage.setItem('lovestory_push_endpoint', endpoint);
+
+        const subJson = sub.toJSON();
+        subJson.deviceId = deviceId;
+        const deviceType = navigator.userAgent.includes('iPhone') ? 'iPhone' : (navigator.userAgent.includes('Android') ? 'Android' : 'Desktop');
+
+        // 3. Kiểm tra các bản ghi subscription hiện có trên Supabase
+        const { data: existingSubs } = await supabaseClient
+          .from('love_notes')
+          .select('id, content, text')
+          .eq('author', '__PUSH_SUB__');
+
+        let primaryId = null;
+        const duplicateIds = [];
+
+        if (existingSubs && existingSubs.length > 0) {
+          for (const row of existingSubs) {
+            let parsed = null;
+            try {
+              parsed = typeof row.content === 'string' ? JSON.parse(row.content) : row.content;
+            } catch (e) {}
+
+            const isSameDevice = parsed && parsed.deviceId === deviceId;
+            const isSameEndpoint = row.text === endpoint || (parsed && parsed.endpoint === endpoint);
+
+            if (isSameDevice || isSameEndpoint) {
+              if (!primaryId) {
+                primaryId = row.id;
+              } else {
+                duplicateIds.push(row.id);
+              }
+            }
+          }
+        }
+
+        // Dọn sạch các bản ghi trùng lặp của cùng thiết bị này
+        if (duplicateIds.length > 0) {
+          await supabaseClient.from('love_notes').delete().in('id', duplicateIds);
+          console.log('🧹 [WebPush] Đã xóa subscription trùng lặp:', duplicateIds);
+        }
+
+        if (primaryId) {
+          await supabaseClient
+            .from('love_notes')
+            .update({
+              content: JSON.stringify(subJson),
+              text: endpoint,
+              date: deviceType
+            })
+            .eq('id', primaryId);
+          console.log('✨ [WebPush] Cập nhật push subscription thành công:', deviceId);
+        } else {
           await supabaseClient
             .from('love_notes')
             .insert([{
               author: '__PUSH_SUB__',
-              content: JSON.stringify(sub),
+              content: JSON.stringify(subJson),
               text: endpoint,
-              date: navigator.userAgent.includes('iPhone') ? 'iPhone' : (navigator.userAgent.includes('Android') ? 'Android' : 'Desktop')
+              date: deviceType
             }]);
-          console.log('✨ [WebPush] Push subscription synced to Supabase!');
+          console.log('✨ [WebPush] Đăng ký push subscription mới thành công:', deviceId);
         }
       }
     } catch (err) {
@@ -2306,6 +2372,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
                         title: '📸 Có ảnh kỷ niệm mới!',
                         body: caption || 'Một khoảnh khắc mới vừa được lưu giữ',
                         icon: imageUrl,
+                        tag: 'memory-' + newRecord.id,
                         action: 'OPEN_GALLERY'
                       });
                     }
@@ -2956,6 +3023,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
             triggerCloudWebPush({
               title: `💬 Thảo luận mới từ ${author}!`,
               body: text,
+              tag: 'comment-' + newId,
               action: 'OPEN_NOTE',
               noteId: String(activeNoteDetailId)
             });
@@ -3098,6 +3166,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
                 triggerCloudWebPush({
                   title: `💌 Lời nhắn mới từ ${author}!`,
                   body: text,
+                  tag: 'note-' + createdNoteId,
                   action: 'OPEN_NOTE',
                   noteId: createdNoteId
                 });
