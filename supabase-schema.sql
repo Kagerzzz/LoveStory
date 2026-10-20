@@ -73,3 +73,11 @@ create policy "Public can update music_settings" on music_settings for update us
 --   content = JSON chuỗi { note_id, author, text, date, timestamp }
 -- Không cần tạo bảng mới, tự động đồng bộ realtime qua channel public:love_notes.
 
+-- ============================================================================
+-- 5. KÍCH HOẠT SUPABASE REALTIME REPLICATION (BẮT BUỘC ĐỂ NHẬN THÔNG BÁO TỨC THÌ)
+-- Sao chép và chạy 2 dòng sau trong Supabase Dashboard -> SQL Editor:
+-- ============================================================================
+alter publication supabase_realtime add table love_notes;
+alter publication supabase_realtime add table memories;
+
+

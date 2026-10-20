@@ -1,0 +1,19 @@
+{
+  "name": "Our Love Story ✦ Hiếu & Linh",
+  "short_name": "LoveStory",
+  "description": "Nơi lưu giữ hành trình tình yêu ngọt ngào của Thân Hiếu & Khánh Linh",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fff5f7",
+  "theme_color": "#ffe5ec",
+  "icons": [
+    {
+      "src": "assets/images/IMG_1373.JPG",
+      "sizes": "192x192 512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}

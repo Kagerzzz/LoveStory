@@ -9,6 +9,38 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
 
+// Lắng nghe sự kiện Push từ máy chủ (Web Push Notification chạy ngầm kể cả khi khóa màn hình)
+self.addEventListener('push', (event) => {
+  let data = {
+    title: 'LoveStory 💕',
+    body: 'Bạn vừa nhận được một cập nhật yêu thương mới!',
+    icon: 'assets/images/IMG_1373.JPG',
+    data: { url: '/', action: 'OPEN_NOTE' }
+  };
+
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (e) {
+      data.body = event.data.text();
+    }
+  }
+
+  const options = {
+    body: data.body || '',
+    icon: data.icon || 'assets/images/IMG_1373.JPG',
+    badge: 'assets/images/IMG_1373.JPG',
+    vibrate: [200, 100, 200],
+    tag: data.tag || ('lovestory-notif-' + Date.now()),
+    renotify: true,
+    data: data.data || { url: '/' }
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'LoveStory 💕', options)
+  );
+});
+
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const targetUrl = (event.notification.data && event.notification.data.url) || '/';

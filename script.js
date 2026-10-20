@@ -182,24 +182,35 @@ function initLoveStoryApp() {
           data: { action, noteId, url: window.location.href }
         };
 
-        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        if ('serviceWorker' in navigator) {
           navigator.serviceWorker.ready.then(reg => {
-            reg.showNotification(title, notifOptions);
-          }).catch(() => {
-            const n = new Notification(title, notifOptions);
-            n.onclick = () => {
-              window.focus();
-              if (typeof onClick === 'function') onClick();
-              n.close();
-            };
+            if (reg && typeof reg.showNotification === 'function') {
+              return reg.showNotification(title, notifOptions);
+            }
+          }).catch(err => {
+            console.warn('SW showNotification error:', err);
+            try {
+              if (typeof Notification === 'function') {
+                const n = new Notification(title, notifOptions);
+                n.onclick = () => {
+                  window.focus();
+                  if (typeof onClick === 'function') onClick();
+                  n.close();
+                };
+              }
+            } catch (e) {}
           });
         } else {
-          const n = new Notification(title, notifOptions);
-          n.onclick = () => {
-            window.focus();
-            if (typeof onClick === 'function') onClick();
-            n.close();
-          };
+          try {
+            if (typeof Notification === 'function') {
+              const n = new Notification(title, notifOptions);
+              n.onclick = () => {
+                window.focus();
+                if (typeof onClick === 'function') onClick();
+                n.close();
+              };
+            }
+          } catch (e) {}
         }
       } catch (e) {
         console.warn('System Notification error:', e);
@@ -207,13 +218,75 @@ function initLoveStoryApp() {
     }
   }
 
+  // Helper: Convert VAPID key to Uint8Array for PushManager
+  function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  }
+
+  // Subscribe to Web Push and sync to Supabase
+  async function syncWebPushSubscription() {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const VAPID_PUBLIC_KEY = 'BH2q1Z90pv4TfqVDXbkMYOYaIekIfvAVUU86jkqLSEEXCvrSAlOItNNn8K1dqQoeXpi_rsk-duL-wjuh_QySCOg';
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub && Notification.permission === 'granted') {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+        });
+      }
+      if (supabaseClient && sub) {
+        const endpoint = sub.endpoint;
+        const { data: existing } = await supabaseClient
+          .from('love_notes')
+          .select('id')
+          .eq('author', '__PUSH_SUB__')
+          .eq('text', endpoint)
+          .limit(1);
+
+        if (!existing || existing.length === 0) {
+          await supabaseClient
+            .from('love_notes')
+            .insert([{
+              author: '__PUSH_SUB__',
+              content: JSON.stringify(sub),
+              text: endpoint,
+              date: navigator.userAgent.includes('iPhone') ? 'iPhone' : (navigator.userAgent.includes('Android') ? 'Android' : 'Desktop')
+            }]);
+          console.log('✨ [WebPush] Push subscription synced to Supabase!');
+        }
+      }
+    } catch (err) {
+      console.warn('WebPush sync error:', err);
+    }
+  }
+
   // Register service worker for web notifications if supported
   if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(err => {
+    const registerSW = () => {
+      navigator.serviceWorker.register('sw.js').then(reg => {
+        console.log('✅ Service Worker registered successfully:', reg.scope);
+        if (Notification.permission === 'granted') {
+          syncWebPushSubscription().catch(() => {});
+        }
+      }).catch(err => {
         console.warn('Service Worker registration note:', err);
       });
-    });
+    };
+
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      registerSW();
+    } else {
+      window.addEventListener('load', registerSW);
+    }
 
     navigator.serviceWorker.addEventListener('message', (event) => {
       if (event.data && event.data.type === 'NOTIFICATION_ACTION') {
@@ -1586,6 +1659,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
         }
 
         if (Notification.permission === 'granted') {
+          syncWebPushSubscription().catch(() => {});
           showAppNotification({
             title: 'LoveStory 💕 Thông báo đang hoạt động!',
             body: 'Bạn sẽ nhận được thông báo tức thì khi có ảnh kỷ niệm, lời nhắn hoặc thảo luận mới từ người thương 💌',
@@ -1608,6 +1682,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
           updateBadgeNotificationState();
 
           if (perm === 'granted') {
+            syncWebPushSubscription().catch(() => {});
             if (typeof confetti === 'function') {
               confetti({
                 particleCount: 35,
@@ -2452,7 +2527,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
           appNotes = loadLocalNotes();
           appComments = loadLocalComments();
         } else if (data && data.length > 0) {
-          const userNotes = data.filter(item => item.author !== '__CONFIG_MUSIC__' && item.author !== '__COMMENT__');
+          const userNotes = data.filter(item => item.author !== '__CONFIG_MUSIC__' && item.author !== '__COMMENT__' && item.author !== '__PUSH_SUB__');
           const commentRows = data.filter(item => item.author === '__COMMENT__');
 
           if (userNotes.length > 0) {
@@ -3108,7 +3183,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
                       }
                     }
                   });
-                } else if (newRow.author !== '__CONFIG_MUSIC__') {
+                } else if (newRow.author !== '__CONFIG_MUSIC__' && newRow.author !== '__PUSH_SUB__') {
                   const authorName = newRow.author || 'Người thương';
                   const noteBody = newRow.content || newRow.text || 'Gửi đến bạn một lời nhắn ngọt ngào 💕';
                   showAppNotification({
