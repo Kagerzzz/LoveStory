@@ -26,13 +26,16 @@ self.addEventListener('push', (event) => {
     }
   }
 
+  // Deduplication tag: use noteId or action so duplicate events collapse into 1 notification
+  const notifTag = data.tag || (data.data && data.data.noteId ? 'note-' + data.data.noteId : 'lovestory-push');
+
   const options = {
     body: data.body || '',
     icon: data.icon || 'assets/images/IMG_1373.JPG',
     badge: 'assets/images/IMG_1373.JPG',
     vibrate: [200, 100, 200],
-    tag: data.tag || ('lovestory-notif-' + Date.now()),
-    renotify: true,
+    tag: notifTag,
+    renotify: false, // Ngăn chặn bắn lặp lại (double) khi cùng 1 nội dung đến
     data: data.data || { url: '/' }
   };
 

@@ -28,6 +28,23 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 console.log('🚀 [Push Daemon] Đang khởi động bộ lắng nghe Web Push cho LoveStory...');
 
+// Bộ nhớ đệm chống trùng lặp (Deduplication Cache) trong 30 giây
+const recentlyPushedIds = new Map();
+
+function shouldPush(id) {
+  if (!id) return true;
+  const now = Date.now();
+  if (recentlyPushedIds.has(id)) {
+    const time = recentlyPushedIds.get(id);
+    if (now - time < 30000) return false; // Đã bắn push cho mục này trong 30s trước
+  }
+  recentlyPushedIds.set(id, now);
+  for (const [k, v] of recentlyPushedIds.entries()) {
+    if (now - v > 60000) recentlyPushedIds.delete(k);
+  }
+  return true;
+}
+
 async function sendPushToAllSubscribers(notificationData) {
   try {
     const { data, error } = await supabase
@@ -47,10 +64,13 @@ async function sendPushToAllSubscribers(notificationData) {
 
     console.log(`🔔 [Push Daemon] Đang gửi thông báo đến ${data.length} thiết bị đăng ký...`);
 
+    const notifTag = notificationData.tag || (notificationData.noteId ? 'note-' + notificationData.noteId : 'lovestory-push');
+
     const payloadString = JSON.stringify({
       title: notificationData.title || 'LoveStory 💕',
       body: notificationData.body || 'Bạn có một cập nhật mới!',
       icon: notificationData.icon || 'https://cdn-icons-png.flaticon.com/512/1041/1041916.png',
+      tag: notifTag,
       data: {
         url: notificationData.url || '/',
         action: notificationData.action || 'OPEN_NOTE',
@@ -102,6 +122,11 @@ supabase
     // Bỏ qua các bản ghi nội bộ
     if (row.author === '__PUSH_SUB__' || row.author === '__CONFIG_MUSIC__') return;
 
+    if (!shouldPush(row.id)) {
+      console.log(`⏩ [Push Daemon] Bỏ qua vì id ${row.id} vừa được gửi push.`);
+      return;
+    }
+
     console.log(`\n📬 [Push Daemon] Phát hiện INSERT mới: author="${row.author}"`);
 
     if (row.author === '__COMMENT__') {
@@ -118,6 +143,7 @@ supabase
       await sendPushToAllSubscribers({
         title: `💬 Thảo luận mới từ ${cmtAuthor}!`,
         body: cmtText,
+        tag: 'comment-' + (row.text || row.id),
         action: 'OPEN_NOTE',
         noteId: row.text
       });
@@ -129,6 +155,7 @@ supabase
       await sendPushToAllSubscribers({
         title: `💌 Lời nhắn mới từ ${authorName}!`,
         body: noteBody,
+        tag: 'note-' + row.id,
         action: 'OPEN_NOTE',
         noteId: row.id
       });
@@ -138,12 +165,18 @@ supabase
     const row = payload.new;
     if (!row) return;
 
+    if (!shouldPush(row.id)) {
+      console.log(`⏩ [Push Daemon] Bỏ qua vì memory id ${row.id} vừa được gửi push.`);
+      return;
+    }
+
     console.log(`\n📸 [Push Daemon] Phát hiện ảnh kỷ niệm mới: "${row.caption}"`);
 
     await sendPushToAllSubscribers({
       title: '📸 Có ảnh kỷ niệm mới!',
       body: row.caption ? `"${row.caption}"` : 'Một khoảnh khắc mới vừa được lưu giữ',
       icon: row.image_url || undefined,
+      tag: 'memory-' + row.id,
       action: 'OPEN_GALLERY'
     });
   })

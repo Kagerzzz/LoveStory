@@ -173,22 +173,29 @@ function initLoveStoryApp() {
     }
 
     // 2. Web Browser Native Notification (System Banner / Background)
+    // Nếu người dùng đang mở trang web ngay trước mắt, banner in-app toast đã hiển thị.
+    // Chỉ kích hoạt system notification khi trang web đang bị ẩn (đang ở tab khác hoặc khóa máy), hoặc đồng bộ cùng tag để không bị nhân đôi.
     if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'granted') {
       try {
+        const notifTag = action && noteId ? `${action}-${noteId}` : 'lovestory-notif';
         const notifOptions = {
           body: body,
           icon: (typeof icon === 'string' && icon.includes('/')) ? icon : 'assets/images/IMG_1373.JPG',
           badge: 'assets/images/IMG_1373.JPG',
+          tag: notifTag,
+          renotify: false, // Tránh duplicate thông báo cho cùng 1 tin
           data: { action, noteId, url: window.location.href }
         };
 
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.ready.then(reg => {
-            if (reg && typeof reg.showNotification === 'function') {
-              return reg.showNotification(title, notifOptions);
-            }
-          }).catch(err => {
-            console.warn('SW showNotification error:', err);
+        // Nếu tab đang ẩn (người dùng đang làm việc khác), ưu tiên bắn thông báo hệ thống
+        if (document.visibilityState === 'hidden') {
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(reg => {
+              if (reg && typeof reg.showNotification === 'function') {
+                return reg.showNotification(title, notifOptions);
+              }
+            }).catch(() => {});
+          } else {
             try {
               if (typeof Notification === 'function') {
                 const n = new Notification(title, notifOptions);
@@ -199,18 +206,7 @@ function initLoveStoryApp() {
                 };
               }
             } catch (e) {}
-          });
-        } else {
-          try {
-            if (typeof Notification === 'function') {
-              const n = new Notification(title, notifOptions);
-              n.onclick = () => {
-                window.focus();
-                if (typeof onClick === 'function') onClick();
-                n.close();
-              };
-            }
-          } catch (e) {}
+          }
         }
       } catch (e) {
         console.warn('System Notification error:', e);

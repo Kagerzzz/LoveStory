@@ -17,6 +17,23 @@ webpush.setVapidDetails(
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Deduplication Cache (30 seconds)
+const recentlyPushedIds = new Map();
+
+function shouldPush(id) {
+  if (!id) return true;
+  const now = Date.now();
+  if (recentlyPushedIds.has(id)) {
+    const time = recentlyPushedIds.get(id);
+    if (now - time < 30000) return false;
+  }
+  recentlyPushedIds.set(id, now);
+  for (const [k, v] of recentlyPushedIds.entries()) {
+    if (now - v > 60000) recentlyPushedIds.delete(k);
+  }
+  return true;
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -31,7 +48,12 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { title, body, icon, url, action, noteId } = req.body || {};
+    const { title, body, icon, url, action, noteId, tag } = req.body || {};
+
+    const notifTag = tag || (noteId ? 'note-' + noteId : 'lovestory-push');
+    if (!shouldPush(notifTag)) {
+      return res.status(200).json({ success: true, skipped: true, message: 'Deduplicated: already sent recently' });
+    }
 
     const { data: subs, error } = await supabase
       .from('love_notes')
@@ -50,6 +72,7 @@ module.exports = async (req, res) => {
       title: title || 'LoveStory 💕',
       body: body || 'Bạn có một cập nhật mới!',
       icon: icon || 'https://cdn-icons-png.flaticon.com/512/1041/1041916.png',
+      tag: notifTag,
       data: {
         url: url || '/',
         action: action || 'OPEN_NOTE',
