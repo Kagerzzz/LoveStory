@@ -2343,9 +2343,6 @@ img {
   border: 1.5px solid var(--ink, #18181b);
 }
 
-.comment-identity-pill {
-  margin-bottom: 8px;
-}
 
 .note-input-card {
   background: #ffffff;

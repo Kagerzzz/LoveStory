@@ -1694,9 +1694,6 @@ Với anh, anh muốn đi tiếp cùng với em.`;
     const noteSenderName = document.getElementById('noteSenderName');
     if (noteSenderName) noteSenderName.textContent = currentUserIdentity || 'Anh ❤️';
 
-    const commentSenderName = document.getElementById('commentSenderName');
-    if (commentSenderName) commentSenderName.textContent = currentUserIdentity || 'Anh ❤️';
-
     // --- A. APPLY STORY & DECRYPTED LETTER TO DOM ---
     const brandCoupleNames = document.getElementById('brandCoupleNames');
     if (brandCoupleNames) brandCoupleNames.textContent = 'LoveStory';
@@ -2878,11 +2875,6 @@ Với anh, anh muốn đi tiếp cùng với em.`;
         noteDetailModal.classList.add('open', 'active');
         noteDetailModal.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
-      }
-
-      const commentSenderName = document.getElementById('commentSenderName');
-      if (commentSenderName) {
-        commentSenderName.textContent = currentUserIdentity || 'Anh ❤️';
       }
 
       if (commentTextInput) {
