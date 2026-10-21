@@ -151,7 +151,7 @@ supabase
     if (!row) return;
 
     // Bỏ qua các bản ghi nội bộ
-    if (row.author === '__PUSH_SUB__' || row.author === '__CONFIG_MUSIC__') return;
+    if (row.author === '__PUSH_SUB__' || row.author === '__CONFIG_MUSIC__' || row.author === '__CONFIG_AUTH__') return;
 
     if (!shouldPush(row.id)) {
       console.log(`⏩ [Push Daemon] Bỏ qua vì id ${row.id} vừa được gửi push.`);

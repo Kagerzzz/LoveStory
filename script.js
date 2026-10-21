@@ -346,8 +346,97 @@ function initLoveStoryApp() {
   const HASH_3108 = '50d65da5a5788e6183a480898578d672eb3f1d593a5b308e6e0b971e90fab6b9'; // Em ❤️
   const HASH_7612 = '336120f10ba42e9e8b5e5e725c0f491bca7cd1968c318f43d8ec7c29aa1f990a'; // Anh ❤️
 
-  // Current logged in user identity based on passcode entered (Em ❤️ or Anh ❤️)
+  const DEFAULT_AUTH_CONFIG = {
+    em: { passcode: '3108', title: 'Em ❤️' },
+    anh: { passcode: '7612', title: 'Anh ❤️' }
+  };
+
+  function getLocalAuthConfig() {
+    try {
+      const raw = localStorage.getItem('lovestory_auth_config');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return {
+          em: { ...DEFAULT_AUTH_CONFIG.em, ...(parsed.em || {}) },
+          anh: { ...DEFAULT_AUTH_CONFIG.anh, ...(parsed.anh || {}) }
+        };
+      }
+    } catch (e) {}
+    return JSON.parse(JSON.stringify(DEFAULT_AUTH_CONFIG));
+  }
+
+  function saveLocalAuthConfig(cfg) {
+    try {
+      localStorage.setItem('lovestory_auth_config', JSON.stringify(cfg));
+    } catch (e) {}
+  }
+
+  async function syncAuthConfigToDatabase(cfg) {
+    saveLocalAuthConfig(cfg);
+    if (!supabaseClient) return;
+    try {
+      const { data: existing } = await supabaseClient
+        .from('love_notes')
+        .select('id')
+        .eq('author', '__CONFIG_AUTH__')
+        .limit(1);
+
+      if (existing && existing.length > 0) {
+        await supabaseClient
+          .from('love_notes')
+          .update({
+            content: JSON.stringify(cfg),
+            text: 'CONFIG_AUTH_UPDATED',
+            date: new Date().toLocaleDateString('vi-VN')
+          })
+          .eq('id', existing[0].id);
+      } else {
+        await supabaseClient
+          .from('love_notes')
+          .insert([{
+            author: '__CONFIG_AUTH__',
+            content: JSON.stringify(cfg),
+            text: 'CONFIG_AUTH_INIT',
+            date: new Date().toLocaleDateString('vi-VN')
+          }]);
+      }
+    } catch (err) {
+      console.warn('Lỗi đồng bộ auth config lên Supabase:', err);
+    }
+  }
+
+  async function loadAuthConfigFromDatabase() {
+    if (!supabaseClient) return;
+    try {
+      const { data, error } = await supabaseClient
+        .from('love_notes')
+        .select('*')
+        .eq('author', '__CONFIG_AUTH__')
+        .limit(1);
+
+      if (!error && data && data.length > 0) {
+        try {
+          const remoteCfg = JSON.parse(data[0].content);
+          if (remoteCfg && (remoteCfg.em || remoteCfg.anh)) {
+            const merged = {
+              em: { ...DEFAULT_AUTH_CONFIG.em, ...(remoteCfg.em || {}) },
+              anh: { ...DEFAULT_AUTH_CONFIG.anh, ...(remoteCfg.anh || {}) }
+            };
+            saveLocalAuthConfig(merged);
+          }
+        } catch (e) {}
+      }
+    } catch (err) {
+      console.warn('Lỗi đọc auth config từ Supabase:', err);
+    }
+  }
+
+  // Pre-load auth config from database
+  loadAuthConfigFromDatabase();
+
+  // Current logged in user identity and role based on passcode entered (em or anh)
   let currentUserIdentity = (typeof localStorage !== 'undefined' && localStorage.getItem('lovestory_user_identity')) || '';
+  let currentAccountRole = (typeof localStorage !== 'undefined' && localStorage.getItem('lovestory_account_role')) || '';
 
   async function computeSHA256(message) {
     const enc = new TextEncoder();
@@ -1269,38 +1358,45 @@ function initLoveStoryApp() {
       : (introPasswordInput ? (introPasswordInput.value || '') : '');
     const cleanDigits = rawVal.trim().replace(/[^0-9]/g, '');
 
+    const authConfig = getLocalAuthConfig();
     let isMatch = false;
     let matchedUser = '';
+    let matchedRole = '';
 
-    try {
+    if (cleanDigits === authConfig.em.passcode || cleanDigits === '3108') {
+      isMatch = true;
+      matchedRole = 'em';
+      matchedUser = authConfig.em.title || 'Em ❤️';
+    } else if (cleanDigits === authConfig.anh.passcode || cleanDigits === '7612') {
+      isMatch = true;
+      matchedRole = 'anh';
+      matchedUser = authConfig.anh.title || 'Anh ❤️';
+    } else {
       let hash = '';
       if (window.crypto && window.crypto.subtle) {
-        hash = await computeSHA256(cleanDigits);
+        try {
+          hash = await computeSHA256(cleanDigits);
+        } catch (e) {}
       }
-      if (cleanDigits === '3108' || hash === HASH_3108) {
+      if (hash === HASH_3108) {
         isMatch = true;
-        matchedUser = 'Em ❤️';
-      } else if (cleanDigits === '7612' || hash === HASH_7612) {
+        matchedRole = 'em';
+        matchedUser = authConfig.em.title || 'Em ❤️';
+      } else if (hash === HASH_7612) {
         isMatch = true;
-        matchedUser = 'Anh ❤️';
-      }
-    } catch (err) {
-      console.warn('Password hash check error, using fallback:', err);
-      if (cleanDigits === '3108') {
-        isMatch = true;
-        matchedUser = 'Em ❤️';
-      } else if (cleanDigits === '7612') {
-        isMatch = true;
-        matchedUser = 'Anh ❤️';
+        matchedRole = 'anh';
+        matchedUser = authConfig.anh.title || 'Anh ❤️';
       }
     }
 
     if (isMatch) {
       isUnlocked = true;
       currentUserIdentity = matchedUser;
+      currentAccountRole = matchedRole;
       try {
         localStorage.setItem('lovestory_passcode', cleanDigits);
         localStorage.setItem('lovestory_user_identity', matchedUser);
+        localStorage.setItem('lovestory_account_role', matchedRole);
       } catch (e) {}
 
       if (tamperObserver) tamperObserver.disconnect();
@@ -1457,7 +1553,13 @@ Với anh, anh muốn đi tiếp cùng với em.`;
   // Tự động đăng nhập nếu đã lưu mật mã hợp lệ trong localStorage
   try {
     const savedPasscode = localStorage.getItem('lovestory_passcode');
-    if (savedPasscode && (savedPasscode === '3108' || savedPasscode === '7612')) {
+    const authCfg = getLocalAuthConfig();
+    if (savedPasscode && (
+      savedPasscode === authCfg.em.passcode ||
+      savedPasscode === authCfg.anh.passcode ||
+      savedPasscode === '3108' ||
+      savedPasscode === '7612'
+    )) {
       handlePasswordCheck(savedPasscode, true);
     }
   } catch (err) {
@@ -1673,18 +1775,173 @@ Với anh, anh muốn đi tiếp cùng với em.`;
   // ==========================================
   function initMainApp(plainLetter) {
 
-    // --- USER IDENTITY SETUP (Em ❤️ / Anh ❤️) ---
+    // --- USER IDENTITY SETUP (Em ❤️ / Anh ❤️) & PROFILE POPUP ---
     const navUserName = document.getElementById('navUserName');
     if (navUserName) navUserName.textContent = currentUserIdentity || 'Anh ❤️';
 
+    const userIdentityModal = document.getElementById('userIdentityModal');
+    const closeUserIdentityModalBtn = document.getElementById('closeUserIdentityModalBtn');
+    const modalActiveUserName = document.getElementById('modalActiveUserName');
+    const modalUserEmoji = document.getElementById('modalUserEmoji');
+    const customIdentityInput = document.getElementById('customIdentityInput');
+    const saveIdentityBtn = document.getElementById('saveIdentityBtn');
+    const identitySaveSuccessTip = document.getElementById('identitySaveSuccessTip');
+    const newPasscodeInput = document.getElementById('newPasscodeInput');
+    const savePasscodeBtn = document.getElementById('savePasscodeBtn');
+    const passcodeSaveSuccessTip = document.getElementById('passcodeSaveSuccessTip');
+    const passcodeSaveErrorTip = document.getElementById('passcodeSaveErrorTip');
+    const modalLogoutBtn = document.getElementById('modalLogoutBtn');
+    const nameChips = document.querySelectorAll('.btn-name-chip');
+
+    function openUserIdentityModal() {
+      if (!userIdentityModal) return;
+      if (modalActiveUserName) modalActiveUserName.textContent = currentUserIdentity || 'Anh ❤️';
+      if (modalUserEmoji) modalUserEmoji.textContent = (currentAccountRole === 'em') ? '🌸' : '❤️';
+      if (customIdentityInput) customIdentityInput.value = currentUserIdentity || '';
+      if (newPasscodeInput) newPasscodeInput.value = '';
+      if (identitySaveSuccessTip) identitySaveSuccessTip.style.display = 'none';
+      if (passcodeSaveSuccessTip) passcodeSaveSuccessTip.style.display = 'none';
+      if (passcodeSaveErrorTip) passcodeSaveErrorTip.style.display = 'none';
+
+      userIdentityModal.style.display = 'flex';
+      userIdentityModal.classList.add('open', 'active');
+      userIdentityModal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeUserIdentityModal() {
+      if (!userIdentityModal) return;
+      userIdentityModal.classList.remove('open', 'active');
+      userIdentityModal.style.display = 'none';
+      userIdentityModal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    if (closeUserIdentityModalBtn) {
+      closeUserIdentityModalBtn.addEventListener('click', closeUserIdentityModal);
+    }
+
+    if (userIdentityModal) {
+      userIdentityModal.addEventListener('click', (e) => {
+        if (e.target === userIdentityModal) closeUserIdentityModal();
+      });
+    }
+
     const navUserIdentityBadge = document.getElementById('navUserIdentityBadge');
     if (navUserIdentityBadge) {
-      navUserIdentityBadge.setAttribute('title', `Đang đăng nhập: ${currentUserIdentity || 'Anh ❤️'} (Nhấp để đổi mã khóa / đăng xuất)`);
-      navUserIdentityBadge.addEventListener('click', () => {
-        if (confirm(`Bạn đang ở phiên của ${currentUserIdentity || 'Anh ❤️'}.\n\nBạn có muốn đăng xuất để đổi mã khóa khác không?`)) {
+      navUserIdentityBadge.setAttribute('title', `Đang đăng nhập: ${currentUserIdentity || 'Anh ❤️'} (Nhấp để đổi danh xưng, đổi mật mã, đăng xuất)`);
+      navUserIdentityBadge.addEventListener('click', (e) => {
+        e.preventDefault();
+        openUserIdentityModal();
+      });
+    }
+
+    // Name chips click
+    nameChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        const val = chip.getAttribute('data-name');
+        if (customIdentityInput && val) {
+          customIdentityInput.value = val;
+        }
+      });
+    });
+
+    // Save identity / display name
+    if (saveIdentityBtn) {
+      saveIdentityBtn.addEventListener('click', async () => {
+        const newTitle = (customIdentityInput ? customIdentityInput.value : '').trim();
+        if (!newTitle) {
+          alert('Vui lòng nhập danh xưng bạn muốn nhé!');
+          if (customIdentityInput) customIdentityInput.focus();
+          return;
+        }
+
+        currentUserIdentity = newTitle;
+        try {
+          localStorage.setItem('lovestory_user_identity', newTitle);
+        } catch (e) {}
+
+        const authCfg = getLocalAuthConfig();
+        const role = currentAccountRole || (currentUserIdentity.includes('Em') ? 'em' : 'anh');
+        if (!authCfg[role]) authCfg[role] = {};
+        authCfg[role].title = newTitle;
+        syncAuthConfigToDatabase(authCfg);
+
+        // Update UI
+        if (navUserName) navUserName.textContent = newTitle;
+        if (modalActiveUserName) modalActiveUserName.textContent = newTitle;
+        const noteSender = document.getElementById('noteSenderName');
+        if (noteSender) noteSender.textContent = newTitle;
+
+        if (identitySaveSuccessTip) {
+          identitySaveSuccessTip.style.display = 'block';
+          setTimeout(() => {
+            if (identitySaveSuccessTip) identitySaveSuccessTip.style.display = 'none';
+          }, 3500);
+        }
+
+        if (typeof confetti === 'function') {
+          confetti({
+            particleCount: 30,
+            spread: 50,
+            origin: { y: 0.6 },
+            colors: ['#ff70a6', '#ffd166', '#70e4d0']
+          });
+        }
+      });
+    }
+
+    // Save new passcode
+    if (savePasscodeBtn) {
+      savePasscodeBtn.addEventListener('click', async () => {
+        if (passcodeSaveErrorTip) passcodeSaveErrorTip.style.display = 'none';
+        if (passcodeSaveSuccessTip) passcodeSaveSuccessTip.style.display = 'none';
+
+        const rawCode = (newPasscodeInput ? newPasscodeInput.value : '').trim();
+        const cleanCode = rawCode.replace(/[^0-9]/g, '');
+
+        if (cleanCode.length !== 4) {
+          if (passcodeSaveErrorTip) passcodeSaveErrorTip.style.display = 'block';
+          if (newPasscodeInput) newPasscodeInput.focus();
+          return;
+        }
+
+        try {
+          localStorage.setItem('lovestory_passcode', cleanCode);
+        } catch (e) {}
+
+        const authCfg = getLocalAuthConfig();
+        const role = currentAccountRole || (currentUserIdentity.includes('Em') ? 'em' : 'anh');
+        if (!authCfg[role]) authCfg[role] = {};
+        authCfg[role].passcode = cleanCode;
+        syncAuthConfigToDatabase(authCfg);
+
+        if (passcodeSaveSuccessTip) {
+          passcodeSaveSuccessTip.style.display = 'block';
+          setTimeout(() => {
+            if (passcodeSaveSuccessTip) passcodeSaveSuccessTip.style.display = 'none';
+          }, 3500);
+        }
+
+        if (typeof confetti === 'function') {
+          confetti({
+            particleCount: 30,
+            spread: 50,
+            origin: { y: 0.6 },
+            colors: ['#ffd166', '#ff70a6', '#70e4d0']
+          });
+        }
+      });
+    }
+
+    // Modal Logout Button
+    if (modalLogoutBtn) {
+      modalLogoutBtn.addEventListener('click', () => {
+        if (confirm(`Bạn đang ở phiên của ${currentUserIdentity || 'Anh ❤️'}.\n\nBạn có chắc chắn muốn đăng xuất và khóa lại trang web không?`)) {
           try {
             localStorage.removeItem('lovestory_passcode');
             localStorage.removeItem('lovestory_user_identity');
+            localStorage.removeItem('lovestory_account_role');
           } catch (e) {}
           window.location.reload();
         }
@@ -2638,7 +2895,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
           appNotes = loadLocalNotes();
           appComments = loadLocalComments();
         } else if (data && data.length > 0) {
-          const userNotes = data.filter(item => item.author !== '__CONFIG_MUSIC__' && item.author !== '__COMMENT__' && item.author !== '__PUSH_SUB__');
+          const userNotes = data.filter(item => item.author !== '__CONFIG_MUSIC__' && item.author !== '__CONFIG_AUTH__' && item.author !== '__COMMENT__' && item.author !== '__PUSH_SUB__');
           const commentRows = data.filter(item => item.author === '__COMMENT__');
 
           if (userNotes.length > 0) {
@@ -3258,6 +3515,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
         closeMusicModal();
         closeAllMemoriesModal();
         closeAllNotesModal();
+        closeUserIdentityModal();
         if (activeNoteDetailId) closeNoteDetailModal();
       }
     });
@@ -3278,6 +3536,26 @@ Với anh, anh muốn đi tiếp cùng với em.`;
                 }
               } catch (e) {
                 console.warn('Lỗi phân tích Realtime music payload:', e);
+              }
+            } else if (payload && payload.new && payload.new.author === '__CONFIG_AUTH__') {
+              try {
+                const remoteCfg = JSON.parse(payload.new.content);
+                if (remoteCfg && (remoteCfg.em || remoteCfg.anh)) {
+                  const merged = {
+                    em: { ...DEFAULT_AUTH_CONFIG.em, ...(remoteCfg.em || {}) },
+                    anh: { ...DEFAULT_AUTH_CONFIG.anh, ...(remoteCfg.anh || {}) }
+                  };
+                  saveLocalAuthConfig(merged);
+                  const role = currentAccountRole || (currentUserIdentity.includes('Em') ? 'em' : 'anh');
+                  if (merged[role] && merged[role].title) {
+                    currentUserIdentity = merged[role].title;
+                    if (navUserName) navUserName.textContent = currentUserIdentity;
+                    const noteSender = document.getElementById('noteSenderName');
+                    if (noteSender) noteSender.textContent = currentUserIdentity;
+                  }
+                }
+              } catch (e) {
+                console.warn('Lỗi phân tích Realtime auth payload:', e);
               }
             } else if (payload && payload.eventType === 'INSERT' && payload.new) {
               const newRow = payload.new;
@@ -3307,7 +3585,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
                       }
                     }
                   });
-                } else if (newRow.author !== '__CONFIG_MUSIC__' && newRow.author !== '__PUSH_SUB__') {
+                } else if (newRow.author !== '__CONFIG_MUSIC__' && newRow.author !== '__CONFIG_AUTH__' && newRow.author !== '__PUSH_SUB__') {
                   const authorName = newRow.author || 'Người thương';
                   const noteBody = newRow.content || newRow.text || 'Gửi đến bạn một lời nhắn ngọt ngào 💕';
                   showAppNotification({
