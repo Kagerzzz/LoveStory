@@ -3257,7 +3257,12 @@ Với anh, anh muốn đi tiếp cùng với em.`;
       });
 
       setTimeout(() => {
-        noteCommentsList.scrollTop = noteCommentsList.scrollHeight;
+        const content = document.querySelector('.note-detail-content');
+        if (content) {
+          content.scrollTop = content.scrollHeight;
+        } else if (noteCommentsList) {
+          noteCommentsList.scrollTop = noteCommentsList.scrollHeight;
+        }
       }, 50);
     }
 
@@ -3412,7 +3417,10 @@ Với anh, anh muốn đi tiếp cùng với em.`;
     if (commentTextInput) {
       commentTextInput.addEventListener('focus', () => {
         setTimeout(() => {
-          if (noteCommentsList) {
+          const content = document.querySelector('.note-detail-content');
+          if (content) {
+            content.scrollTop = content.scrollHeight;
+          } else if (noteCommentsList) {
             noteCommentsList.scrollTop = noteCommentsList.scrollHeight;
           }
         }, 300);

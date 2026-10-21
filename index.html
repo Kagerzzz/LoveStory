@@ -588,25 +588,25 @@
           <div class="note-comments-list" id="noteCommentsList">
             <!-- Dynamically populated -->
           </div>
-
-          <!-- Add Comment Form -->
-          <form id="noteCommentForm" class="comment-input-box">
-            <div class="comment-field-row">
-              <textarea 
-                id="commentTextInput" 
-                class="comment-textarea" 
-                placeholder="Viết lời hồi đáp..." 
-                rows="2" 
-                required
-              ></textarea>
-              <button type="submit" id="sendCommentBtn" class="btn-primary btn-send-comment" title="Gửi lời hồi đáp">
-                <span class="btn-send-text">Gửi</span>
-                <span class="btn-send-icon">💌</span>
-              </button>
-            </div>
-          </form>
         </div>
       </div>
+
+      <!-- Add Comment Form (Pinned at bottom of dialog) -->
+      <form id="noteCommentForm" class="comment-input-box">
+        <div class="comment-field-row">
+          <textarea 
+            id="commentTextInput" 
+            class="comment-textarea" 
+            placeholder="Viết lời hồi đáp..." 
+            rows="2" 
+            required
+          ></textarea>
+          <button type="submit" id="sendCommentBtn" class="btn-primary btn-send-comment" title="Gửi lời hồi đáp">
+            <span class="btn-send-text">Gửi</span>
+            <span class="btn-send-icon">💌</span>
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 

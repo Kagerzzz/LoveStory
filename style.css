@@ -3032,10 +3032,26 @@ body.note-detail-open .floating-audio-bar,
 .note-detail-content {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 6px 14px 2px;
+}
+
+.note-detail-content::-webkit-scrollbar {
+  width: 5px;
+}
+
+.note-detail-content::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 10px;
+}
+
+.note-detail-content::-webkit-scrollbar-thumb {
+  background: var(--pink-soft, #fca5a5);
+  border-radius: 10px;
 }
 
 /* Featured sticky note inside detail modal */
@@ -3056,8 +3072,7 @@ body.note-detail-open .floating-audio-bar,
 }
 
 .note-featured-card.is-expanded {
-  max-height: 52vh;
-  max-height: 52dvh;
+  max-height: none !important;
 }
 
 .note-featured-body {
@@ -3066,6 +3081,11 @@ body.note-detail-open .floating-audio-bar,
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding-right: 4px;
+}
+
+.note-featured-card.is-expanded .note-featured-body {
+  max-height: none !important;
+  overflow: visible !important;
 }
 
 .note-featured-body::-webkit-scrollbar {
@@ -3178,9 +3198,8 @@ body.note-detail-open .floating-audio-bar,
   box-shadow: 3px 3px 0 var(--ink);
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
+  flex-shrink: 0;
+  overflow: visible;
 }
 
 .comments-thread-header {
@@ -3213,21 +3232,16 @@ body.note-detail-open .floating-audio-bar,
   box-shadow: 1px 1px 0 var(--ink);
 }
 
-/* Scrollable comments list */
+/* Comments list (natural flow inside unified scroll) */
 .note-comments-list {
-  flex: 1;
-  min-height: 120px;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 8px 4px 8px 0;
-  margin: 4px 0;
-}
-
-.note-comments-list::-webkit-scrollbar {
-  width: 5px;
+  padding: 8px 0;
+  margin: 4px 0 0;
+  overflow: visible !important;
+  max-height: none !important;
+  min-height: 40px;
 }
 
 .note-comments-list::-webkit-scrollbar-track {
@@ -3492,7 +3506,10 @@ body.note-detail-open .floating-audio-bar,
   .note-detail-content {
     flex: 1;
     min-height: 0;
-    gap: 8px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 12px;
+    padding: 2px 2px 14px;
   }
 
   .note-featured-card {
@@ -3508,8 +3525,7 @@ body.note-detail-open .floating-audio-bar,
   }
 
   .note-featured-card.is-expanded {
-    max-height: 50vh;
-    max-height: 50dvh;
+    max-height: none !important;
   }
 
   .note-featured-body {
@@ -3517,6 +3533,11 @@ body.note-detail-open .floating-audio-bar,
     min-height: 40px;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+  }
+
+  .note-featured-card.is-expanded .note-featured-body {
+    max-height: none !important;
+    overflow: visible !important;
   }
 
   .note-featured-tape {
@@ -3544,15 +3565,15 @@ body.note-detail-open .floating-audio-bar,
   }
 
   .comments-thread-container {
-    flex: 1;
-    min-height: 0;
+    flex: none;
+    min-height: auto;
     padding: 10px 10px 8px;
     border-radius: 12px;
     border: 2px solid var(--ink);
     box-shadow: 2px 2px 0 var(--ink);
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: visible !important;
   }
 
   .comments-thread-header {
@@ -3570,13 +3591,12 @@ body.note-detail-open .floating-audio-bar,
   }
 
   .note-comments-list {
-    flex: 1;
-    min-height: 0;
+    flex: none;
+    min-height: auto;
     max-height: none !important;
     gap: 8px;
-    padding: 6px 2px 6px 0;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    padding: 6px 0;
+    overflow: visible !important;
   }
 
   .comment-bubble {
@@ -3604,8 +3624,9 @@ body.note-detail-open .floating-audio-bar,
 
   .comment-input-box {
     padding-top: 8px;
-    margin-top: 4px;
+    margin-top: 0;
     border-top: 2px dashed rgba(24, 24, 27, 0.15);
+    background: #fffdfa;
     flex-shrink: 0;
   }
 
