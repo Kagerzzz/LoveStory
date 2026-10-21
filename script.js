@@ -1188,9 +1188,12 @@ function initLoveStoryApp() {
   const submitPassBtn = document.getElementById('submitPassBtn');
   const passwordErrorMsg = document.getElementById('passwordErrorMsg');
 
-  function dismissIntro() {
+  function dismissIntro(isInstant = false) {
     if (!introScreen) return;
     introScreen.classList.add('hide');
+    if (isInstant) {
+      introScreen.style.display = 'none';
+    }
     document.body.classList.remove('lock-scroll');
 
     // Force top position on mobile immediately and after keyboard retracts
@@ -1208,7 +1211,7 @@ function initLoveStoryApp() {
       document.body.scrollTop = 0;
     }, 300);
 
-    if (typeof confetti === 'function') {
+    if (!isInstant && typeof confetti === 'function') {
       confetti({
         particleCount: 60,
         spread: 70,
@@ -1260,10 +1263,11 @@ function initLoveStoryApp() {
   window.showPasswordStepGlobal = showPasswordStep;
   window.startMusic = startMusic;
 
-  async function handlePasswordCheck() {
-    if (!introPasswordInput) return;
-    const rawVal = (introPasswordInput.value || '').trim();
-    const cleanDigits = rawVal.replace(/[^0-9]/g, '');
+  async function handlePasswordCheck(presetPasscode, isAutoLogin = false) {
+    const rawVal = (presetPasscode !== undefined && presetPasscode !== null)
+      ? String(presetPasscode)
+      : (introPasswordInput ? (introPasswordInput.value || '') : '');
+    const cleanDigits = rawVal.trim().replace(/[^0-9]/g, '');
 
     let isMatch = false;
     let matchedUser = '';
@@ -1295,6 +1299,7 @@ function initLoveStoryApp() {
       isUnlocked = true;
       currentUserIdentity = matchedUser;
       try {
+        localStorage.setItem('lovestory_passcode', cleanDigits);
         localStorage.setItem('lovestory_user_identity', matchedUser);
       } catch (e) {}
 
@@ -1315,13 +1320,17 @@ function initLoveStoryApp() {
       document.body.scrollTop = 0;
 
       // Start music directly within this user gesture call stack
-      startMusic();
+      if (!isAutoLogin) {
+        startMusic();
+      }
 
       if (passwordErrorMsg) passwordErrorMsg.style.display = 'none';
-      introPasswordInput.classList.remove('pass-error');
-      introPasswordInput.classList.add('pass-success');
+      if (introPasswordInput) {
+        introPasswordInput.classList.remove('pass-error');
+        introPasswordInput.classList.add('pass-success');
+      }
 
-      if (typeof confetti === 'function') {
+      if (!isAutoLogin && typeof confetti === 'function') {
         confetti({
           particleCount: 50,
           spread: 60,
@@ -1375,17 +1384,33 @@ Với anh, anh muốn đi tiếp cùng với em.`;
       initMainApp(plainLetter);
 
       // 4. Animate and dismiss curtain
-      setTimeout(() => {
-        dismissIntro();
-      }, 400);
+      if (isAutoLogin) {
+        dismissIntro(true);
+      } else {
+        setTimeout(() => {
+          dismissIntro(false);
+        }, 400);
+      }
 
     } else {
+      if (isAutoLogin) {
+        try {
+          localStorage.removeItem('lovestory_passcode');
+          localStorage.removeItem('lovestory_user_identity');
+        } catch (e) {}
+        return;
+      }
+
       // Wrong password
       if (passwordErrorMsg) {
         passwordErrorMsg.style.display = 'block';
       }
-      introPasswordInput.classList.remove('pass-success');
-      introPasswordInput.classList.add('pass-error');
+      if (introPasswordInput) {
+        introPasswordInput.classList.remove('pass-success');
+        introPasswordInput.classList.add('pass-error');
+        introPasswordInput.value = '';
+        introPasswordInput.focus();
+      }
 
       const card = document.querySelector('.intro-card');
       if (card) {
@@ -1393,9 +1418,6 @@ Với anh, anh muốn đi tiếp cùng với em.`;
         void card.offsetWidth;
         card.classList.add('shake-anim');
       }
-
-      introPasswordInput.value = '';
-      introPasswordInput.focus();
     }
   }
 
@@ -1430,6 +1452,16 @@ Với anh, anh muốn đi tiếp cùng với em.`;
         handlePasswordCheck();
       }
     });
+  }
+
+  // Tự động đăng nhập nếu đã lưu mật mã hợp lệ trong localStorage
+  try {
+    const savedPasscode = localStorage.getItem('lovestory_passcode');
+    if (savedPasscode && (savedPasscode === '3108' || savedPasscode === '7612')) {
+      handlePasswordCheck(savedPasscode, true);
+    }
+  } catch (err) {
+    console.warn('Lỗi đọc passcode từ localStorage:', err);
   }
 
   // ==========================================
@@ -1647,9 +1679,13 @@ Với anh, anh muốn đi tiếp cùng với em.`;
 
     const navUserIdentityBadge = document.getElementById('navUserIdentityBadge');
     if (navUserIdentityBadge) {
-      navUserIdentityBadge.setAttribute('title', `Đang đăng nhập: ${currentUserIdentity || 'Anh ❤️'} (Nhấp để đổi mã khóa)`);
+      navUserIdentityBadge.setAttribute('title', `Đang đăng nhập: ${currentUserIdentity || 'Anh ❤️'} (Nhấp để đổi mã khóa / đăng xuất)`);
       navUserIdentityBadge.addEventListener('click', () => {
-        if (confirm(`Bạn đang ở phiên của ${currentUserIdentity || 'Anh ❤️'}.\nBạn có muốn khóa trang web để đổi mã khóa khác không?`)) {
+        if (confirm(`Bạn đang ở phiên của ${currentUserIdentity || 'Anh ❤️'}.\n\nBạn có muốn đăng xuất để đổi mã khóa khác không?`)) {
+          try {
+            localStorage.removeItem('lovestory_passcode');
+            localStorage.removeItem('lovestory_user_identity');
+          } catch (e) {}
           window.location.reload();
         }
       });
