@@ -1827,11 +1827,17 @@ Với anh, anh muốn đi tiếp cùng với em.`;
       });
     }
 
+    window.__openUserIdentityModal = openUserIdentityModal;
+
     const navUserIdentityBadge = document.getElementById('navUserIdentityBadge');
     if (navUserIdentityBadge) {
       navUserIdentityBadge.setAttribute('title', `Đang đăng nhập: ${currentUserIdentity || 'Anh ❤️'} (Nhấp để đổi danh xưng, đổi mật mã, đăng xuất)`);
+      navUserIdentityBadge.onclick = (e) => {
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
+        openUserIdentityModal();
+      };
       navUserIdentityBadge.addEventListener('click', (e) => {
-        e.preventDefault();
+        if (e && typeof e.preventDefault === 'function') e.preventDefault();
         openUserIdentityModal();
       });
     }

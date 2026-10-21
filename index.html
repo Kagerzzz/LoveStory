@@ -141,7 +141,7 @@
       </nav>
 
       <div class="nav-controls">
-        <div class="user-identity-badge" id="navUserIdentityBadge" title="Bấm để đổi mã khóa / người dùng">
+        <div class="user-identity-badge" id="navUserIdentityBadge" title="Bấm để đổi mã khóa / danh xưng" onclick="window.__openUserIdentityModal && window.__openUserIdentityModal(event)">
           <span class="user-dot"></span>
           <span id="navUserName">Anh ❤️</span>
         </div>
@@ -598,6 +598,8 @@
         </div>
       </div>
     </div>
+  </div>
+
   <!-- USER PROFILE & IDENTITY POPUP MODAL (NEUBRUTALISM STYLE) -->
   <div id="userIdentityModal" class="memory-modal" aria-hidden="true" style="display:none;">
     <div class="memory-dialog user-identity-dialog">
