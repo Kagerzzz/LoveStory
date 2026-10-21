@@ -4409,18 +4409,20 @@ body.note-detail-open .floating-audio-bar,
   }
 
   .hero-title {
-    font-size: clamp(1.35rem, 5.2vw, 2.2rem);
-    line-height: 1.28;
+    font-size: clamp(1.85rem, 5.8vw, 2.7rem);
+    line-height: 1.22;
+    margin-bottom: 24px;
+    text-wrap: balance;
   }
 
   .hero-line-1 {
     display: block;
-    white-space: nowrap;
+    margin-bottom: 6px;
   }
 
   .hero-line-2 {
     display: block;
-    font-size: clamp(1.15rem, 4.4vw, 1.95rem);
+    font-size: clamp(1.7rem, 5.2vw, 2.45rem);
   }
 
   .hero-subtitle {
@@ -4847,19 +4849,21 @@ body.note-detail-open .floating-audio-bar,
   }
 
   .hero-title {
-    font-size: clamp(1.15rem, 5.2vw, 1.65rem);
-    line-height: 1.25;
-    margin-bottom: 20px;
+    font-size: clamp(1.65rem, 6.8vw, 2.15rem);
+    line-height: 1.24;
+    margin-bottom: 22px;
+    text-wrap: balance;
   }
 
   .hero-line-1 {
     display: block;
-    white-space: nowrap;
+    margin-bottom: 4px;
+    white-space: normal;
   }
 
   .hero-line-2 {
     display: block;
-    font-size: clamp(1rem, 4.4vw, 1.45rem);
+    font-size: clamp(1.5rem, 6vw, 1.95rem);
   }
 
   .counter-card {
@@ -5066,15 +5070,20 @@ body.note-detail-open .floating-audio-bar,
 
 @media (max-width: 380px) {
   .hero-title {
-    font-size: 1.08rem;
+    font-size: 1.55rem;
+    line-height: 1.25;
+    text-wrap: balance;
   }
 
   .hero-line-1 {
-    white-space: nowrap;
+    display: block;
+    margin-bottom: 4px;
+    white-space: normal;
   }
 
   .hero-line-2 {
-    font-size: 0.92rem;
+    display: block;
+    font-size: 1.4rem;
   }
 
   .counter-card {
