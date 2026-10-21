@@ -555,12 +555,18 @@
   <!-- NOTE DETAIL & COMMENT THREAD MODAL (NEUBRUTALISM STYLE) -->
   <div id="noteDetailModal" class="memory-modal" aria-hidden="true" style="display:none;">
     <div class="memory-dialog note-detail-dialog">
-      <div class="memory-header">
+      <div class="memory-header note-detail-header">
         <div class="modal-badge-title">
           <span class="modal-badge">✦ LỜI NHẮN & HỒI ĐÁP ✦</span>
           <h3 class="memory-title">Chi Tiết Lời Nhắn</h3>
         </div>
-        <button type="button" id="closeNoteDetailBtn" class="modal-close-btn" aria-label="Đóng">&times;</button>
+        <div class="modal-header-actions">
+          <button type="button" id="reloadNoteDetailBtn" class="modal-reload-btn" title="Làm mới lời nhắn & phản hồi" aria-label="Làm mới">
+            <span class="reload-icon">🔄</span>
+            <span class="reload-label">Làm Mới</span>
+          </button>
+          <button type="button" id="closeNoteDetailBtn" class="modal-close-btn" aria-label="Đóng">&times;</button>
+        </div>
       </div>
 
       <div class="note-detail-content">
@@ -585,13 +591,17 @@
 
           <!-- Add Comment Form -->
           <form id="noteCommentForm" class="comment-input-box">
-            <div class="comment-field-text">
-              <textarea id="commentTextInput" placeholder="Viết lời hồi đáp hoặc trêu đùa đối phương..." rows="2" required></textarea>
-            </div>
-
-            <div class="comment-form-actions">
-              <button type="submit" id="sendCommentBtn" class="btn-primary btn-send-comment">
-                <span>Gửi Lời Hồi Đáp 💌</span>
+            <div class="comment-field-row">
+              <textarea 
+                id="commentTextInput" 
+                class="comment-textarea" 
+                placeholder="Viết lời hồi đáp hoặc trêu đùa đối phương..." 
+                rows="2" 
+                required
+              ></textarea>
+              <button type="submit" id="sendCommentBtn" class="btn-primary btn-send-comment" title="Gửi lời hồi đáp">
+                <span class="btn-send-text">Gửi</span>
+                <span class="btn-send-icon">💌</span>
               </button>
             </div>
           </form>

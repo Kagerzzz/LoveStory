@@ -3277,10 +3277,10 @@ Với anh, anh muốn đi tiếp cùng với em.`;
           timestamp: Date.now()
         };
 
-        const origBtnHTML = sendCommentBtn ? sendCommentBtn.innerHTML : '';
+        const origBtnHTML = sendCommentBtn ? sendCommentBtn.innerHTML : '<span class="btn-send-text">Gửi</span><span class="btn-send-icon">💌</span>';
         if (sendCommentBtn) {
           sendCommentBtn.disabled = true;
-          sendCommentBtn.innerHTML = '<span>Đang gửi phản hồi... 💌</span>';
+          sendCommentBtn.innerHTML = '<span class="btn-send-text">Đang gửi...</span><span class="btn-send-icon">💌</span>';
         }
 
         try {
@@ -3368,6 +3368,51 @@ Với anh, anh muốn đi tiếp cùng với em.`;
         }
       });
     });
+
+    const reloadNoteDetailBtn = document.getElementById('reloadNoteDetailBtn');
+    if (reloadNoteDetailBtn) {
+      reloadNoteDetailBtn.addEventListener('click', async (e) => {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        const icon = reloadNoteDetailBtn.querySelector('.reload-icon');
+        const label = reloadNoteDetailBtn.querySelector('.reload-label');
+        if (icon) icon.classList.add('spin-anim');
+        if (label) label.textContent = 'Đang tải...';
+        reloadNoteDetailBtn.disabled = true;
+
+        try {
+          if (typeof fetchLoveNotes === 'function') {
+            await fetchLoveNotes();
+          }
+          if (activeNoteDetailId) {
+            const note = appNotes.find(n => String(n.id) === String(activeNoteDetailId));
+            if (note && noteDetailFeatured) {
+              noteDetailFeatured.innerHTML = `
+                <div class="note-featured-tape"></div>
+                <p class="note-featured-text font-mali">"${escapeHTML(note.text)}"</p>
+                <div class="note-featured-footer">
+                  <span class="note-featured-author font-title">✦ ${escapeHTML(note.author)}</span>
+                  <span class="note-featured-date">${escapeHTML(note.date || '')}</span>
+                </div>
+              `;
+            }
+            renderNoteDetailComments(activeNoteDetailId);
+          }
+          if (label) label.textContent = '✓ Xong!';
+          setTimeout(() => {
+            if (label) label.textContent = 'Làm Mới';
+          }, 1500);
+        } catch (err) {
+          console.warn('Lỗi khi làm mới lời nhắn:', err);
+          if (label) label.textContent = 'Làm Mới';
+        } finally {
+          reloadNoteDetailBtn.disabled = false;
+          if (icon) icon.classList.remove('spin-anim');
+        }
+      });
+    }
 
     if (closeNoteDetailBtn) {
       closeNoteDetailBtn.addEventListener('click', closeNoteDetailModal);
