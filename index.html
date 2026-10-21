@@ -458,7 +458,7 @@
   </div>
 
   <!-- MEMORY ADD & EDIT MODAL (NEUBRUTALISM STYLE) -->
-  <div id="memoryModal" class="memory-modal" aria-hidden="true">
+  <div id="memoryModal" class="memory-modal" aria-hidden="true" style="display:none;">
     <div class="memory-dialog">
       <div class="memory-header">
         <div class="modal-badge-title">
@@ -628,87 +628,89 @@
         <button type="button" id="closeUserIdentityModalBtn" class="modal-close-btn" aria-label="Đóng">&times;</button>
       </div>
 
-      <!-- Active Profile Card -->
-      <div class="identity-profile-summary">
-        <div class="identity-avatar-ring">
-          <span class="identity-avatar-emoji" id="modalUserEmoji">❤️</span>
-        </div>
-        <div class="identity-info-col">
-          <div class="identity-role-label">Hiện tại bạn đang là:</div>
-          <div class="identity-active-name" id="modalActiveUserName">Anh ❤️</div>
-        </div>
-      </div>
-
-      <!-- Section 1: Change Identity / Display Name -->
-      <div class="identity-section-box">
-        <h4 class="identity-section-title">
-          <span>🏷️</span> Thay Đổi Danh Xưng
-        </h4>
-        <p class="identity-section-desc">Danh xưng hiển thị khi gửi lời nhắn và bình luận.</p>
-        
-        <!-- Quick Chips for common names -->
-        <div class="identity-chips-row">
-          <button type="button" class="btn-name-chip" data-name="Anh ❤️">Anh ❤️</button>
-          <button type="button" class="btn-name-chip" data-name="Em ❤️">Em ❤️</button>
-          <button type="button" class="btn-name-chip" data-name="Chồng yêu 💖">Chồng yêu 💖</button>
-          <button type="button" class="btn-name-chip" data-name="Vợ iu 🌸">Vợ iu 🌸</button>
-          <button type="button" class="btn-name-chip" data-name="Bé iu 💖">Bé iu 💖</button>
-          <button type="button" class="btn-name-chip" data-name="Thân Hiếu ✦">Thân Hiếu ✦</button>
-          <button type="button" class="btn-name-chip" data-name="Khánh Linh ✦">Khánh Linh ✦</button>
+      <div class="user-identity-content">
+        <!-- Active Profile Card -->
+        <div class="identity-profile-summary">
+          <div class="identity-avatar-ring">
+            <span class="identity-avatar-emoji" id="modalUserEmoji">❤️</span>
+          </div>
+          <div class="identity-info-col">
+            <div class="identity-role-label">Hiện tại bạn đang là:</div>
+            <div class="identity-active-name" id="modalActiveUserName">Anh ❤️</div>
+          </div>
         </div>
 
-        <div class="input-with-button">
-          <input 
-            type="text" 
-            id="customIdentityInput" 
-            class="identity-custom-input" 
-            placeholder="Nhập danh xưng bạn muốn..." 
-            maxlength="25"
-          >
-          <button type="button" id="saveIdentityBtn" class="btn-primary btn-save-action">
-            <span>Lưu Tên</span>
+        <!-- Section 1: Change Identity / Display Name -->
+        <div class="identity-section-box">
+          <h4 class="identity-section-title">
+            <span>🏷️</span> Thay Đổi Danh Xưng
+          </h4>
+          <p class="identity-section-desc">Danh xưng hiển thị khi gửi lời nhắn và bình luận.</p>
+          
+          <!-- Quick Chips for common names -->
+          <div class="identity-chips-row">
+            <button type="button" class="btn-name-chip" data-name="Anh ❤️">Anh ❤️</button>
+            <button type="button" class="btn-name-chip" data-name="Em ❤️">Em ❤️</button>
+            <button type="button" class="btn-name-chip" data-name="Chồng yêu 💖">Chồng yêu 💖</button>
+            <button type="button" class="btn-name-chip" data-name="Vợ iu 🌸">Vợ iu 🌸</button>
+            <button type="button" class="btn-name-chip" data-name="Bé iu 💖">Bé iu 💖</button>
+            <button type="button" class="btn-name-chip" data-name="Thân Hiếu ✦">Thân Hiếu ✦</button>
+            <button type="button" class="btn-name-chip" data-name="Khánh Linh ✦">Khánh Linh ✦</button>
+          </div>
+
+          <div class="input-with-button">
+            <input 
+              type="text" 
+              id="customIdentityInput" 
+              class="identity-custom-input" 
+              placeholder="Nhập danh xưng bạn muốn..." 
+              maxlength="25"
+            >
+            <button type="button" id="saveIdentityBtn" class="btn-primary btn-save-action">
+              <span>Lưu Tên</span>
+            </button>
+          </div>
+          <div id="identitySaveSuccessTip" class="identity-success-tip" style="display:none;">
+            <span>✓ Đã cập nhật danh xưng thành công!</span>
+          </div>
+        </div>
+
+        <!-- Section 2: Change Passcode -->
+        <div class="identity-section-box">
+          <h4 class="identity-section-title">
+            <span>🔐</span> Thay Đổi Mật Mã Mở Khóa (4 số)
+          </h4>
+          <p class="identity-section-desc">Đổi mã 4 số cá nhân để mở khóa nhanh trang web.</p>
+          
+          <div class="input-with-button">
+            <input 
+              type="password" 
+              id="newPasscodeInput" 
+              class="identity-custom-input passcode-input" 
+              placeholder="•••• (4 số mới)" 
+              maxlength="4" 
+              inputmode="numeric" 
+              pattern="[0-9]*"
+              autocomplete="off"
+            >
+            <button type="button" id="savePasscodeBtn" class="btn-primary btn-save-action">
+              <span>Đổi Mã</span>
+            </button>
+          </div>
+          <div id="passcodeSaveSuccessTip" class="identity-success-tip" style="display:none;">
+            <span>✓ Đã cập nhật mật mã mới thành công!</span>
+          </div>
+          <div id="passcodeSaveErrorTip" class="identity-error-tip" style="display:none;">
+            <span>❌ Mật mã phải gồm đúng 4 chữ số!</span>
+          </div>
+        </div>
+
+        <!-- Section 3: Logout -->
+        <div class="identity-section-logout">
+          <button type="button" id="modalLogoutBtn" class="btn-danger-logout">
+            <span>🚪 Đăng Xuất & Khóa Trang Web</span>
           </button>
         </div>
-        <div id="identitySaveSuccessTip" class="identity-success-tip" style="display:none;">
-          <span>✓ Đã cập nhật danh xưng thành công!</span>
-        </div>
-      </div>
-
-      <!-- Section 2: Change Passcode -->
-      <div class="identity-section-box">
-        <h4 class="identity-section-title">
-          <span>🔐</span> Thay Đổi Mật Mã Mở Khóa (4 số)
-        </h4>
-        <p class="identity-section-desc">Đổi mã 4 số cá nhân để mở khóa nhanh trang web.</p>
-        
-        <div class="input-with-button">
-          <input 
-            type="password" 
-            id="newPasscodeInput" 
-            class="identity-custom-input passcode-input" 
-            placeholder="•••• (4 số mới)" 
-            maxlength="4" 
-            inputmode="numeric" 
-            pattern="[0-9]*"
-            autocomplete="off"
-          >
-          <button type="button" id="savePasscodeBtn" class="btn-primary btn-save-action">
-            <span>Đổi Mã</span>
-          </button>
-        </div>
-        <div id="passcodeSaveSuccessTip" class="identity-success-tip" style="display:none;">
-          <span>✓ Đã cập nhật mật mã mới thành công!</span>
-        </div>
-        <div id="passcodeSaveErrorTip" class="identity-error-tip" style="display:none;">
-          <span>❌ Mật mã phải gồm đúng 4 chữ số!</span>
-        </div>
-      </div>
-
-      <!-- Section 3: Logout -->
-      <div class="identity-section-logout">
-        <button type="button" id="modalLogoutBtn" class="btn-danger-logout">
-          <span>🚪 Đăng Xuất & Khóa Trang Web</span>
-        </button>
       </div>
     </div>
   </div>

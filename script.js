@@ -1829,6 +1829,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
       userIdentityModal.classList.add('open', 'active');
       userIdentityModal.setAttribute('aria-hidden', 'false');
       document.body.style.overflow = 'hidden';
+      document.body.classList.add('user-identity-open');
     }
 
     function closeUserIdentityModal() {
@@ -1837,6 +1838,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
       userIdentityModal.style.display = 'none';
       userIdentityModal.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
+      document.body.classList.remove('user-identity-open');
     }
 
     if (closeUserIdentityModalBtn) {
@@ -2490,8 +2492,11 @@ Với anh, anh muốn đi tiếp cùng với em.`;
       if (memoryFileNameHint) memoryFileNameHint.textContent = '';
       if (memoryPreviewWrap) memoryPreviewWrap.style.display = 'none';
 
+      memoryModal.style.display = 'flex';
       memoryModal.classList.add('open', 'active');
       memoryModal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      document.body.classList.add('memory-modal-open');
       if (memoryCaptionInput) memoryCaptionInput.focus();
     }
 
@@ -2511,8 +2516,11 @@ Với anh, anh muốn đi tiếp cùng với em.`;
         memoryPreviewWrap.style.display = 'block';
       }
 
+      memoryModal.style.display = 'flex';
       memoryModal.classList.add('open', 'active');
       memoryModal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      document.body.classList.add('memory-modal-open');
       if (memoryCaptionInput) memoryCaptionInput.focus();
     }
 
@@ -2520,6 +2528,9 @@ Với anh, anh muốn đi tiếp cùng với em.`;
       if (memoryModal) {
         memoryModal.classList.remove('open', 'active');
         memoryModal.setAttribute('aria-hidden', 'true');
+        memoryModal.style.display = 'none';
+        document.body.style.overflow = '';
+        document.body.classList.remove('memory-modal-open');
       }
     }
 

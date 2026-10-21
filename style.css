@@ -2940,13 +2940,25 @@ img {
   z-index: 20000 !important;
 }
 
-/* Hide floating audio bar completely while note detail modal is open */
+/* Hide floating audio bar completely while note detail, memory or user profile modal is open */
 body.note-detail-open #floatingAudioBar,
 body.note-detail-open .floating-audio-bar,
+body.memory-modal-open #floatingAudioBar,
+body.memory-modal-open .floating-audio-bar,
+body.user-identity-open #floatingAudioBar,
+body.user-identity-open .floating-audio-bar,
 #noteDetailModal.open ~ #floatingAudioBar,
 #noteDetailModal.active ~ #floatingAudioBar,
 #noteDetailModal.open ~ .floating-audio-bar,
-#noteDetailModal.active ~ .floating-audio-bar {
+#noteDetailModal.active ~ .floating-audio-bar,
+#memoryModal.open ~ #floatingAudioBar,
+#memoryModal.active ~ #floatingAudioBar,
+#memoryModal.open ~ .floating-audio-bar,
+#memoryModal.active ~ .floating-audio-bar,
+#userIdentityModal.open ~ #floatingAudioBar,
+#userIdentityModal.active ~ #floatingAudioBar,
+#userIdentityModal.open ~ .floating-audio-bar,
+#userIdentityModal.active ~ .floating-audio-bar {
   opacity: 0 !important;
   visibility: hidden !important;
   pointer-events: none !important;
@@ -3462,7 +3474,7 @@ body.note-detail-open .floating-audio-bar,
 }
 
 /* --------------------------------------------------------------------------
-   RESPONSIVE MOBILE FULL-SCREEN POPUP FOR NOTE DETAIL MODAL
+   RESPONSIVE MOBILE FULL-SCREEN POPUP FOR NOTE DETAIL, MEMORY & USER PROFILE MODALS
    -------------------------------------------------------------------------- */
 @media (max-width: 680px) {
   input,
@@ -3471,7 +3483,9 @@ body.note-detail-open .floating-audio-bar,
     font-size: 16px !important;
   }
 
-  #noteDetailModal {
+  #noteDetailModal,
+  #memoryModal,
+  #userIdentityModal {
     z-index: 20000 !important;
     padding: 0 !important;
     background: #fffdfa !important;
@@ -3479,7 +3493,9 @@ body.note-detail-open .floating-audio-bar,
     justify-content: stretch !important;
   }
 
-  #noteDetailModal .note-detail-dialog {
+  #noteDetailModal .note-detail-dialog,
+  #memoryModal .memory-dialog,
+  #userIdentityModal .user-identity-dialog {
     width: 100% !important;
     max-width: 100% !important;
     height: 100% !important;
@@ -3497,20 +3513,31 @@ body.note-detail-open .floating-audio-bar,
     flex-direction: column !important;
     background: #fffdfa !important;
     box-sizing: border-box !important;
+    overflow: hidden !important;
   }
 
-  .note-detail-header {
+  .note-detail-header,
+  #memoryModal .memory-header,
+  #userIdentityModal .memory-header {
     margin-bottom: 8px;
     padding-bottom: 8px;
     border-bottom: 2px dashed rgba(24, 24, 27, 0.15);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
   }
 
-  .note-detail-header .modal-badge {
+  .note-detail-header .modal-badge,
+  #memoryModal .memory-header .modal-badge,
+  #userIdentityModal .memory-header .modal-badge {
     font-size: 0.65rem;
     padding: 2px 7px;
   }
 
-  .note-detail-header .memory-title {
+  .note-detail-header .memory-title,
+  #memoryModal .memory-header .memory-title,
+  #userIdentityModal .memory-header .memory-title {
     font-size: 1.15rem;
   }
 
@@ -3525,20 +3552,112 @@ body.note-detail-open .floating-audio-bar,
     gap: 4px;
   }
 
-  .note-detail-header .modal-close-btn {
+  .note-detail-header .modal-close-btn,
+  #memoryModal .memory-header .modal-close-btn,
+  #userIdentityModal .memory-header .modal-close-btn {
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
     width: 30px;
     height: 30px;
     min-width: 30px;
+    border-radius: 50%;
+    background: var(--pink);
+    border: 2px solid var(--ink);
+    box-shadow: 2px 2px 0 var(--ink);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     font-size: 1.25rem;
+    line-height: 1;
+    color: var(--ink);
+    cursor: pointer;
+    margin: 0 !important;
+    flex-shrink: 0;
   }
 
-  .note-detail-content {
+  .note-detail-content,
+  #memoryModal .memory-form,
+  #userIdentityModal .user-identity-content {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     gap: 12px;
     padding: 2px 2px 14px;
+  }
+
+  /* Specific Memory Form tweaks on mobile */
+  #memoryModal .memory-form {
+    display: flex;
+    flex-direction: column;
+  }
+
+  #memoryModal .memory-form .setting-field {
+    margin-bottom: 12px;
+  }
+
+  #memoryModal .memory-form .setting-field label {
+    font-size: 0.85rem;
+    margin-bottom: 4px;
+  }
+
+  #memoryModal .memory-form .settings-actions {
+    margin-top: auto;
+    padding-top: 14px;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6px);
+    display: flex;
+    gap: 10px;
+    width: 100%;
+  }
+
+  #memoryModal .memory-form .settings-actions button {
+    flex: 1;
+    min-height: 44px;
+    font-size: 0.95rem;
+  }
+
+  /* Specific User Identity tweaks on mobile */
+  #userIdentityModal .identity-profile-summary {
+    padding: 10px 14px;
+    margin-bottom: 12px;
+  }
+
+  #userIdentityModal .identity-section-box {
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+
+  #userIdentityModal .identity-section-title {
+    font-size: 0.9rem;
+    margin-bottom: 3px;
+  }
+
+  #userIdentityModal .identity-section-desc {
+    font-size: 0.78rem;
+    margin-bottom: 8px;
+  }
+
+  #userIdentityModal .identity-chips-row {
+    gap: 5px;
+    margin-bottom: 10px;
+  }
+
+  #userIdentityModal .btn-name-chip {
+    padding: 3px 8px;
+    font-size: 0.74rem;
+  }
+
+  #userIdentityModal .identity-section-logout {
+    margin-top: auto;
+    padding-top: 10px;
+    padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 6px);
+  }
+
+  #userIdentityModal .btn-danger-logout {
+    width: 100%;
+    min-height: 44px;
+    font-size: 0.92rem;
   }
 
   .note-featured-card {
@@ -5046,7 +5165,9 @@ body.note-detail-open .floating-audio-bar,
     touch-action: manipulation;
   }
 
-  .memory-dialog:not(.note-detail-dialog) {
+  #allMemoriesModal .memory-dialog,
+  #allNotesModal .memory-dialog,
+  #musicSettingsModal .memory-dialog {
     width: 95%;
     max-height: 92vh;
     padding: 24px 16px;
@@ -5248,6 +5369,10 @@ body.note-detail-open .floating-audio-bar,
    -------------------------------------------------------------------------- */
 .user-identity-dialog {
   max-width: 460px;
+}
+
+.user-identity-content {
+  width: 100%;
 }
 
 .identity-profile-summary {
