@@ -3106,6 +3106,48 @@ Với anh, anh muốn đi tiếp cùng với em.`;
       });
     }
 
+    function renderFeaturedNoteCard(note) {
+      if (!noteDetailFeatured || !note) return;
+
+      // Reset to collapsed view initially
+      noteDetailFeatured.classList.remove('is-expanded');
+
+      const isLong = (note.text && (note.text.length > 70 || note.text.includes('\n')));
+      const expandBtnHTML = isLong ? `
+        <button type="button" class="btn-toggle-note-expand" id="toggleNoteExpandBtn" title="Đọc toàn bộ / Thu gọn lời nhắn">
+          <span class="toggle-text">Đọc tất cả</span>
+          <span class="toggle-icon">▾</span>
+        </button>
+      ` : '';
+
+      noteDetailFeatured.innerHTML = `
+        <div class="note-featured-tape"></div>
+        <p class="note-featured-text font-mali">"${escapeHTML(note.text)}"</p>
+        <div class="note-featured-footer">
+          <div class="note-featured-meta">
+            <span class="note-featured-author font-title">✦ ${escapeHTML(note.author)}</span>
+            <span class="note-featured-date">${escapeHTML(note.date || '')}</span>
+          </div>
+          ${expandBtnHTML}
+        </div>
+      `;
+
+      if (isLong) {
+        const toggleBtn = noteDetailFeatured.querySelector('#toggleNoteExpandBtn');
+        if (toggleBtn) {
+          toggleBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const expanded = noteDetailFeatured.classList.toggle('is-expanded');
+            const txt = toggleBtn.querySelector('.toggle-text');
+            const icon = toggleBtn.querySelector('.toggle-icon');
+            if (txt) txt.textContent = expanded ? 'Thu gọn' : 'Đọc tất cả';
+            if (icon) icon.textContent = expanded ? '▴' : '▾';
+          });
+        }
+      }
+    }
+
     function openNoteDetailModal(noteId) {
       let note = appNotes.find(n => String(n.id) === String(noteId));
       if (!note) {
@@ -3120,16 +3162,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
 
       activeNoteDetailId = note.id;
 
-      if (noteDetailFeatured) {
-        noteDetailFeatured.innerHTML = `
-          <div class="note-featured-tape"></div>
-          <p class="note-featured-text font-mali">"${escapeHTML(note.text)}"</p>
-          <div class="note-featured-footer">
-            <span class="note-featured-author font-title">✦ ${escapeHTML(note.author)}</span>
-            <span class="note-featured-date">${escapeHTML(note.date || '')}</span>
-          </div>
-        `;
-      }
+      renderFeaturedNoteCard(note);
 
       renderNoteDetailComments(note.id);
 
@@ -3159,6 +3192,9 @@ Với anh, anh muốn đi tiếp cùng với em.`;
         noteDetailModal.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
         document.body.classList.remove('note-detail-open');
+      }
+      if (noteDetailFeatured) {
+        noteDetailFeatured.classList.remove('is-expanded');
       }
       activeNoteDetailId = null;
       if (commentTextInput) commentTextInput.value = '';
@@ -3400,15 +3436,8 @@ Với anh, anh muốn đi tiếp cùng với em.`;
           }
           if (activeNoteDetailId) {
             const note = appNotes.find(n => String(n.id) === String(activeNoteDetailId));
-            if (note && noteDetailFeatured) {
-              noteDetailFeatured.innerHTML = `
-                <div class="note-featured-tape"></div>
-                <p class="note-featured-text font-mali">"${escapeHTML(note.text)}"</p>
-                <div class="note-featured-footer">
-                  <span class="note-featured-author font-title">✦ ${escapeHTML(note.author)}</span>
-                  <span class="note-featured-date">${escapeHTML(note.date || '')}</span>
-                </div>
-              `;
+            if (note) {
+              renderFeaturedNoteCard(note);
             }
             renderNoteDetailComments(activeNoteDetailId);
           }

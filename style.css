@@ -3048,8 +3048,15 @@ body.note-detail-open .floating-audio-bar,
   padding: 18px 16px 12px;
   margin-top: 6px;
   flex-shrink: 0;
-  max-height: 170px;
+  max-height: 160px;
   overflow-y: auto;
+  transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  -webkit-overflow-scrolling: touch;
+}
+
+.note-featured-card.is-expanded {
+  max-height: 52vh;
+  max-height: 52dvh;
 }
 
 .note-featured-tape {
@@ -3091,8 +3098,51 @@ body.note-detail-open .floating-audio-bar,
   gap: 6px;
 }
 
+.note-featured-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .note-featured-author {
   color: var(--pink-deep);
+}
+
+.btn-toggle-note-expand {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #ffffff;
+  border: 1.5px solid var(--ink);
+  box-shadow: 1.5px 1.5px 0 var(--ink);
+  border-radius: var(--radius-pill);
+  padding: 3px 10px;
+  font-family: var(--font-title);
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--ink);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  -webkit-tap-highlight-color: transparent;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.btn-toggle-note-expand:hover {
+  background: var(--yellow);
+  transform: translateY(-1px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.btn-toggle-note-expand:active {
+  transform: translateY(1px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+.btn-toggle-note-expand .toggle-icon {
+  font-size: 0.78rem;
+  line-height: 1;
 }
 
 .note-featured-date {
@@ -3429,9 +3479,15 @@ body.note-detail-open .floating-audio-bar,
   .note-featured-card {
     padding: 12px 12px 8px;
     margin-top: 2px;
-    max-height: 125px;
+    max-height: 130px;
     border-radius: 12px;
     flex-shrink: 0;
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .note-featured-card.is-expanded {
+    max-height: 50vh;
+    max-height: 50dvh;
   }
 
   .note-featured-tape {
@@ -3448,6 +3504,12 @@ body.note-detail-open .floating-audio-bar,
   .note-featured-footer {
     margin-top: 6px;
     font-size: 0.72rem;
+  }
+
+  .btn-toggle-note-expand {
+    padding: 2px 8px;
+    font-size: 0.68rem;
+    gap: 3px;
   }
 
   .comments-thread-container {
