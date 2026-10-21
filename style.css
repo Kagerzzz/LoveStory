@@ -3308,7 +3308,7 @@ body.note-detail-open .floating-audio-bar,
   max-height: 85px;
   padding: 10px 12px;
   font-family: var(--font-hand);
-  font-size: 0.96rem;
+  font-size: 16px;
   border: 2px solid var(--ink);
   border-radius: var(--radius-sm, 10px);
   background: #ffffff;
@@ -3353,6 +3353,12 @@ body.note-detail-open .floating-audio-bar,
    RESPONSIVE MOBILE FULL-SCREEN POPUP FOR NOTE DETAIL MODAL
    -------------------------------------------------------------------------- */
 @media (max-width: 680px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
   #noteDetailModal {
     z-index: 20000 !important;
     padding: 0 !important;
@@ -3519,7 +3525,7 @@ body.note-detail-open .floating-audio-bar,
   .comment-textarea {
     min-height: 42px;
     max-height: 70px;
-    font-size: 0.92rem;
+    font-size: 16px !important; /* 16px prevents iOS Safari auto-zoom on focus */
     padding: 8px 10px;
     border-radius: 10px;
   }
