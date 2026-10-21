@@ -3140,7 +3140,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
         document.body.style.overflow = 'hidden';
       }
 
-      if (commentTextInput) {
+      if (commentTextInput && window.innerWidth > 680) {
         setTimeout(() => commentTextInput.focus(), 150);
       }
     }
@@ -3368,6 +3368,16 @@ Với anh, anh muốn đi tiếp cùng với em.`;
         }
       });
     });
+
+    if (commentTextInput) {
+      commentTextInput.addEventListener('focus', () => {
+        setTimeout(() => {
+          if (noteCommentsList) {
+            noteCommentsList.scrollTop = noteCommentsList.scrollHeight;
+          }
+        }, 300);
+      });
+    }
 
     const reloadNoteDetailBtn = document.getElementById('reloadNoteDetailBtn');
     if (reloadNoteDetailBtn) {
