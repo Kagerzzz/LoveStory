@@ -231,8 +231,27 @@ function initLoveStoryApp() {
         }
         localStorage.setItem('lovestory_push_endpoint', endpoint);
 
+        let activeRole = (typeof currentAccountRole !== 'undefined' && currentAccountRole) || '';
+        if (!activeRole && typeof localStorage !== 'undefined') {
+          activeRole = localStorage.getItem('lovestory_account_role') || '';
+        }
+        let activeIdentity = (typeof currentUserIdentity !== 'undefined' && currentUserIdentity) || '';
+        if (!activeIdentity && typeof localStorage !== 'undefined') {
+          activeIdentity = localStorage.getItem('lovestory_user_identity') || '';
+        }
+        if (!activeRole) {
+          if (activeIdentity && (activeIdentity.toLowerCase().includes('em') || activeIdentity.toLowerCase().includes('linh'))) {
+            activeRole = 'em';
+          } else {
+            activeRole = 'anh';
+          }
+        }
+
         const subJson = sub.toJSON();
         subJson.deviceId = deviceId;
+        subJson.role = activeRole;
+        subJson.identity = activeIdentity || (activeRole === 'em' ? 'Em ❤️' : 'Anh ❤️');
+        subJson.updatedAt = Date.now();
         const deviceType = navigator.userAgent.includes('iPhone') ? 'iPhone' : (navigator.userAgent.includes('Android') ? 'Android' : 'Desktop');
 
         // 3. Kiểm tra các bản ghi subscription hiện có trên Supabase
@@ -279,7 +298,7 @@ function initLoveStoryApp() {
               date: deviceType
             })
             .eq('id', primaryId);
-          console.log('✨ [WebPush] Cập nhật push subscription thành công:', deviceId);
+          console.log('✨ [WebPush] Cập nhật push subscription thành công:', deviceId, 'Role:', activeRole);
         } else {
           await supabaseClient
             .from('love_notes')
@@ -289,7 +308,7 @@ function initLoveStoryApp() {
               text: endpoint,
               date: deviceType
             }]);
-          console.log('✨ [WebPush] Đăng ký push subscription mới thành công:', deviceId);
+          console.log('✨ [WebPush] Đăng ký push subscription mới thành công:', deviceId, 'Role:', activeRole);
         }
       }
     } catch (err) {
@@ -1399,6 +1418,9 @@ function initLoveStoryApp() {
         localStorage.setItem('lovestory_account_role', matchedRole);
       } catch (e) {}
 
+      // Tự động đồng bộ role của tài khoản đang đăng nhập với Push Subscription của thiết bị
+      syncWebPushSubscription().catch(() => {});
+
       if (tamperObserver) tamperObserver.disconnect();
       removeLockScreenGuards();
 
@@ -1872,6 +1894,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
         if (!authCfg[role]) authCfg[role] = {};
         authCfg[role].title = newTitle;
         syncAuthConfigToDatabase(authCfg);
+        syncWebPushSubscription().catch(() => {});
 
         // Update UI
         if (navUserName) navUserName.textContent = newTitle;
@@ -2905,12 +2928,23 @@ Với anh, anh muốn đi tiếp cùng với em.`;
           const commentRows = data.filter(item => item.author === '__COMMENT__');
 
           if (userNotes.length > 0) {
-            appNotes = userNotes.map(item => ({
-              id: item.id,
-              author: item.author || 'Người Giấu Tên',
-              text: item.content || item.text || '',
-              date: item.date || ''
-            }));
+            appNotes = userNotes.map(item => {
+              let noteText = item.content || '';
+              if (!noteText && item.text) {
+                try {
+                  const meta = JSON.parse(item.text);
+                  noteText = meta.text || item.text;
+                } catch (e) {
+                  noteText = item.text;
+                }
+              }
+              return {
+                id: item.id,
+                author: item.author || 'Người Giấu Tên',
+                text: noteText,
+                date: item.date || ''
+              };
+            });
           } else {
             appNotes = [...DEFAULT_NOTES];
           }
@@ -3313,12 +3347,21 @@ Với anh, anh muốn đi tiếp cùng với em.`;
         const dateStr = `${String(now.getDate()).padStart(2, '0')}.${String(now.getMonth() + 1).padStart(2, '0')}.${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
         const myDeviceId = (typeof localStorage !== 'undefined' && localStorage.getItem('lovestory_device_id')) || '';
+        let senderRole = (typeof currentAccountRole !== 'undefined' && currentAccountRole) || '';
+        if (!senderRole && typeof localStorage !== 'undefined') {
+          senderRole = localStorage.getItem('lovestory_account_role') || '';
+        }
+        if (!senderRole) {
+          senderRole = (author.toLowerCase().includes('em') || author.toLowerCase().includes('linh')) ? 'em' : 'anh';
+        }
+
         const commentData = {
           note_id: String(activeNoteDetailId),
           author: author,
           text: text,
           date: dateStr,
           sender_device: myDeviceId,
+          sender_role: senderRole,
           timestamp: Date.now()
         };
 
@@ -3530,12 +3573,28 @@ Với anh, anh muốn đi tiếp cùng với em.`;
 
         if (supabaseClient) {
           try {
+            const myDeviceId = (typeof localStorage !== 'undefined' && localStorage.getItem('lovestory_device_id')) || '';
+            let senderRole = (typeof currentAccountRole !== 'undefined' && currentAccountRole) || '';
+            if (!senderRole && typeof localStorage !== 'undefined') {
+              senderRole = localStorage.getItem('lovestory_account_role') || '';
+            }
+            if (!senderRole) {
+              senderRole = (author.toLowerCase().includes('em') || author.toLowerCase().includes('linh')) ? 'em' : 'anh';
+            }
+
+            const noteMeta = {
+              sender_role: senderRole,
+              sender_device: myDeviceId,
+              sender_name: author,
+              text: text
+            };
+
             const { data, error } = await supabaseClient
               .from('love_notes')
               .insert([{
                 author: author,
                 content: text,
-                text: text,
+                text: JSON.stringify(noteMeta),
                 date: dateStr
               }])
               .select();
@@ -3664,16 +3723,28 @@ Với anh, anh muốn đi tiếp cùng với em.`;
               const rowId = newRow.id;
 
               if (!myRecentlySentIds.has(rowId)) {
+                const myDevId = (typeof localStorage !== 'undefined' && localStorage.getItem('lovestory_device_id')) || '';
+                const myRole = (typeof currentAccountRole !== 'undefined' && currentAccountRole) || (typeof localStorage !== 'undefined' && localStorage.getItem('lovestory_account_role')) || '';
+
                 if (newRow.author === '__COMMENT__') {
                   let cmtAuthor = 'Người ấy';
                   let cmtText = 'Vừa để lại một phản hồi mới 💬';
+                  let senderDev = null;
+                  let senderRole = null;
                   try {
                     const parsed = JSON.parse(newRow.content);
                     if (parsed.author) cmtAuthor = parsed.author;
                     if (parsed.text) cmtText = parsed.text;
+                    if (parsed.sender_device) senderDev = parsed.sender_device;
+                    if (parsed.sender_role) senderRole = parsed.sender_role;
                   } catch (e) {
                     if (newRow.text) cmtText = newRow.text;
                   }
+
+                  // Không hiển thị thông báo phản hồi của chính mình
+                  if (senderDev && senderDev === myDevId) return;
+                  if (senderRole && myRole && senderRole === myRole) return;
+
                   const noteTargetId = newRow.text;
                   showAppNotification({
                     title: `💬 Thảo luận mới từ ${cmtAuthor}`,
@@ -3689,10 +3760,32 @@ Với anh, anh muốn đi tiếp cùng với em.`;
                   });
                 } else if (newRow.author !== '__CONFIG_MUSIC__' && newRow.author !== '__CONFIG_AUTH__' && newRow.author !== '__PUSH_SUB__') {
                   const authorName = newRow.author || 'Người thương';
-                  const noteBody = newRow.content || newRow.text || 'Gửi đến bạn một lời nhắn ngọt ngào 💕';
+                  let noteBody = newRow.content || '';
+                  let senderDev = null;
+                  let senderRole = null;
+
+                  if (newRow.text) {
+                    try {
+                      const meta = JSON.parse(newRow.text);
+                      if (meta.sender_device) senderDev = meta.sender_device;
+                      if (meta.sender_role) senderRole = meta.sender_role;
+                      if (meta.text && !noteBody) noteBody = meta.text;
+                    } catch (e) {
+                      if (!noteBody) noteBody = newRow.text;
+                    }
+                  }
+
+                  if (!senderRole) {
+                    senderRole = (authorName.toLowerCase().includes('em') || authorName.toLowerCase().includes('linh')) ? 'em' : 'anh';
+                  }
+
+                  // Không hiển thị thông báo lời nhắn của chính mình
+                  if (senderDev && senderDev === myDevId) return;
+                  if (senderRole && myRole && senderRole === myRole) return;
+
                   showAppNotification({
                     title: `💌 Lời nhắn mới từ ${authorName}!`,
-                    body: noteBody,
+                    body: noteBody || 'Gửi đến bạn một lời nhắn ngọt ngào 💕',
                     icon: '💌',
                     action: 'OPEN_NOTE',
                     noteId: rowId,

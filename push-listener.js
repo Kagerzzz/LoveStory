@@ -103,6 +103,21 @@ async function sendPushToAllSubscribers(notificationData) {
       }
     }
 
+    // Lọc theo Target Role: Chỉ gửi đến thiết bị của người nhận tương ứng (anh -> em, em -> anh)
+    if (notificationData.targetRole) {
+      const beforeCount = uniqueTargets.length;
+      uniqueTargets = uniqueTargets.filter(({ subObj }) => {
+        if (subObj.role) {
+          return subObj.role === notificationData.targetRole;
+        }
+        // Tương thích ngược với các bản ghi chưa có trường role:
+        if (subObj.deviceId === 'dev_q6r2nitw_mvglumhd') return notificationData.targetRole === 'em';
+        if (subObj.deviceId === 'dev_wrbob92w_mvgk6e31') return notificationData.targetRole === 'anh';
+        return true;
+      });
+      console.log(`🎯 [Push Daemon] Phân luồng targetRole="${notificationData.targetRole}": ${uniqueTargets.length}/${beforeCount} thiết bị phù hợp.`);
+    }
+
     console.log(`🔔 [Push Daemon] Đang gửi thông báo đến ${uniqueTargets.length} thiết bị nhận...`);
 
     const notifTag = notificationData.tag || (notificationData.noteId ? 'note-' + notificationData.noteId : 'lovestory-push');
@@ -123,7 +138,7 @@ async function sendPushToAllSubscribers(notificationData) {
       uniqueTargets.map(async ({ row, subObj }) => {
         try {
           const res = await webpush.sendNotification(subObj, payloadString);
-          console.log(`✅ [Push Daemon] Gửi thành công tới [${row.date || 'Device'} - ${subObj.deviceId || 'legacy'}]: HTTP ${res.statusCode}`);
+          console.log(`✅ [Push Daemon] Gửi thành công tới [${row.date || 'Device'} - ${subObj.role || 'no-role'} - ${subObj.deviceId || 'legacy'}]: HTTP ${res.statusCode}`);
           return { success: true };
         } catch (pushErr) {
           console.error(`❌ [Push Daemon] Lỗi gửi tới [${row.date || 'Device'}]:`, pushErr.message);
@@ -164,14 +179,28 @@ supabase
       let cmtAuthor = 'Người ấy';
       let cmtText = 'Vừa để lại một phản hồi mới';
       let senderDevice = null;
+      let senderRole = null;
       try {
         const parsed = JSON.parse(row.content);
         if (parsed.author) cmtAuthor = parsed.author;
         if (parsed.text) cmtText = parsed.text;
         if (parsed.sender_device) senderDevice = parsed.sender_device;
+        if (parsed.sender_role) senderRole = parsed.sender_role;
       } catch (e) {
         if (row.text) cmtText = row.text;
       }
+
+      if (!senderRole) {
+        if (cmtAuthor.toLowerCase().includes('em') || cmtAuthor.toLowerCase().includes('linh')) {
+          senderRole = 'em';
+        } else {
+          senderRole = 'anh';
+        }
+      }
+
+      // Người gửi là senderRole -> Chỉ gửi đến role đối nghịch
+      const targetRole = senderRole === 'anh' ? 'em' : 'anh';
+      console.log(`💬 [Push Daemon] Bình luận từ "${cmtAuthor}" (${senderRole}) -> Gửi đến role: "${targetRole}"`);
 
       await sendPushToAllSubscribers({
         title: `💬 Thảo luận mới từ ${cmtAuthor}!`,
@@ -179,19 +208,47 @@ supabase
         tag: 'comment-' + row.id,
         action: 'OPEN_NOTE',
         noteId: row.text,
+        targetRole: targetRole,
         excludeDeviceId: senderDevice
       });
     } else {
       // Lời nhắn mới
       const authorName = row.author || 'Người thương';
-      const noteBody = row.content || row.text || 'Gửi đến bạn một lời nhắn ngọt ngào 💕';
+      let noteBody = row.content || '';
+      let senderRole = null;
+      let senderDevice = null;
+
+      if (row.text) {
+        try {
+          const meta = JSON.parse(row.text);
+          if (meta.sender_role) senderRole = meta.sender_role;
+          if (meta.sender_device) senderDevice = meta.sender_device;
+          if (meta.text && !noteBody) noteBody = meta.text;
+        } catch (e) {
+          if (!noteBody) noteBody = row.text;
+        }
+      }
+
+      if (!senderRole) {
+        if (authorName.toLowerCase().includes('em') || authorName.toLowerCase().includes('linh')) {
+          senderRole = 'em';
+        } else {
+          senderRole = 'anh';
+        }
+      }
+
+      // Người gửi là senderRole -> Chỉ gửi đến role đối nghịch
+      const targetRole = senderRole === 'anh' ? 'em' : 'anh';
+      console.log(`💌 [Push Daemon] Lời nhắn từ "${authorName}" (${senderRole}) -> Gửi đến role: "${targetRole}"`);
 
       await sendPushToAllSubscribers({
         title: `💌 Lời nhắn mới từ ${authorName}!`,
-        body: noteBody,
+        body: noteBody || 'Gửi đến bạn một lời nhắn ngọt ngào 💕',
         tag: 'note-' + row.id,
         action: 'OPEN_NOTE',
-        noteId: row.id
+        noteId: row.id,
+        targetRole: targetRole,
+        excludeDeviceId: senderDevice
       });
     }
   })
