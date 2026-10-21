@@ -4196,13 +4196,11 @@ body.note-detail-open .floating-audio-bar,
   }
 
   .brand-tag {
-    font-size: 0.65rem;
-    padding: 2px 8px;
+    display: none !important;
   }
 
   .nav-cta-btn {
-    padding: 5px 12px;
-    font-size: 0.78rem;
+    display: none !important;
   }
 
   .intro-screen {
