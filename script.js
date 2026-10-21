@@ -3138,6 +3138,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
         noteDetailModal.classList.add('open', 'active');
         noteDetailModal.setAttribute('aria-hidden', 'false');
         document.body.style.overflow = 'hidden';
+        document.body.classList.add('note-detail-open');
       }
 
       if (commentTextInput && window.innerWidth > 680) {
@@ -3157,6 +3158,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
         noteDetailModal.style.display = 'none';
         noteDetailModal.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
+        document.body.classList.remove('note-detail-open');
       }
       activeNoteDetailId = null;
       if (commentTextInput) commentTextInput.value = '';
