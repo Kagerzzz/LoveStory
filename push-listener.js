@@ -107,13 +107,17 @@ async function sendPushToAllSubscribers(notificationData) {
     if (notificationData.targetRole) {
       const beforeCount = uniqueTargets.length;
       uniqueTargets = uniqueTargets.filter(({ subObj }) => {
-        if (subObj.role) {
-          return subObj.role === notificationData.targetRole;
+        // Tuyệt đối không gửi cho user 'em' nếu targetRole là 'anh'
+        if (notificationData.targetRole === 'anh') {
+          if (subObj.role === 'em' || subObj.deviceId === 'dev_q6r2nitw_mvglumhd') return false;
+          return subObj.role === 'anh' || subObj.deviceId === 'dev_wrbob92w_mvgk6e31';
         }
-        // Tương thích ngược với các bản ghi chưa có trường role:
-        if (subObj.deviceId === 'dev_q6r2nitw_mvglumhd') return notificationData.targetRole === 'em';
-        if (subObj.deviceId === 'dev_wrbob92w_mvgk6e31') return notificationData.targetRole === 'anh';
-        return true;
+        // Tuyệt đối không gửi cho user 'anh' nếu targetRole là 'em'
+        if (notificationData.targetRole === 'em') {
+          if (subObj.role === 'anh' || subObj.deviceId === 'dev_wrbob92w_mvgk6e31') return false;
+          return subObj.role === 'em' || subObj.deviceId === 'dev_q6r2nitw_mvglumhd';
+        }
+        return subObj.role === notificationData.targetRole;
       });
       console.log(`🎯 [Push Daemon] Phân luồng targetRole="${notificationData.targetRole}": ${uniqueTargets.length}/${beforeCount} thiết bị phù hợp.`);
     }
