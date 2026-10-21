@@ -342,8 +342,12 @@ function initLoveStoryApp() {
   // ==========================================
   // 2. CRYPTOGRAPHY & SECURITY HELPERS
   // ==========================================
-  // SHA-256 hash of valid PIN ('3108')
-  const HASH_3108 = '50d65da5a5788e6183a480898578d672eb3f1d593a5b308e6e0b971e90fab6b9';
+  // SHA-256 hashes of valid PINs
+  const HASH_3108 = '50d65da5a5788e6183a480898578d672eb3f1d593a5b308e6e0b971e90fab6b9'; // Em ❤️
+  const HASH_7612 = '336120f10ba42e9e8b5e5e725c0f491bca7cd1968c318f43d8ec7c29aa1f990a'; // Anh ❤️
+
+  // Current logged in user identity based on passcode entered (Em ❤️ or Anh ❤️)
+  let currentUserIdentity = (typeof localStorage !== 'undefined' && localStorage.getItem('lovestory_user_identity')) || '';
 
   async function computeSHA256(message) {
     const enc = new TextEncoder();
@@ -1262,26 +1266,38 @@ function initLoveStoryApp() {
     const cleanDigits = rawVal.replace(/[^0-9]/g, '');
 
     let isMatch = false;
+    let matchedUser = '';
+
     try {
+      let hash = '';
       if (window.crypto && window.crypto.subtle) {
-        const hash = await computeSHA256(cleanDigits);
-        if (hash === HASH_3108 || cleanDigits === '3108') {
-          isMatch = true;
-        }
-      } else {
-        if (cleanDigits === '3108') {
-          isMatch = true;
-        }
+        hash = await computeSHA256(cleanDigits);
+      }
+      if (cleanDigits === '3108' || hash === HASH_3108) {
+        isMatch = true;
+        matchedUser = 'Em ❤️';
+      } else if (cleanDigits === '7612' || hash === HASH_7612) {
+        isMatch = true;
+        matchedUser = 'Anh ❤️';
       }
     } catch (err) {
-      console.warn('Password hash computation error, using fallback:', err);
+      console.warn('Password hash check error, using fallback:', err);
       if (cleanDigits === '3108') {
         isMatch = true;
+        matchedUser = 'Em ❤️';
+      } else if (cleanDigits === '7612') {
+        isMatch = true;
+        matchedUser = 'Anh ❤️';
       }
     }
 
     if (isMatch) {
       isUnlocked = true;
+      currentUserIdentity = matchedUser;
+      try {
+        localStorage.setItem('lovestory_user_identity', matchedUser);
+      } catch (e) {}
+
       if (tamperObserver) tamperObserver.disconnect();
       removeLockScreenGuards();
 
@@ -1328,7 +1344,7 @@ function initLoveStoryApp() {
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
 
-      // 2. Decrypt love letter via AES-GCM
+      // 2. Decrypt love letter via AES-GCM (Dùng key gốc 3108 để giải mã cho cả 2 user)
       const FALLBACK_LETTER = `Người ta thường nói, duyên số là do trời, nhưng nếu vậy thì vũ trụ đã ưu ái anh quá nhiều. Giữa thế giới hàng tỷ người, gặp nhau chỉ có thể là duyên hoặc nợ. Có duyên thì ở lại, còn nếu nợ thì anh xin được mang theo cả đời ...
 
 Anh chưa bao giờ phủ nhận rằng, mình là kẻ phản diện. Anh từng vụng về với những điều đáng lẽ phải dịu dàng, từng im lặng ở những lúc cần một lời nói, và đôi khi mải mê với thế giới của mình.
@@ -1345,7 +1361,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
           plainLetter = await decryptText(
             COUPLE_DATA.letterBodyCipher.data,
             COUPLE_DATA.letterBodyCipher.iv,
-            cleanDigits
+            '3108'
           );
         } else {
           plainLetter = FALLBACK_LETTER;
@@ -1624,6 +1640,26 @@ Với anh, anh muốn đi tiếp cùng với em.`;
   // Called ONLY after password verification & DOM mounting
   // ==========================================
   function initMainApp(plainLetter) {
+
+    // --- USER IDENTITY SETUP (Em ❤️ / Anh ❤️) ---
+    const navUserName = document.getElementById('navUserName');
+    if (navUserName) navUserName.textContent = currentUserIdentity || 'Anh ❤️';
+
+    const navUserIdentityBadge = document.getElementById('navUserIdentityBadge');
+    if (navUserIdentityBadge) {
+      navUserIdentityBadge.setAttribute('title', `Đang đăng nhập: ${currentUserIdentity || 'Anh ❤️'} (Nhấp để đổi mã khóa)`);
+      navUserIdentityBadge.addEventListener('click', () => {
+        if (confirm(`Bạn đang ở phiên của ${currentUserIdentity || 'Anh ❤️'}.\nBạn có muốn khóa trang web để đổi mã khóa khác không?`)) {
+          window.location.reload();
+        }
+      });
+    }
+
+    const noteSenderName = document.getElementById('noteSenderName');
+    if (noteSenderName) noteSenderName.textContent = currentUserIdentity || 'Anh ❤️';
+
+    const commentSenderName = document.getElementById('commentSenderName');
+    if (commentSenderName) commentSenderName.textContent = currentUserIdentity || 'Anh ❤️';
 
     // --- A. APPLY STORY & DECRYPTED LETTER TO DOM ---
     const brandCoupleNames = document.getElementById('brandCoupleNames');
@@ -2808,9 +2844,9 @@ Với anh, anh muốn đi tiếp cùng với em.`;
         document.body.style.overflow = 'hidden';
       }
 
-      const savedAuthor = localStorage.getItem('lovestory_comment_author') || (noteAuthorInput ? noteAuthorInput.value.trim() : '');
-      if (commentAuthorInput && !commentAuthorInput.value && savedAuthor) {
-        commentAuthorInput.value = savedAuthor;
+      const commentSenderName = document.getElementById('commentSenderName');
+      if (commentSenderName) {
+        commentSenderName.textContent = currentUserIdentity || 'Anh ❤️';
       }
 
       if (commentTextInput) {
@@ -2924,7 +2960,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
         e.preventDefault();
         if (!activeNoteDetailId) return;
 
-        const author = (commentAuthorInput && commentAuthorInput.value.trim()) || 'Người Giấu Tên';
+        const author = currentUserIdentity || (commentAuthorInput && commentAuthorInput.value.trim()) || 'Anh ❤️';
         const text = (commentTextInput && commentTextInput.value.trim()) || '';
 
         if (!text) {
@@ -3075,7 +3111,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
 
       if (isSubmittingNote) return;
 
-      const author = (noteAuthorInput && noteAuthorInput.value.trim()) || 'Người Giấu Tên';
+      const author = currentUserIdentity || (noteAuthorInput && noteAuthorInput.value.trim()) || 'Anh ❤️';
       const text = (noteContentInput && noteContentInput.value.trim()) || '';
 
       if (!text) {
