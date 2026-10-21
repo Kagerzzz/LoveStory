@@ -4623,17 +4623,51 @@ body.note-detail-open .floating-audio-bar,
     font-size: 1.9rem;
   }
 
-  /* Polaroid Gallery Mobile */
+  /* --------------------------------------------------------------------------
+     Polaroid Gallery Mobile (Horizontal Swipeable Carousel)
+     -------------------------------------------------------------------------- */
   .polaroid-grid {
-    grid-template-columns: 1fr;
-    max-width: 340px;
-    margin: 24px auto 0;
-    gap: 28px;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: 20px;
+    scroll-padding-right: 20px;
+    -webkit-overflow-scrolling: touch;
+    gap: 16px;
+    padding: 16px 20px 24px 20px !important;
+    margin: 16px -24px 0 -24px !important;
+    width: calc(100% + 48px) !important;
+    max-width: none !important;
+    box-sizing: border-box;
+  }
+
+  .polaroid-grid::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .polaroid-grid::-webkit-scrollbar-track {
+    background: rgba(24, 24, 27, 0.06);
+    border-radius: 10px;
+    margin: 0 24px;
+  }
+
+  .polaroid-grid::-webkit-scrollbar-thumb {
+    background: var(--pink-soft, #fca5a5);
+    border-radius: 10px;
+    border: 1.5px solid var(--ink);
   }
 
   .polaroid-card {
+    flex: 0 0 260px !important;
+    width: 260px !important;
+    max-width: 80vw !important;
+    scroll-snap-align: start;
     padding: 12px 12px 18px;
-    transform: none !important; /* Prevent side overflow */
+    transform: none !important; /* Flat alignment for smooth horizontal carousel */
+    box-sizing: border-box;
   }
 
   .polaroid-action-bar {
@@ -4657,6 +4691,56 @@ body.note-detail-open .floating-audio-bar,
   .btn-add-memory {
     padding: 12px 20px;
     font-size: 0.92rem;
+  }
+
+  /* --------------------------------------------------------------------------
+     Sticky Notes Wall Mobile (Horizontal Swipeable Carousel)
+     -------------------------------------------------------------------------- */
+  .notes-section .sticky-notes-wall {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: 20px;
+    scroll-padding-right: 20px;
+    -webkit-overflow-scrolling: touch;
+    gap: 16px;
+    padding: 16px 20px 24px 20px !important;
+    margin: 10px -24px 0 -24px !important;
+    width: calc(100% + 48px) !important;
+    max-width: none !important;
+    justify-content: flex-start !important;
+    box-sizing: border-box;
+  }
+
+  .notes-section .sticky-notes-wall::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .notes-section .sticky-notes-wall::-webkit-scrollbar-track {
+    background: rgba(24, 24, 27, 0.06);
+    border-radius: 10px;
+    margin: 0 24px;
+  }
+
+  .notes-section .sticky-notes-wall::-webkit-scrollbar-thumb {
+    background: var(--yellow, #ffea79);
+    border-radius: 10px;
+    border: 1.5px solid var(--ink);
+  }
+
+  .notes-section .sticky-note,
+  .notes-section .note-card {
+    flex: 0 0 250px !important;
+    width: 250px !important;
+    max-width: 78vw !important;
+    height: 265px !important;
+    min-height: 265px !important;
+    scroll-snap-align: start;
+    transform: none !important; /* Flat alignment for smooth horizontal carousel */
+    box-sizing: border-box;
   }
 
   .btn-badge-live {
