@@ -2348,8 +2348,7 @@ Với anh, anh muốn đi tiếp cùng với em.`;
         </div>
 
         <div class="polaroid-img-wrap" title="Nhấp để phóng to ảnh">
-          <img src="${escapeHTML(mem.image_url)}" alt="${escapeHTML(mem.caption)}" loading="lazy">
-          <div class="polaroid-zoom-hint">🔍 Phóng to</div>
+          <img src="${escapeHTML(mem.image_url)}" alt="${escapeHTML(mem.caption)}" class="polaroid-img" loading="lazy">
         </div>
 
         <div class="polaroid-caption">
