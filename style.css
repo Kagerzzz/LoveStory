@@ -3045,18 +3045,36 @@ body.note-detail-open .floating-audio-bar,
   border: 2px solid var(--ink);
   border-radius: var(--radius-md, 14px);
   box-shadow: 3px 3px 0 var(--ink);
-  padding: 18px 16px 12px;
+  padding: 16px 16px 10px;
   margin-top: 6px;
   flex-shrink: 0;
-  max-height: 160px;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  max-height: 165px;
+  overflow: visible;
   transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  -webkit-overflow-scrolling: touch;
 }
 
 .note-featured-card.is-expanded {
   max-height: 52vh;
   max-height: 52dvh;
+}
+
+.note-featured-body {
+  flex: 1;
+  min-height: 44px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 4px;
+}
+
+.note-featured-body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.note-featured-body::-webkit-scrollbar-thumb {
+  background: rgba(24, 24, 27, 0.2);
+  border-radius: 4px;
 }
 
 .note-featured-tape {
@@ -3075,8 +3093,8 @@ body.note-detail-open .floating-audio-bar,
 
 .note-featured-text {
   font-family: var(--font-hand);
-  font-size: 1.1rem;
-  line-height: 1.55;
+  font-size: 1.05rem;
+  line-height: 1.5;
   color: var(--ink);
   font-weight: 700;
   margin: 0;
@@ -3085,7 +3103,7 @@ body.note-detail-open .floating-audio-bar,
 }
 
 .note-featured-footer {
-  margin-top: 10px;
+  margin-top: 8px;
   padding-top: 6px;
   border-top: 1.5px dashed rgba(24, 24, 27, 0.2);
   display: flex;
@@ -3096,6 +3114,7 @@ body.note-detail-open .floating-audio-bar,
   font-weight: 800;
   flex-wrap: wrap;
   gap: 6px;
+  flex-shrink: 0;
 }
 
 .note-featured-meta {
@@ -3477,17 +3496,27 @@ body.note-detail-open .floating-audio-bar,
   }
 
   .note-featured-card {
-    padding: 12px 12px 8px;
+    padding: 12px 12px 6px;
     margin-top: 2px;
-    max-height: 130px;
+    max-height: 135px;
     border-radius: 12px;
     flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
     transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .note-featured-card.is-expanded {
     max-height: 50vh;
     max-height: 50dvh;
+  }
+
+  .note-featured-body {
+    flex: 1;
+    min-height: 40px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .note-featured-tape {
@@ -3502,8 +3531,10 @@ body.note-detail-open .floating-audio-bar,
   }
 
   .note-featured-footer {
-    margin-top: 6px;
+    margin-top: 5px;
+    padding-top: 4px;
     font-size: 0.72rem;
+    flex-shrink: 0;
   }
 
   .btn-toggle-note-expand {

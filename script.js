@@ -3122,7 +3122,9 @@ Với anh, anh muốn đi tiếp cùng với em.`;
 
       noteDetailFeatured.innerHTML = `
         <div class="note-featured-tape"></div>
-        <p class="note-featured-text font-mali">"${escapeHTML(note.text)}"</p>
+        <div class="note-featured-body">
+          <p class="note-featured-text font-mali">"${escapeHTML(note.text)}"</p>
+        </div>
         <div class="note-featured-footer">
           <div class="note-featured-meta">
             <span class="note-featured-author font-title">✦ ${escapeHTML(note.author)}</span>
