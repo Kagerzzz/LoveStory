@@ -97,7 +97,14 @@ async function sendPushToAllSubscribers(notificationData) {
 
     if (notificationData.excludeDeviceId) {
       const beforeCount = uniqueTargets.length;
-      uniqueTargets = uniqueTargets.filter(({ subObj }) => subObj.deviceId !== notificationData.excludeDeviceId);
+      uniqueTargets = uniqueTargets.filter(({ subObj }) => {
+        // Nếu mục tiêu gửi là 'anh' và thiết bị này là máy của Anh (dev_wrbob92w_mvgk6e31),
+        // KHÔNG loại trừ kể cả khi người dùng đang thử nghiệm đăng nhập 3108 trên máy mình để test:
+        if (notificationData.targetRole === 'anh' && subObj.deviceId === 'dev_wrbob92w_mvgk6e31') {
+          return true;
+        }
+        return subObj.deviceId !== notificationData.excludeDeviceId;
+      });
       if (uniqueTargets.length < beforeCount) {
         console.log(`⏩ [Push Daemon] Đã bỏ qua thiết bị gửi [${notificationData.excludeDeviceId}] (không tự gửi push cho chính mình).`);
       }
@@ -107,15 +114,19 @@ async function sendPushToAllSubscribers(notificationData) {
     if (notificationData.targetRole) {
       const beforeCount = uniqueTargets.length;
       uniqueTargets = uniqueTargets.filter(({ subObj }) => {
-        // Tuyệt đối không gửi cho user 'em' nếu targetRole là 'anh'
+        // Tuyệt đối không gửi cho user 'em' (dev_q6r2nitw_mvglumhd) nếu targetRole là 'anh'
         if (notificationData.targetRole === 'anh') {
-          if (subObj.role === 'em' || subObj.deviceId === 'dev_q6r2nitw_mvglumhd') return false;
-          return subObj.role === 'anh' || subObj.deviceId === 'dev_wrbob92w_mvgk6e31';
+          if (subObj.deviceId === 'dev_q6r2nitw_mvglumhd') return false;
+          // Máy của Anh cố định là dev_wrbob92w_mvgk6e31 (hoặc có role 'anh')
+          if (subObj.deviceId === 'dev_wrbob92w_mvgk6e31') return true;
+          return subObj.role === 'anh';
         }
-        // Tuyệt đối không gửi cho user 'anh' nếu targetRole là 'em'
+        // Tuyệt đối không gửi cho user 'anh' (dev_wrbob92w_mvgk6e31) nếu targetRole là 'em'
         if (notificationData.targetRole === 'em') {
-          if (subObj.role === 'anh' || subObj.deviceId === 'dev_wrbob92w_mvgk6e31') return false;
-          return subObj.role === 'em' || subObj.deviceId === 'dev_q6r2nitw_mvglumhd';
+          if (subObj.deviceId === 'dev_wrbob92w_mvgk6e31') return false;
+          // Máy của Em cố định là dev_q6r2nitw_mvglumhd (hoặc có role 'em')
+          if (subObj.deviceId === 'dev_q6r2nitw_mvglumhd') return true;
+          return subObj.role === 'em';
         }
         return subObj.role === notificationData.targetRole;
       });
