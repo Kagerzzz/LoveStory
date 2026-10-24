@@ -26,6 +26,19 @@ webpush.setVapidDetails(
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Khởi tạo HTTP Server siêu nhẹ cho Health Check khi triển khai lên Cloud (Render/Railway/Koyeb)
+const http = require('http');
+const PORT = process.env.PORT || 3000;
+const healthServer = http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' });
+  res.end('LoveStory Realtime Web Push Daemon is running 24/7 🟢');
+});
+healthServer.listen(PORT, () => {
+  console.log(`🌐 [Cloud Health Check] Server sẵn sàng trên cổng ${PORT}`);
+}).on('error', (err) => {
+  console.log(`ℹ️ [Cloud Health Check] Cổng ${PORT} bận hoặc không khả dụng, daemon vẫn chạy bình thường.`);
+});
+
 console.log('🚀 [Push Daemon] Đang khởi động bộ lắng nghe Web Push cho LoveStory...');
 
 // Bộ nhớ đệm chống trùng lặp (Deduplication Cache) trong 30 giây
